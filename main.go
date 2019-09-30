@@ -1,35 +1,40 @@
 package main
 
 import (
-	"GraphQL_harp/harpcheckroot"
-	"GraphQL_harp/harpconfig"
-	"GraphQL_harp/harpgraphql"
-	"GraphQL_harp/harplogger"
-	"GraphQL_harp/harpmysql"
+	"fmt"
+	"github.com/mactsouk/go/simpleGitHub"
+	"hcc/harp/checkroot"
+	"hcc/harp/config"
+	"hcc/harp/graphql"
+	"hcc/harp/logger"
+	"hcc/harp/mysql"
 	"net/http"
 )
 
 func main() {
-	if !harpcheckroot.CheckRoot() {
+
+	fmt.Println(simpleGitHub.AddTwo(5, 6))
+
+	if !checkroot.CheckRoot() {
 		return
 	}
 
-	if !harplogger.Prepare() {
+	if !logger.Prepare() {
 		return
 	}
-	defer harplogger.FpLog.Close()
+	defer logger.FpLog.Close()
 
-	err := harpmysql.Prepare()
+	err := mysql.Prepare()
 	if err != nil {
 		return
 	}
-	defer harpmysql.Db.Close()
+	defer mysql.Db.Close()
 
-	http.Handle("/graphql", harpgraphql.GraphqlHandler)
+	http.Handle("/graphql", graphql.GraphqlHandler)
 
-	harplogger.Logger.Println("Server is running on port " + harpconfig.HTTPPort)
-	err = http.ListenAndServe(":"+harpconfig.HTTPPort, nil)
+	logger.Logger.Println("Server is running on port " + config.HTTPPort)
+	err = http.ListenAndServe(":"+config.HTTPPort, nil)
 	if err != nil {
-		harplogger.Logger.Println("Failed to prepare http server!")
+		logger.Logger.Println("Failed to prepare http server!")
 	}
 }

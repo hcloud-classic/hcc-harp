@@ -1,10 +1,10 @@
-package cellographql
+package graphql
 
 import (
-	"GraphQL_Cello/cellologger"
-	"GraphQL_Cello/cellomysql"
-	"GraphQL_Cello/cellotypes"
 	"github.com/graphql-go/graphql"
+	"hcc/harp/logger"
+	"hcc/harp/mysql"
+	"hcc/harp/types"
 )
 
 var queryTypes = graphql.NewObject(
@@ -24,11 +24,11 @@ var queryTypes = graphql.NewObject(
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					cellologger.Logger.Println("Resolving: volume")
+					logger.Logger.Println("Resolving: volume")
 
 					requestedUUID, ok := p.Args["uuid"].(string)
 					if ok {
-						volume := new(cellotypes.Volume)
+						volume := new(types.Volume)
 
 						var uuid string
 						var size int
@@ -36,9 +36,9 @@ var queryTypes = graphql.NewObject(
 						var serverUUID string
 
 						sql := "select * from volume where uuid = ?"
-						err := cellomysql.Db.QueryRow(sql, requestedUUID).Scan(&uuid, &size, &_type, &serverUUID)
+						err := mysql.Db.QueryRow(sql, requestedUUID).Scan(&uuid, &size, &_type, &serverUUID)
 						if err != nil {
-							cellologger.Logger.Println(err)
+							logger.Logger.Println(err)
 							return nil, nil
 						}
 
@@ -60,18 +60,18 @@ var queryTypes = graphql.NewObject(
 				Type:        graphql.NewList(volumeType),
 				Description: "Get volume list",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					cellologger.Logger.Println("Resolving: list_volume")
+					logger.Logger.Println("Resolving: list_volume")
 
-					var volumes []cellotypes.Volume
+					var volumes []types.Volume
 					var uuid string
 					var size int
 					var _type string
 					var serverUUID string
 
 					sql := "select * from volume"
-					stmt, err := cellomysql.Db.Query(sql)
+					stmt, err := mysql.Db.Query(sql)
 					if err != nil {
-						cellologger.Logger.Println(err)
+						logger.Logger.Println(err)
 						return nil, nil
 					}
 					defer stmt.Close()
@@ -79,12 +79,12 @@ var queryTypes = graphql.NewObject(
 					for stmt.Next() {
 						err := stmt.Scan(&uuid, &size, &_type, &serverUUID)
 						if err != nil {
-							cellologger.Logger.Println(err)
+							logger.Logger.Println(err)
 						}
 
-						volume := cellotypes.Volume{UUID: uuid, Size: size, Type: _type, ServerUUID: serverUUID}
+						volume := types.Volume{UUID: uuid, Size: size, Type: _type, ServerUUID: serverUUID}
 
-						cellologger.Logger.Println(volume)
+						logger.Logger.Println(volume)
 						volumes = append(volumes, volume)
 					}
 
