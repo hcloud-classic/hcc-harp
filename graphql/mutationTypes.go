@@ -1,14 +1,14 @@
-package cellographql
+package graphql
 
 import (
-	"GraphQL_Cello/celloconfig"
-	"GraphQL_Cello/cellologger"
-	"GraphQL_Cello/cellomysql"
-	"GraphQL_Cello/cellotypes"
-	"GraphQL_Cello/cellouuidgen"
 	"errors"
 	"fmt"
 	"github.com/graphql-go/graphql"
+	"hcc/harp/config"
+	"hcc/harp/logger"
+	"hcc/harp/mysql"
+	"hcc/harp/types"
+	"hcc/harp/uuidgen"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -19,7 +19,7 @@ import (
 func CheckServerUUID(serverUUID string) error {
 	query := fmt.Sprintf("%s", "query Select_Server {\n  server(uuid: \""+serverUUID+"\") {\n    uuid\n    subnet_id\n    os\n    server_name\n    server_disc\n    cpu\n    memory\n    disk_size\n    status\n    user_uuid\n    created_time\n }\n}\n")
 
-	resp, err := http.PostForm("http://localhost:"+celloconfig.ViolinHTTPPort+
+	resp, err := http.PostForm("http://localhost:"+config.ViolinHTTPPort+
 		"/graphql", url.Values{"query": {query},
 		"variables":     {"{}"},
 		"operationName": {"Select_Server"}})
@@ -67,15 +67,15 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				cellologger.Logger.Println("Resolving: create_volume")
+				logger.Logger.Println("Resolving: create_volume")
 
-				uuid, err := cellouuidgen.Uuidgen()
+				uuid, err := uuidgen.Uuidgen()
 				if err != nil {
-					cellologger.Logger.Println("Failed to generate uuid!")
+					logger.Logger.Println("Failed to generate uuid!")
 					return nil, nil
 				}
 
-				volume := cellotypes.Volume{
+				volume := types.Volume{
 					UUID:       uuid,
 					Size:       params.Args["size"].(int),
 					Type:       params.Args["type"].(string),
@@ -84,23 +84,23 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 
 				err = CheckServerUUID(volume.ServerUUID)
 				if err != nil {
-					cellologger.Logger.Println(err)
+					logger.Logger.Println(err)
 					return nil, nil
 				}
 
 				sql := "insert into volume(uuid, size, type, server_uuid) values (?, ?, ?, ?)"
-				stmt, err := cellomysql.Db.Prepare(sql)
+				stmt, err := mysql.Db.Prepare(sql)
 				if err != nil {
-					cellologger.Logger.Println(err.Error())
+					logger.Logger.Println(err.Error())
 					return nil, nil
 				}
 				defer stmt.Close()
 				result, err2 := stmt.Exec(volume.UUID, volume.Size, volume.Type, volume.ServerUUID)
 				if err2 != nil {
-					cellologger.Logger.Println(err2)
+					logger.Logger.Println(err2)
 					return nil, nil
 				}
-				cellologger.Logger.Println(result.LastInsertId())
+				logger.Logger.Println(result.LastInsertId())
 
 				return volume, nil
 			},
@@ -127,14 +127,14 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				cellologger.Logger.Println("Resolving: update_volume")
+				logger.Logger.Println("Resolving: update_volume")
 
 				requestedUUID, _ := params.Args["uuid"].(string)
 				size, sizeOk := params.Args["size"].(int)
 				_type, _typeOk := params.Args["type"].(string)
 				serverUUID, serverUUIDOk := params.Args["server_uuid"].(string)
 
-				volume := new(cellotypes.Volume)
+				volume := new(types.Volume)
 
 				if sizeOk && _typeOk && serverUUIDOk {
 					volume.UUID = requestedUUID
@@ -143,18 +143,18 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					volume.ServerUUID = serverUUID
 
 					sql := "update volume set size = ?, type = ?, server_uuid = ? where uuid = ?"
-					stmt, err := cellomysql.Db.Prepare(sql)
+					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
-						cellologger.Logger.Println(err.Error())
+						logger.Logger.Println(err.Error())
 						return nil, nil
 					}
 					defer stmt.Close()
 					result, err2 := stmt.Exec(volume.Size, volume.Type, volume.ServerUUID, volume.UUID)
 					if err2 != nil {
-						cellologger.Logger.Println(err2)
+						logger.Logger.Println(err2)
 						return nil, nil
 					}
-					cellologger.Logger.Println(result.LastInsertId())
+					logger.Logger.Println(result.LastInsertId())
 
 					return volume, nil
 				}
@@ -174,23 +174,23 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				cellologger.Logger.Println("Resolving: delete_volume")
+				logger.Logger.Println("Resolving: delete_volume")
 
 				requestedUUID, ok := params.Args["uuid"].(string)
 				if ok {
 					sql := "delete from volume where uuid = ?"
-					stmt, err := cellomysql.Db.Prepare(sql)
+					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
-						cellologger.Logger.Println(err.Error())
+						logger.Logger.Println(err.Error())
 						return nil, nil
 					}
 					defer stmt.Close()
 					result, err2 := stmt.Exec(requestedUUID)
 					if err2 != nil {
-						cellologger.Logger.Println(err2)
+						logger.Logger.Println(err2)
 						return nil, nil
 					}
-					cellologger.Logger.Println(result.RowsAffected())
+					logger.Logger.Println(result.RowsAffected())
 
 					return requestedUUID, nil
 				}
