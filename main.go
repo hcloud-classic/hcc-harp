@@ -9,6 +9,7 @@ import (
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
 	"net/http"
+	"strconv"
 )
 
 func main() {
@@ -22,18 +23,22 @@ func main() {
 	if !logger.Prepare() {
 		return
 	}
-	defer logger.FpLog.Close()
+	defer func() {
+		_ = logger.FpLog.Close()
+	}()
 
 	err := mysql.Prepare()
 	if err != nil {
 		return
 	}
-	defer mysql.Db.Close()
+	defer func() {
+		_ = mysql.Db.Close()
+	}()
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 
-	logger.Logger.Println("Server is running on port " + config.HTTPPort)
-	err = http.ListenAndServe(":"+config.HTTPPort, nil)
+	logger.Logger.Println("Server is running on port " + strconv.Itoa(int(config.HTTP.Port)))
+	err = http.ListenAndServe(":"+strconv.Itoa(int(config.HTTP.Port)), nil)
 	if err != nil {
 		logger.Logger.Println("Failed to prepare http server!")
 	}
