@@ -1,73 +1,67 @@
 package graphql
 
 import (
-	"errors"
-	"fmt"
 	"github.com/graphql-go/graphql"
-	"hcc/harp/config"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
 	"hcc/harp/types"
 	"hcc/harp/uuidgen"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
-// CheckServerUUID : Check if server UUID is exist in violin server module
-func CheckServerUUID(serverUUID string) error {
-	query := fmt.Sprintf("%s", "query Select_Server {\n  server(uuid: \""+serverUUID+"\") {\n    uuid\n    subnet_id\n    os\n    server_name\n    server_disc\n    cpu\n    memory\n    disk_size\n    status\n    user_uuid\n    created_time\n }\n}\n")
-
-	resp, err := http.PostForm("http://localhost:"+config.ViolinHTTPPort+
-		"/graphql", url.Values{"query": {query},
-		"variables":     {"{}"},
-		"operationName": {"Select_Server"}})
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Check response
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err == nil {
-		str := string(respBody)
-		println(str)
-	} else {
-		return err
-	}
-
-	if strings.Contains(string(respBody), "null") {
-		return errors.New("server UUID is not exist")
-	}
-
-	return nil
-}
+//// CheckServerUUID : Check if server UUID is exist in violin server module
+//func CheckServerUUID(serverUUID string) error {
+//	query := fmt.Sprintf("%s", "query Select_Server {\n  server(uuid: \""+serverUUID+"\") {\n    uuid\n    subnet_id\n    os\n    server_name\n    server_disc\n    cpu\n    memory\n    disk_size\n    status\n    user_uuid\n    created_time\n }\n}\n")
+//
+//	resp, err := http.PostForm("http://localhost:"+config.ViolinHTTPPort+
+//		"/graphql", url.Values{"query": {query},
+//		"variables":     {"{}"},
+//		"operationName": {"Select_Server"}})
+//
+//	if err != nil {
+//		return err
+//	}
+//	defer resp.Body.Close()
+//
+//	// Check response
+//	respBody, err := ioutil.ReadAll(resp.Body)
+//	if err == nil {
+//		str := string(respBody)
+//		println(str)
+//	} else {
+//		return err
+//	}
+//
+//	if strings.Contains(string(respBody), "null") {
+//		return errors.New("server UUID is not exist")
+//	}
+//
+//	return nil
+//}
 
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Mutation",
 	Fields: graphql.Fields{
-		////////////////////////////// volume ///////////////////////////////
-		/* Create new volume
-		http://localhost:8001/graphql?query=mutation+_{create_volume(size:1024000,type:"ext4",server_uuid:"[server_uuid]"){size,type,server_uuid}}
-		*/
-		"create_volume": &graphql.Field{
-			Type:        volumeType,
-			Description: "Create new volume",
+		/* Create new volume */
+		// http://localhost:8001/graphql?query=mutation+_{create_volume(size:1024000,type:"ext4",server_uuid:"[server_uuid]"){size,type,server_uuid}}
+		"create_subnet": &graphql.Field{
+			Type:        subnetType,
+			Description: "Create new subnet",
 			Args: graphql.FieldConfigArgument{
-				"size": &graphql.ArgumentConfig{
-					Type: graphql.Int,
-				},
-				"type": &graphql.ArgumentConfig{
+				"name": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"server_uuid": &graphql.ArgumentConfig{
+				"ip": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"netmask": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"os": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				logger.Logger.Println("Resolving: create_volume")
+				logger.Logger.Println("Resolving: create_subnet")
 
 				uuid, err := uuidgen.Uuidgen()
 				if err != nil {
@@ -75,110 +69,114 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					return nil, nil
 				}
 
-				volume := types.Volume{
-					UUID:       uuid,
-					Size:       params.Args["size"].(int),
-					Type:       params.Args["type"].(string),
-					ServerUUID: params.Args["server_uuid"].(string),
+				subnet := types.Subnet{
+					UUID:    uuid,
+					Name:    params.Args["name"].(string),
+					Ip:      params.Args["ip"].(string),
+					Netmask: params.Args["netmask"].(string),
+					Os:      params.Args["os"].(string),
 				}
 
-				err = CheckServerUUID(volume.ServerUUID)
-				if err != nil {
-					logger.Logger.Println(err)
-					return nil, nil
-				}
+				//err = CheckServerUUID(subnet.ServerUUID)
+				//if err != nil {
+				//	logger.Logger.Println(err)
+				//	return nil, nil
+				//}
 
-				sql := "insert into volume(uuid, size, type, server_uuid) values (?, ?, ?, ?)"
+				sql := "insert into subnet(uuid, name, ip, netmask, os, created_at) values (?, ?, ?, ?, ?, now())"
 				stmt, err := mysql.Db.Prepare(sql)
 				if err != nil {
 					logger.Logger.Println(err.Error())
 					return nil, nil
 				}
 				defer stmt.Close()
-				result, err2 := stmt.Exec(volume.UUID, volume.Size, volume.Type, volume.ServerUUID)
+				result, err2 := stmt.Exec(subnet.UUID, subnet.Name, subnet.Ip, subnet.Netmask, subnet.Os)
 				if err2 != nil {
 					logger.Logger.Println(err2)
 					return nil, nil
 				}
 				logger.Logger.Println(result.LastInsertId())
 
-				return volume, nil
+				return subnet, nil
 			},
 		},
 
-		/* Update volume by uuid
-		   http://localhost:8001/graphql?query=mutation+_{update_volume(uuid:"[volume_uuid]",size:10240,type:"ext4",server_uuid:"[server_uuid]"){uuid,size,type,server_uuid}}
-		*/
-		"update_volume": &graphql.Field{
-			Type:        volumeType,
-			Description: "Update volume by uuid",
+		/* Update volume by uuid */
+		// http://localhost:8001/graphql?query=mutation+_{update_subnet(uuid:"0ac56231-a0ee-4323-55ad-37c08c2d4a78",name:"aaaa",ip:"1234",netmask:"1234",os:"centos"){uuid,name,ip,netmask,os}}
+		"update_subnet": &graphql.Field{
+			Type:        subnetType,
+			Description: "Update subnet by uuid",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
-				"size": &graphql.ArgumentConfig{
-					Type: graphql.Int,
-				},
-				"type": &graphql.ArgumentConfig{
+				"name": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"server_uuid": &graphql.ArgumentConfig{
+				"ip": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"netmask": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"os": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				logger.Logger.Println("Resolving: update_volume")
+				logger.Logger.Println("Resolving: update_subnet")
 
 				requestedUUID, _ := params.Args["uuid"].(string)
-				size, sizeOk := params.Args["size"].(int)
-				_type, _typeOk := params.Args["type"].(string)
-				serverUUID, serverUUIDOk := params.Args["server_uuid"].(string)
+				name := params.Args["name"].(string)
+				ip, _ip := params.Args["ip"].(string)
+				netmask, _netmask := params.Args["netmask"].(string)
+				os, _os := params.Args["os"].(string)
 
-				volume := new(types.Volume)
+				subnet := new(types.Subnet)
 
-				if sizeOk && _typeOk && serverUUIDOk {
-					volume.UUID = requestedUUID
-					volume.Size = size
-					volume.Type = _type
-					volume.ServerUUID = serverUUID
+				if _ip && _netmask && _os {
+					subnet.UUID = requestedUUID
+					subnet.Name = name
+					subnet.Ip = ip
+					subnet.Netmask = netmask
+					subnet.Os = os
 
-					sql := "update volume set size = ?, type = ?, server_uuid = ? where uuid = ?"
+					sql := "update subnet set name = ?, ip = ?, netmask = ?, os = ? where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
 						logger.Logger.Println(err.Error())
 						return nil, nil
 					}
 					defer stmt.Close()
-					result, err2 := stmt.Exec(volume.Size, volume.Type, volume.ServerUUID, volume.UUID)
+					result, err2 := stmt.Exec(subnet.Name, subnet.Ip, subnet.Netmask, subnet.Os, subnet.UUID)
 					if err2 != nil {
 						logger.Logger.Println(err2)
 						return nil, nil
 					}
 					logger.Logger.Println(result.LastInsertId())
 
-					return volume, nil
+					return subnet, nil
 				}
 				return nil, nil
 			},
 		},
 
-		/* Delete volume by id
-		   http://localhost:8001/graphql?query=mutation+_{delete_volume(id:"test1"){id}}
-		*/
-		"delete_volume": &graphql.Field{
-			Type:        volumeType,
-			Description: "Delete volume by uuid",
+		/* Delete subnet by id */
+		// http://localhost:8001/graphql?query=mutation+_{delete_subnet(uuid:"cccc"){uuid}}
+		"delete_subnet": &graphql.Field{
+			Type:        subnetType,
+			Description: "Delete subnet by uuid",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				logger.Logger.Println("Resolving: delete_volume")
+				logger.Logger.Println("Resolving: delete_subnet")
 
 				requestedUUID, ok := params.Args["uuid"].(string)
 				if ok {
-					sql := "delete from volume where uuid = ?"
+					sql := "delete from subnet where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
 						logger.Logger.Println(err.Error())
