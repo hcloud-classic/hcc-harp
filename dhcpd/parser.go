@@ -22,6 +22,9 @@ type nodeEntries struct {
 
 func GetPXEFilename(os string) (string, error) {
 	// TODO: Need implement of how to get pxe file location for each OS
+	if os == "CentOS 6" {
+		return "/boot/pxeboot/centos6", nil
+	}
 
 	return "", errors.New("not supported os")
 }
@@ -113,11 +116,11 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 		return err
 	}
 
-	strings.Replace(confBase, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
-	strings.Replace(confBase, "HARP_DHCPD_DOMAIN_NAME", name, -1)
-	strings.Replace(confBase, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
-	strings.Replace(confBase, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
-	strings.Replace(confBase, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_DOMAIN_NAME", name, -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
 
 	var nodeEntryConfPart = ""
 	for i, uuid := range nodeUUIDs {
@@ -129,6 +132,7 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 		if err != nil {
 			return err
 		}
+		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
 		node.NodeName = "node" + strconv.Itoa(i) + "." + name
@@ -141,14 +145,14 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 		}
 
 		var nodeConfPart = nodeEntry
-		strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
-		strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
-		strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
 
 		nodeEntryConfPart += nodeConfPart
 	}
 
-	strings.Replace(confBase, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
+	confBase = strings.Replace(confBase, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
 	// TODO: Write config string to file
 	fmt.Println(confBase)
