@@ -33,7 +33,16 @@ func main() {
 		_ = mysql.Db.Close()
 	}()
 
-	dhcpd.ConfParser("192.168.110.0", "255.255.255.252", nil, "", "", "")
+	var nodeUUIDs = []string{
+		"48d08a00-b652-11e8-906e-000ffee02d5c",
+		"d4f3a900-b674-11e8-906e-000ffee02d5c",
+		"b9e43600-b4c8-11e8-906e-000ffee02d5c",
+		"18aada80-b696-11e8-906e-000ffee02d5c"}
+
+	err = dhcpd.ConfParser("192.168.110.0", "255.255.255.0", nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "jolla")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 
