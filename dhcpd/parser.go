@@ -20,7 +20,7 @@ type nodeEntries struct {
 	NodeName      string
 }
 
-func GetPXEFilename(os string) (string, error) {
+func getPXEFilename(os string) (string, error) {
 	// TODO: Need implement of how to get pxe file location for each OS
 	if os == "CentOS 6" {
 		return "/boot/pxeboot/centos6", nil
@@ -37,7 +37,7 @@ type nodePXEMACAddr struct {
 	} `json:"data"`
 }
 
-func GetPXEMACAddress(nodeUUID string) (string, error) {
+func getPXEMACAddress(nodeUUID string) (string, error) {
 	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
 	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+"/graphql?query={node(uuid:%22"+
 		nodeUUID+"%22){pxe_mac_addr}}", nil)
@@ -111,7 +111,7 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 
 	nextIP := cidr.Inc(firstIP)
 
-	pxeFileName, err := GetPXEFilename(os)
+	pxeFileName, err := getPXEFilename(os)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 			return errors.New("ip range exceeded")
 		}
 
-		pxeMacAddr, err := GetPXEMACAddress(uuid)
+		pxeMacAddr, err := getPXEMACAddress(uuid)
 		if err != nil {
 			return err
 		}
