@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	"hcc/flute/checkroot"
-	"hcc/flute/config"
-	"hcc/flute/logger"
+	"hcc/harp/checkroot"
+	"hcc/harp/config"
+	"hcc/harp/logger"
 	"testing"
 )
 

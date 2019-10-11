@@ -67,13 +67,13 @@ var queryTypes = graphql.NewObject(
 
 						var uuid string
 						var name string
-						var ip string
+						var networkIP string
 						var netmask string
 						var os string
 						var createdAt time.Time
 
 						sql := "select * from subnet where uuid = ?"
-						err := mysql.Db.QueryRow(sql, requestedUUID).Scan(&uuid, &name, &ip, &netmask, &os, &createdAt)
+						err := mysql.Db.QueryRow(sql, requestedUUID).Scan(&uuid, &name, &networkIP, &netmask, &os, &createdAt)
 						if err != nil {
 							logger.Logger.Println(err)
 							return nil, nil
@@ -81,7 +81,7 @@ var queryTypes = graphql.NewObject(
 
 						subnet.UUID = uuid
 						subnet.Name = name
-						subnet.Ip = ip
+						subnet.NetworkIP = networkIP
 						subnet.Netmask = netmask
 						subnet.Os = os
 						subnet.CreatedAt = createdAt
@@ -129,7 +129,7 @@ var queryTypes = graphql.NewObject(
 					var subnets []types.Subnet
 					var uuid string
 					var name string
-					var ip string
+					var networkIP string
 					var netmask string
 					var os string
 					var createdAt time.Time
@@ -143,12 +143,12 @@ var queryTypes = graphql.NewObject(
 					defer stmt.Close()
 
 					for stmt.Next() {
-						err := stmt.Scan(&uuid, &name, &ip, &netmask, &os, &createdAt)
+						err := stmt.Scan(&uuid, &name, &networkIP, &netmask, &os, &createdAt)
 						if err != nil {
 							logger.Logger.Println(err)
 						}
 
-						subnet := types.Subnet{UUID: uuid, Name: name, Ip: ip, Netmask: netmask, Os: os, CreatedAt: createdAt}
+						subnet := types.Subnet{UUID: uuid, Name: name, NetworkIP: networkIP, Netmask: netmask, Os: os, CreatedAt: createdAt}
 
 						logger.Logger.Println(subnet)
 						subnets = append(subnets, subnet)

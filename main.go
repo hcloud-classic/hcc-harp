@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"github.com/mactsouk/go/simpleGitHub"
 	"hcc/harp/checkroot"
 	"hcc/harp/config"
+	"hcc/harp/dhcpd"
 	"hcc/harp/graphql"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
@@ -13,9 +12,6 @@ import (
 )
 
 func main() {
-
-	fmt.Println(simpleGitHub.AddTwo(5, 6))
-
 	if !checkroot.CheckRoot() {
 		return
 	}
@@ -27,6 +23,8 @@ func main() {
 		_ = logger.FpLog.Close()
 	}()
 
+	config.Parser()
+
 	err := mysql.Prepare()
 	if err != nil {
 		return
@@ -34,6 +32,8 @@ func main() {
 	defer func() {
 		_ = mysql.Db.Close()
 	}()
+
+	dhcpd.ConfParser("192.168.110.0", "255.255.255.252", nil, "", "", "")
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 

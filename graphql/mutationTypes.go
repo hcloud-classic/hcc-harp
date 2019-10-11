@@ -8,36 +8,6 @@ import (
 	"hcc/harp/uuidgen"
 )
 
-//// CheckServerUUID : Check if server UUID is exist in violin server module
-//func CheckServerUUID(serverUUID string) error {
-//	query := fmt.Sprintf("%s", "query Select_Server {\n  server(uuid: \""+serverUUID+"\") {\n    uuid\n    subnet_id\n    os\n    server_name\n    server_disc\n    cpu\n    memory\n    disk_size\n    status\n    user_uuid\n    created_time\n }\n}\n")
-//
-//	resp, err := http.PostForm("http://localhost:"+config.ViolinHTTPPort+
-//		"/graphql", url.Values{"query": {query},
-//		"variables":     {"{}"},
-//		"operationName": {"Select_Server"}})
-//
-//	if err != nil {
-//		return err
-//	}
-//	defer resp.Body.Close()
-//
-//	// Check response
-//	respBody, err := ioutil.ReadAll(resp.Body)
-//	if err == nil {
-//		str := string(respBody)
-//		println(str)
-//	} else {
-//		return err
-//	}
-//
-//	if strings.Contains(string(respBody), "null") {
-//		return errors.New("server UUID is not exist")
-//	}
-//
-//	return nil
-//}
-
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Mutation",
 	Fields: graphql.Fields{
@@ -50,7 +20,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				"name": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"ip": &graphql.ArgumentConfig{
+				"network_ip": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 				"netmask": &graphql.ArgumentConfig{
@@ -70,11 +40,11 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				subnet := types.Subnet{
-					UUID:    uuid,
-					Name:    params.Args["name"].(string),
-					Ip:      params.Args["ip"].(string),
-					Netmask: params.Args["netmask"].(string),
-					Os:      params.Args["os"].(string),
+					UUID:      uuid,
+					Name:      params.Args["name"].(string),
+					NetworkIP: params.Args["network_ip"].(string),
+					Netmask:   params.Args["netmask"].(string),
+					Os:        params.Args["os"].(string),
 				}
 
 				//err = CheckServerUUID(subnet.ServerUUID)
@@ -83,14 +53,14 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				//	return nil, nil
 				//}
 
-				sql := "insert into subnet(uuid, name, ip, netmask, os, created_at) values (?, ?, ?, ?, ?, now())"
+				sql := "insert into subnet(uuid, name, network_ip, netmask, os, created_at) values (?, ?, ?, ?, ?, now())"
 				stmt, err := mysql.Db.Prepare(sql)
 				if err != nil {
 					logger.Logger.Println(err.Error())
 					return nil, nil
 				}
 				defer stmt.Close()
-				result, err2 := stmt.Exec(subnet.UUID, subnet.Name, subnet.Ip, subnet.Netmask, subnet.Os)
+				result, err2 := stmt.Exec(subnet.UUID, subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os)
 				if err2 != nil {
 					logger.Logger.Println(err2)
 					return nil, nil
@@ -113,7 +83,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				"name": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"ip": &graphql.ArgumentConfig{
+				"network_ip": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 				"netmask": &graphql.ArgumentConfig{
@@ -128,7 +98,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 
 				requestedUUID, _ := params.Args["uuid"].(string)
 				name := params.Args["name"].(string)
-				ip, _ip := params.Args["ip"].(string)
+				ip, _ip := params.Args["network_ip"].(string)
 				netmask, _netmask := params.Args["netmask"].(string)
 				os, _os := params.Args["os"].(string)
 
@@ -137,18 +107,18 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				if _ip && _netmask && _os {
 					subnet.UUID = requestedUUID
 					subnet.Name = name
-					subnet.Ip = ip
+					subnet.NetworkIP = ip
 					subnet.Netmask = netmask
 					subnet.Os = os
 
-					sql := "update subnet set name = ?, ip = ?, netmask = ?, os = ? where uuid = ?"
+					sql := "update subnet set name = ?, network_ip = ?, netmask = ?, os = ? where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
 						logger.Logger.Println(err.Error())
 						return nil, nil
 					}
 					defer stmt.Close()
-					result, err2 := stmt.Exec(subnet.Name, subnet.Ip, subnet.Netmask, subnet.Os, subnet.UUID)
+					result, err2 := stmt.Exec(subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os, subnet.UUID)
 					if err2 != nil {
 						logger.Logger.Println(err2)
 						return nil, nil
