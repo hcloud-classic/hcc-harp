@@ -132,7 +132,7 @@ func ConfParser(networkIP string, netmask string, gateway string,
 	firstIP = cidr.Inc(firstIP)
 	lastIP := firstIP
 
-	for i := 0; i < maxNodes - 1; i++ {
+	for i := 0; i < maxNodes-1; i++ {
 		lastIP = cidr.Inc(lastIP)
 	}
 
