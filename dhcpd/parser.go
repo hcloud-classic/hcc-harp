@@ -3,12 +3,13 @@ package dhcpd
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/config"
+	"hcc/harp/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -74,7 +75,26 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 	return "", errors.New("http response returned error code")
 }
 
-func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
+func writeFile(input string, fileLocation string) error {
+	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	_, err = file.WriteString(input)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ConfParser(networkIP string, netmask string, gateway string,
+	nextServer string, nameServer string,
+	domainName string, maxNodes int, nodeUUIDs []string,
 	leaderUUID string, os string, name string) error {
 	var err error = nil
 
@@ -101,26 +121,43 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 
 	count := int(cidr.AddressCount(&ipNet) - 2)
 
-	if len(nodeUUIDs) > count {
-		return errors.New("nodes count is bigger than available IP addresses count")
+	if len(nodeUUIDs) > maxNodes {
+		return errors.New("nodes count is bigger than provided max nodes value")
+	}
+	if maxNodes > count {
+		return errors.New("provided max nodes value is bigger than available IP addresses count")
 	}
 
-	firstIP, lastIP := cidr.AddressRange(&ipNet)
+	firstIP, _ := cidr.AddressRange(&ipNet)
 	firstIP = cidr.Inc(firstIP)
-	lastIP = cidr.Dec(lastIP)
+	lastIP := firstIP
 
-	nextIP := cidr.Inc(firstIP)
+	for i := 0; i < maxNodes - 1; i++ {
+		lastIP = cidr.Inc(lastIP)
+	}
 
 	pxeFileName, err := getPXEFilename(os)
 	if err != nil {
 		return err
 	}
 
-	confBase = strings.Replace(confBase, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
-	confBase = strings.Replace(confBase, "HARP_DHCPD_DOMAIN_NAME", name, -1)
-	confBase = strings.Replace(confBase, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
-	confBase = strings.Replace(confBase, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
-	confBase = strings.Replace(confBase, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
+	confContent := confBase
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", networkIP, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", netmask, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", nextServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", nameServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", domainName, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", gateway, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
+
+	nextIP := cidr.Inc(firstIP)
 
 	var nodeEntryConfPart = ""
 	for i, uuid := range nodeUUIDs {
@@ -152,10 +189,18 @@ func ConfParser(networkIP string, netmask string, nodeUUIDs []string,
 		nodeEntryConfPart += nodeConfPart
 	}
 
-	confBase = strings.Replace(confBase, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	// TODO: Write config string to file
-	fmt.Println(confBase)
+	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
+	err = writeFile(confContent, dhcpdConfLocation)
+	if err != nil {
+		return err
+	}
 
 	return err
 }
