@@ -111,4 +111,5 @@ func Parser() {
 	parseMysql()
 	parseHTTP()
 	parseFlute()
+	parseDHCPD()
 }
