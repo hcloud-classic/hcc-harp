@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -75,15 +76,8 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 	return "", errors.New("http response returned error code")
 }
 
-func writeConfigFile(input string, name string) error {
-	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
-	if err != nil {
-		return err
-	}
-
-	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
-
-	file, err := os.OpenFile(dhcpdConfLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+func writeFile(fileLocation string, input string) error {
+	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -92,6 +86,21 @@ func writeConfigFile(input string, name string) error {
 	}()
 
 	_, err = file.WriteString(input)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeConfigFile(input string, name string) error {
+	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
+	err = writeFile(dhcpdConfLocation, input)
 	if err != nil {
 		return err
 	}
@@ -170,10 +179,6 @@ func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNo
 	}
 
 	return nil
-}
-
-func UpdateDHCPDConfig() {
-
 }
 
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
@@ -288,4 +293,64 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 	}
 
 	return err
+}
+
+func CheckLocalDHCPDConfig() error {
+	include := includeStr
+	include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION",
+		config.DHCPD.ConfigFileLocation + "/harp_dhcpd.conf", -1)
+
+	data, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
+	if err != nil {
+		return errors.New("failed reading data from local dhcpd config file location")
+	}
+
+	isHarpDHCPDIncluded := strings.Contains(string(data), include)
+	if !isHarpDHCPDIncluded {
+		logger.Logger.Println("Please add this line to dhcpd config file!\n" + include)
+		return errors.New("cannot find harp dhcp config include line from local dhcpd config file")
+	}
+
+	return nil
+}
+
+func getSubnetConfFiles() ([]string, error) {
+	var files []string
+
+	folder := config.DHCPD.ConfigFileLocation
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func UpdateHarpDHCPDConfig() error {
+	configFiles, err := getSubnetConfFiles()
+	if err != nil {
+		return err
+	}
+
+	var allIncludeLines = ""
+	for _, filename := range configFiles {
+		if strings.Contains(filename, "harp_dhcpd.conf") ||
+			filename == config.DHCPD.ConfigFileLocation {
+			continue
+		}
+
+		include := includeStr
+		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
+		allIncludeLines += include + "\n"
+	}
+
+	err = writeFile(config.DHCPD.ConfigFileLocation + "/harp_dhcpd.conf", allIncludeLines)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

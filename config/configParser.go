@@ -86,6 +86,11 @@ func parseDHCPD() {
 
 	DHCPD = dhcpd{}
 
+	DHCPD.LocalConfigFileLocation, err = config.DHCPDConfig.String("dhcpd_local_config_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	DHCPD.ConfigFileLocation, err = config.DHCPDConfig.String("dhcpd_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)

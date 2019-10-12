@@ -31,6 +31,7 @@ flute_server_port 3333
 flute_request_timeout_ms 5000
 
 [dhcpd]
+dhcpd_local_config_file_location /usr/local/etc/dhcpd.conf
 dhcpd_config_file_location /etc/harp/dhcpd
 dhcpd_min_lease_time 1200
 dhcpd_default_lease_time 1800
