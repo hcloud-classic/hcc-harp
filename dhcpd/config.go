@@ -146,6 +146,32 @@ func checkGateway(subnet net.IPNet, gateway string) error {
 	return nil
 }
 
+func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNodeUUID string) error {
+	if len(nodeUUIDs) == 0 {
+		return errors.New("provided nodeUUIDs[] is empty")
+	}
+	count := int(cidr.AddressCount(&subnet) - 2)
+	if len(nodeUUIDs) > maxNodes {
+		return errors.New("nodes count is bigger than provided max nodes value")
+	}
+	if maxNodes > count {
+		return errors.New("provided max nodes value is bigger than available IP addresses count")
+	}
+
+	var leaderNodeUUIDfound = false
+	for _, uuid := range nodeUUIDs {
+		if uuid == leaderNodeUUID {
+			leaderNodeUUIDfound = true
+			break
+		}
+	}
+	if leaderNodeUUIDfound == false {
+		return errors.New("leaderNodeUUID is not found from provided nodeUUIDs[]")
+	}
+
+	return nil
+}
+
 func UpdateDHCPDConfig() {
 
 }
@@ -191,31 +217,14 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return errors.New("wrong name server IP")
 	}
 
-	if len(nodeUUIDs) == 0 {
-		return errors.New("provided nodeUUIDs[] is empty")
-	}
-	count := int(cidr.AddressCount(&ipNet) - 2)
-	if len(nodeUUIDs) > maxNodes {
-		return errors.New("nodes count is bigger than provided max nodes value")
-	}
-	if maxNodes > count {
-		return errors.New("provided max nodes value is bigger than available IP addresses count")
+	err = checkNodeUUIDs(ipNet, maxNodes, nodeUUIDs, leaderNodeUUID)
+	if err != nil {
+		return err
 	}
 
 	pxeFileName, err := getPXEFilename(os)
 	if err != nil {
 		return err
-	}
-
-	var leaderNodeUUIDfound = false
-	for _, uuid := range nodeUUIDs {
-		if uuid == leaderNodeUUID {
-			leaderNodeUUIDfound = true
-			break
-		}
-	}
-	if leaderNodeUUIDfound == false {
-		return errors.New("leaderNodeUUID is not found from provided nodeUUIDs[]")
 	}
 
 	firstIP, _ := cidr.AddressRange(&ipNet)
