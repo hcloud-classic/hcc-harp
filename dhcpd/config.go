@@ -299,7 +299,7 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 func CheckLocalDHCPDConfig() error {
 	include := includeStr
 	include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION",
-		config.DHCPD.ConfigFileLocation + "/harp_dhcpd.conf", -1)
+		config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", -1)
 
 	data, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
 	if err != nil {
@@ -349,7 +349,7 @@ func UpdateHarpDHCPDConfig() error {
 		allIncludeLines += include + "\n"
 	}
 
-	err = writeFile(config.DHCPD.ConfigFileLocation + "/harp_dhcpd.conf", allIncludeLines)
+	err = writeFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
 	if err != nil {
 		return err
 	}
