@@ -96,7 +96,7 @@ func writeFile(input string, fileLocation string) error {
 func CreateConfig(networkIP string, netmask string, gateway string,
 	nextServer string, nameServer string,
 	domainName string, maxNodes int, nodeUUIDs []string,
-	leaderUUID string, os string, name string) error {
+	leaderNodeUUID string, os string, name string) error {
 	var err error
 
 	if len(name) == 0 {
@@ -160,7 +160,6 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return errors.New("wrong name server IP")
 	}
 
-
 	if len(nodeUUIDs) == 0 {
 		return errors.New("provided nodeUUIDs[] is empty")
 	}
@@ -185,15 +184,15 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return err
 	}
 
-	var leaderUUIDfound = false
+	var leaderNodeUUIDfound = false
 	for _, uuid := range nodeUUIDs {
-		if uuid == leaderUUID {
-			leaderUUIDfound = true
+		if uuid == leaderNodeUUID {
+			leaderNodeUUIDfound = true
 			break
 		}
 	}
-	if leaderUUIDfound == false {
-		return errors.New("leaderUUID is not found from provided nodeUUIDs[]")
+	if leaderNodeUUIDfound == false {
+		return errors.New("leaderNodeUUID is not found from provided nodeUUIDs[]")
 	}
 
 	confContent := confBase
@@ -226,7 +225,7 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		var node = new(nodeEntries)
 		node.NodeName = "node" + strconv.Itoa(i) + "." + name
 		node.PXEMACAddress = pxeMacAddr
-		if uuid == leaderUUID {
+		if uuid == leaderNodeUUID {
 			node.IP = firstIP.String()
 		} else {
 			node.IP = nextIP.String()
