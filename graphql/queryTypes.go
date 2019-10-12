@@ -5,7 +5,6 @@ import (
 	"hcc/harp/floatingip"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
-	"hcc/harp/subnet"
 	"hcc/harp/types"
 	"time"
 )
@@ -26,7 +25,7 @@ var queryTypes = graphql.NewObject(
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					subnet.UpdateSubnet()
+					// TODO: updateSubnet
 					return nil, nil
 				},
 			},
