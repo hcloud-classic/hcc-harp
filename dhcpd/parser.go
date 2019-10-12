@@ -99,13 +99,25 @@ func ConfParser(networkIP string, netmask string, gateway string,
 	leaderUUID string, os string, name string) error {
 	var err error
 
-	var maskPartsStr = strings.Split(netmask, ".")
-	var maskParts [4]int
+	if len(name) == 0 {
+		return errors.New("name is needed for make dhcpd config file")
+	}
 
+	netIPnetworkIP := net.ParseIP(networkIP).To4()
+	if netIPnetworkIP == nil {
+		return errors.New("wrong network IP")
+	}
+
+	var maskPartsStr = strings.Split(netmask, ".")
+	if len(maskPartsStr) != 4 {
+		return errors.New("netmask should be X.X.X.X form")
+	}
+
+	var maskParts [4]int
 	for i := range maskPartsStr {
 		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
 		if err != nil {
-			return err
+			return errors.New("netmask contained none integer value")
 		}
 	}
 
@@ -115,13 +127,44 @@ func ConfParser(networkIP string, netmask string, gateway string,
 		byte(maskParts[2]),
 		byte(maskParts[3]))
 
+	maskSizeOne, maskSizeBit := mask.Size()
+	if maskSizeOne == 0 && maskSizeBit == 0 {
+		return errors.New("invalid netmask")
+	}
+
+	if maskSizeOne > 30 {
+		return errors.New("netmask bit should be smaller than 30")
+	}
+
 	ipNet := net.IPNet{
-		IP:   net.ParseIP(networkIP).To4(),
+		IP:   netIPnetworkIP,
 		Mask: mask,
 	}
 
-	count := int(cidr.AddressCount(&ipNet) - 2)
+	netIPgateway := net.ParseIP(gateway)
+	if netIPgateway == nil {
+		return errors.New("wrong gateway IP")
+	}
+	isGatewayInSubnet := ipNet.Contains(netIPgateway)
+	if isGatewayInSubnet == false {
+		return errors.New("gateway IP is not in the subnet")
+	}
 
+	netIPnextServer := net.ParseIP(nextServer)
+	if netIPnextServer == nil {
+		return errors.New("wrong next server IP")
+	}
+
+	netIPnameServer := net.ParseIP(nameServer)
+	if netIPnameServer == nil {
+		return errors.New("wrong name server IP")
+	}
+
+
+	if len(nodeUUIDs) == 0 {
+		return errors.New("provided nodeUUIDs[] is empty")
+	}
+	count := int(cidr.AddressCount(&ipNet) - 2)
 	if len(nodeUUIDs) > maxNodes {
 		return errors.New("nodes count is bigger than provided max nodes value")
 	}
@@ -142,8 +185,18 @@ func ConfParser(networkIP string, netmask string, gateway string,
 		return err
 	}
 
-	confContent := confBase
+	var leaderUUIDfound = false
+	for _, uuid := range nodeUUIDs {
+		if uuid == leaderUUID {
+			leaderUUIDfound = true
+			break
+		}
+	}
+	if leaderUUIDfound == false {
+		return errors.New("leaderUUID is not found from provided nodeUUIDs[]")
+	}
 
+	confContent := confBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", networkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", netmask, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
@@ -151,9 +204,11 @@ func ConfParser(networkIP string, netmask string, gateway string,
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", nextServer, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", nameServer, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", domainName, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", gateway, -1)
+
 	confContent = strings.Replace(confContent, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
@@ -162,10 +217,6 @@ func ConfParser(networkIP string, netmask string, gateway string,
 
 	var nodeEntryConfPart = ""
 	for i, uuid := range nodeUUIDs {
-		if nextIP.Equal(lastIP) {
-			return errors.New("ip range exceeded")
-		}
-
 		pxeMacAddr, err := getPXEMACAddress(uuid)
 		if err != nil {
 			return err
