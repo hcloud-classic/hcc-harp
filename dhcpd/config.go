@@ -295,6 +295,7 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 	return err
 }
 
+// CheckLocalDHCPDConfig : Check if harp dhcpd config file is included in local dhcpd server config file
 func CheckLocalDHCPDConfig() error {
 	include := includeStr
 	include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION",
@@ -329,6 +330,7 @@ func getSubnetConfFiles() ([]string, error) {
 	return files, nil
 }
 
+// UpdateHarpDHCPDConfig : Update harp dhcpd main config file. Write subnet config files include lines to 'harp_dhcpd.conf'
 func UpdateHarpDHCPDConfig() error {
 	configFiles, err := getSubnetConfFiles()
 	if err != nil {
