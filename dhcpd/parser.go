@@ -133,7 +133,7 @@ func ConfParser(networkIP string, netmask string, gateway string,
 	}
 
 	if maskSizeOne > 30 {
-		return errors.New("netmask bit should be smaller than 30")
+		return errors.New("netmask bit should be equal or smaller than 30")
 	}
 
 	ipNet := net.IPNet{
