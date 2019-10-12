@@ -41,7 +41,7 @@ var queryTypes = graphql.NewObject(
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					floatingip.CreateFloatingip()
+					floatingip.CreateFloatingIP()
 					return nil, nil
 				},
 			},

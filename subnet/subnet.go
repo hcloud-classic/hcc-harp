@@ -27,7 +27,7 @@ func printOutput(outs []byte) {
 	}
 }
 
-func ReadFile() {
+func readFile() {
 	data, err := ioutil.ReadFile("test.txt")
 	if err != nil {
 		log.Panicf("failed reading data from file: %s", err)
@@ -35,7 +35,7 @@ func ReadFile() {
 	fmt.Printf("\nFile Content: %s", data)
 }
 
-func AppendFile() {
+func appendFile() {
 	file, err := os.OpenFile("test.txt", os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
@@ -49,7 +49,7 @@ func AppendFile() {
 	}
 }
 
-func EditFile() {
+func editFile() {
 	file, err := os.OpenFile("test.txt", os.O_RDWR, 0644)
 	if err != nil {
 		log.Fatalf("failed opening file : %s", err)
@@ -63,7 +63,7 @@ func EditFile() {
 	fmt.Printf("\nFile Name: %s", file.Name())
 }
 
-func UpdateSubnet() error {
+func updateSubnet() error {
 	var err error
 
 	logger.Logger.Println("Create Subnet")
@@ -84,7 +84,7 @@ func UpdateSubnet() error {
 	//ReadFile()
 	//EditFile()
 	//ReadFile()
-	AppendFile()
+	//AppendFile()
 
 	return nil
 }

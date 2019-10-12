@@ -92,11 +92,12 @@ func writeFile(input string, fileLocation string) error {
 	return nil
 }
 
+// ConfParser : Get needed parameters for make dhcpd config file then generate config file for each subnet
 func ConfParser(networkIP string, netmask string, gateway string,
 	nextServer string, nameServer string,
 	domainName string, maxNodes int, nodeUUIDs []string,
 	leaderUUID string, os string, name string) error {
-	var err error = nil
+	var err error
 
 	var maskPartsStr = strings.Split(netmask, ".")
 	var maskParts [4]int

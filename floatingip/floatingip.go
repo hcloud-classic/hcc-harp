@@ -4,7 +4,8 @@ import (
 	"hcc/harp/logger"
 )
 
-func CreateFloatingip() error {
+// CreateFloatingIP : Create floating IP for server.
+func CreateFloatingIP() error {
 	var err error
 
 	logger.Logger.Println("Create FloatingIP")
