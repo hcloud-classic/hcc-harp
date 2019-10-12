@@ -63,6 +63,11 @@ func main() {
 		logger.Logger.Panic(err)
 	}
 
+	err = dhcpd.RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
 	http.Handle("/graphql", graphql.GraphqlHandler)
 
 	logger.Logger.Println("Server is running on port " + strconv.Itoa(int(config.HTTP.Port)))

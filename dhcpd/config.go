@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -349,7 +350,22 @@ func UpdateHarpDHCPDConfig() error {
 		allIncludeLines += include + "\n"
 	}
 
+	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
 	err = writeFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RestartDHCPDServer() error {
+	cmd := exec.Command("service", "isc-dhcpd", "restart")
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
