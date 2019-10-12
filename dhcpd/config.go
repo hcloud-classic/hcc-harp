@@ -75,8 +75,15 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 	return "", errors.New("http response returned error code")
 }
 
-func writeFile(input string, fileLocation string) error {
-	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+func writeConfigFile(input string, name string) error {
+	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
+
+	file, err := os.OpenFile(dhcpdConfLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -90,6 +97,57 @@ func writeFile(input string, fileLocation string) error {
 	}
 
 	return nil
+}
+
+func checkNetmask(netmask string) (net.IPMask, error) {
+	var err error
+
+	var maskPartsStr = strings.Split(netmask, ".")
+	if len(maskPartsStr) != 4 {
+		return nil, errors.New("netmask should be X.X.X.X form")
+	}
+
+	var maskParts [4]int
+	for i := range maskPartsStr {
+		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
+		if err != nil {
+			return nil, errors.New("netmask contained none integer value")
+		}
+	}
+
+	var mask = net.IPv4Mask(
+		byte(maskParts[0]),
+		byte(maskParts[1]),
+		byte(maskParts[2]),
+		byte(maskParts[3]))
+
+	maskSizeOne, maskSizeBit := mask.Size()
+	if maskSizeOne == 0 && maskSizeBit == 0 {
+		return nil, errors.New("invalid netmask")
+	}
+
+	if maskSizeOne > 30 {
+		return nil, errors.New("netmask bit should be equal or smaller than 30")
+	}
+
+	return mask, err
+}
+
+func checkGateway(subnet net.IPNet, gateway string) error {
+	netIPgateway := net.ParseIP(gateway)
+	if netIPgateway == nil {
+		return errors.New("wrong gateway IP")
+	}
+	isGatewayInSubnet := subnet.Contains(netIPgateway)
+	if isGatewayInSubnet == false {
+		return errors.New("gateway IP is not in the subnet")
+	}
+
+	return nil
+}
+
+func UpdateDHCPDConfig() {
+
 }
 
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
@@ -108,32 +166,9 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return errors.New("wrong network IP")
 	}
 
-	var maskPartsStr = strings.Split(netmask, ".")
-	if len(maskPartsStr) != 4 {
-		return errors.New("netmask should be X.X.X.X form")
-	}
-
-	var maskParts [4]int
-	for i := range maskPartsStr {
-		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
-		if err != nil {
-			return errors.New("netmask contained none integer value")
-		}
-	}
-
-	var mask = net.IPv4Mask(
-		byte(maskParts[0]),
-		byte(maskParts[1]),
-		byte(maskParts[2]),
-		byte(maskParts[3]))
-
-	maskSizeOne, maskSizeBit := mask.Size()
-	if maskSizeOne == 0 && maskSizeBit == 0 {
-		return errors.New("invalid netmask")
-	}
-
-	if maskSizeOne > 30 {
-		return errors.New("netmask bit should be equal or smaller than 30")
+	mask, err := checkNetmask(netmask)
+	if err != nil {
+		return err
 	}
 
 	ipNet := net.IPNet{
@@ -141,13 +176,9 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		Mask: mask,
 	}
 
-	netIPgateway := net.ParseIP(gateway)
-	if netIPgateway == nil {
-		return errors.New("wrong gateway IP")
-	}
-	isGatewayInSubnet := ipNet.Contains(netIPgateway)
-	if isGatewayInSubnet == false {
-		return errors.New("gateway IP is not in the subnet")
+	err = checkGateway(ipNet, gateway)
+	if err != nil {
+		return err
 	}
 
 	netIPnextServer := net.ParseIP(nextServer)
@@ -171,14 +202,6 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return errors.New("provided max nodes value is bigger than available IP addresses count")
 	}
 
-	firstIP, _ := cidr.AddressRange(&ipNet)
-	firstIP = cidr.Inc(firstIP)
-	lastIP := firstIP
-
-	for i := 0; i < maxNodes-1; i++ {
-		lastIP = cidr.Inc(lastIP)
-	}
-
 	pxeFileName, err := getPXEFilename(os)
 	if err != nil {
 		return err
@@ -193,6 +216,14 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 	}
 	if leaderNodeUUIDfound == false {
 		return errors.New("leaderNodeUUID is not found from provided nodeUUIDs[]")
+	}
+
+	firstIP, _ := cidr.AddressRange(&ipNet)
+	firstIP = cidr.Inc(firstIP)
+	lastIP := firstIP
+
+	for i := 0; i < maxNodes-1; i++ {
+		lastIP = cidr.Inc(lastIP)
 	}
 
 	confContent := confBase
@@ -242,13 +273,7 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
-	if err != nil {
-		return err
-	}
-
-	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
-	err = writeFile(confContent, dhcpdConfLocation)
+	err = writeConfigFile(confContent, name)
 	if err != nil {
 		return err
 	}
