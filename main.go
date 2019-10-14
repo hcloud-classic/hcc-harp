@@ -3,7 +3,6 @@ package main
 import (
 	"hcc/harp/checkroot"
 	"hcc/harp/config"
-	"hcc/harp/dhcpd"
 	"hcc/harp/graphql"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
@@ -32,13 +31,6 @@ func main() {
 	defer func() {
 		_ = mysql.Db.Close()
 	}()
-
-	err = dhcpd.RestartDHCPDServer()
-	if err != nil {
-		logger.Logger.Printf("Error occurred while restarting dhcpd service!\n"+
-			"==> Error messages\n%s\n", err)
-		logger.Logger.Panic(err)
-	}
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 

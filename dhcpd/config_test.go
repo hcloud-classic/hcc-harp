@@ -73,3 +73,17 @@ func Test_UpdateHarpDHCPDConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_RestartDHCPDServer(t *testing.T) {
+	if !testInitPass {
+		testInit(t)
+	}
+
+	err := RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Printf("Error occurred while restarting dhcpd service!\n"+
+			"==> Error messages\n%s\n", err)
+		// Ignore this error because we just try for testing.
+		t.Log(err)
+	}
+}
