@@ -27,9 +27,6 @@ var subnetType = graphql.NewObject(
 			"domain_name": &graphql.Field{
 				Type: graphql.String,
 			},
-			"max_nodes": &graphql.Field{
-				Type: graphql.Int,
-			},
 			"leader_node_uuid": &graphql.Field{
 				Type: graphql.String,
 			},

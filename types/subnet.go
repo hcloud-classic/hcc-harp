@@ -11,7 +11,6 @@ type Subnet struct {
 	NextServer     string    `json:"next_server"`
 	NameServer     string    `json:"name_server"`
 	DomainName     string    `json:"domain_name"`
-	MaxNodes       int       `json:"max_nodes"`
 	LeaderNodeUUID string    `json:"leader_node_uuid"`
 	Os             string    `json:"os"`
 	Name           string    `json:"name"`
