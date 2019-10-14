@@ -3,10 +3,12 @@ package graphql
 import (
 	"errors"
 	"github.com/graphql-go/graphql"
+	"hcc/harp/iputil"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
 	"hcc/harp/types"
 	"hcc/harp/uuidgen"
+	"net"
 )
 
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
@@ -65,10 +67,42 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					return nil, errors.New("need name argument")
 				}
 
+				netIPnetworkIP := iputil.CheckValidIP(networkIP)
+				if netIPnetworkIP == nil {
+					return nil, errors.New("wrong network IP")
+				}
+
+				mask, err := iputil.CheckNetmask(netmask)
+				if err != nil {
+					return nil, err
+				}
+
+				ipNet := net.IPNet{
+					IP:   netIPnetworkIP,
+					Mask: mask,
+				}
+
+				err = iputil.CheckGateway(ipNet, gateway)
+				if err != nil {
+					return nil, err
+				}
+
+				netIPnextServer := net.ParseIP(nextServer)
+				if netIPnextServer == nil {
+					return nil, errors.New("wrong next server IP")
+				}
+
 				nameServer, nameServerOk := params.Args["name_server"].(string)
 				if !nameServerOk {
 					nameServer = ""
 				}
+				if len(nameServer) != 0 {
+					netIPnameServer := net.ParseIP(nameServer)
+					if netIPnameServer == nil {
+						return nil, errors.New("wrong name server IP")
+					}
+				}
+
 				domainName, domainNameOk := params.Args["domain_name"].(string)
 				if !domainNameOk {
 					domainName = ""
