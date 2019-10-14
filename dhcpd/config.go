@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/config"
+	"hcc/harp/iputil"
 	"hcc/harp/logger"
 	"io/ioutil"
 	"net"
@@ -109,53 +110,6 @@ func writeConfigFile(input string, name string) error {
 	return nil
 }
 
-func checkNetmask(netmask string) (net.IPMask, error) {
-	var err error
-
-	var maskPartsStr = strings.Split(netmask, ".")
-	if len(maskPartsStr) != 4 {
-		return nil, errors.New("netmask should be X.X.X.X form")
-	}
-
-	var maskParts [4]int
-	for i := range maskPartsStr {
-		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
-		if err != nil {
-			return nil, errors.New("netmask contained none integer value")
-		}
-	}
-
-	var mask = net.IPv4Mask(
-		byte(maskParts[0]),
-		byte(maskParts[1]),
-		byte(maskParts[2]),
-		byte(maskParts[3]))
-
-	maskSizeOne, maskSizeBit := mask.Size()
-	if maskSizeOne == 0 && maskSizeBit == 0 {
-		return nil, errors.New("invalid netmask")
-	}
-
-	if maskSizeOne > 30 {
-		return nil, errors.New("netmask bit should be equal or smaller than 30")
-	}
-
-	return mask, err
-}
-
-func checkGateway(subnet net.IPNet, gateway string) error {
-	netIPgateway := net.ParseIP(gateway)
-	if netIPgateway == nil {
-		return errors.New("wrong gateway IP")
-	}
-	isGatewayInSubnet := subnet.Contains(netIPgateway)
-	if isGatewayInSubnet == false {
-		return errors.New("gateway IP is not in the subnet")
-	}
-
-	return nil
-}
-
 func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNodeUUID string) error {
 	if len(nodeUUIDs) == 0 {
 		return errors.New("provided nodeUUIDs[] is empty")
@@ -193,12 +147,12 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		return errors.New("name is needed for make dhcpd config file")
 	}
 
-	netIPnetworkIP := net.ParseIP(networkIP).To4()
+	netIPnetworkIP := iputil.CheckValidIP(networkIP)
 	if netIPnetworkIP == nil {
 		return errors.New("wrong network IP")
 	}
 
-	mask, err := checkNetmask(netmask)
+	mask, err := iputil.CheckNetmask(netmask)
 	if err != nil {
 		return err
 	}
@@ -208,7 +162,7 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 		Mask: mask,
 	}
 
-	err = checkGateway(ipNet, gateway)
+	err = iputil.CheckGateway(ipNet, gateway)
 	if err != nil {
 		return err
 	}
