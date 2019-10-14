@@ -12,8 +12,8 @@ import (
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Mutation",
 	Fields: graphql.Fields{
-		/* Create new volume */
-		// http://localhost:8001/graphql?query=mutation+_{create_volume(size:1024000,type:"ext4",server_uuid:"[server_uuid]"){size,type,server_uuid}}
+		/* Create new subnet */
+		// http://192.168.110.240:7400/graphql?query=mutation+_{create_subnet(network_ip:"192.168.110.0",netmask:"255.255.255.0",gateway:"192.168.110.254",next_server: "192.168.110.240",name:"hcc",name_server:"8.8.8.8",domain_name:"google.com"){network_ip,netmask,gateway,next_server,name,name_server,domain_name}}
 		"create_subnet": &graphql.Field{
 			Type:        subnetType,
 			Description: "Create new subnet",
@@ -24,12 +24,55 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				"netmask": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"os": &graphql.ArgumentConfig{
+				"gateway": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"next_server": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"name_server": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"domain_name": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				logger.Logger.Println("Resolving: create_subnet")
+
+				networkIP, networkIPOk := params.Args["network_ip"].(string)
+				netmask, netmaskOk := params.Args["netmask"].(string)
+				gateway, gatewayOk := params.Args["gateway"].(string)
+				nextServer, nextServerOk := params.Args["next_server"].(string)
+				name, nameOk := params.Args["name"].(string)
+
+				if !networkIPOk {
+					return nil, errors.New("need network_ip argument")
+				}
+				if !netmaskOk {
+					return nil, errors.New("need netmask argument")
+				}
+				if !gatewayOk {
+					return nil, errors.New("need gateway argument")
+				}
+				if !nextServerOk {
+					return nil, errors.New("need next_server argument")
+				}
+				if !nameOk {
+					return nil, errors.New("need name argument")
+				}
+
+				nameServer, nameServerOk := params.Args["name_server"].(string)
+				if !nameServerOk {
+					nameServer = ""
+				}
+				domainName, domainNameOk := params.Args["domain_name"].(string)
+				if !domainNameOk {
+					domainName = ""
+				}
 
 				uuid, err := uuidgen.UUIDgen()
 				if err != nil {
@@ -38,14 +81,17 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				subnet := types.Subnet{
-					UUID:      uuid,
-					Name:      params.Args["name"].(string),
-					NetworkIP: params.Args["network_ip"].(string),
-					Netmask:   params.Args["netmask"].(string),
-					Os:        params.Args["os"].(string),
+					UUID:       uuid,
+					NetworkIP:  networkIP,
+					Netmask:    netmask,
+					Gateway:    gateway,
+					NextServer: nextServer,
+					Name:       name,
+					NameServer: nameServer,
+					DomainName: domainName,
 				}
 
-				sql := "insert into subnet(uuid, name, network_ip, netmask, os, created_at) values (?, ?, ?, ?, ?, now())"
+				sql := "insert into subnet(network_ip, netmask, gateway, next_server, name, name_server, domain_name, created_at) values (?, ?, ?, ?, ?, ?, ?, now())"
 				stmt, err := mysql.Db.Prepare(sql)
 				if err != nil {
 					logger.Logger.Println(err)
@@ -54,7 +100,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				defer func() {
 					_ = stmt.Close()
 				}()
-				result, err2 := stmt.Exec(subnet.UUID, subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os)
+				result, err2 := stmt.Exec(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.Name, subnet.NameServer, subnet.DomainName)
 				if err2 != nil {
 					logger.Logger.Println(err2)
 					return nil, err2
