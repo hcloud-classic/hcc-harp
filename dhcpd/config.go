@@ -341,6 +341,7 @@ func UpdateHarpDHCPDConfig() error {
 	var allIncludeLines = ""
 	for _, filename := range configFiles {
 		if strings.Contains(filename, "harp_dhcpd.conf") ||
+			strings.Contains(filename, "test") ||
 			filename == config.DHCPD.ConfigFileLocation {
 			continue
 		}
