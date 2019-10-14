@@ -33,11 +33,6 @@ func main() {
 		_ = mysql.Db.Close()
 	}()
 
-	err = dhcpd.UpdateHarpDHCPDConfig()
-	if err != nil {
-		logger.Logger.Panic(err)
-	}
-
 	err = dhcpd.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Printf("Error occurred while restarting dhcpd service!\n"+

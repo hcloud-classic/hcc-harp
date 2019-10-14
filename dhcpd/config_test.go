@@ -62,3 +62,14 @@ func Test_CheckLocalDHCPDConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_UpdateHarpDHCPDConfig(t *testing.T) {
+	if !testInitPass {
+		testInit(t)
+	}
+
+	err := UpdateHarpDHCPDConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
