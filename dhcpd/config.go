@@ -364,7 +364,7 @@ func UpdateHarpDHCPDConfig() error {
 }
 
 func RestartDHCPDServer() error {
-	cmd := exec.Command("sudo", "service", "isc-dhcpd", "restart")
+	cmd := exec.Command("service", "isc-dhcpd", "restart")
 	err := cmd.Run()
 	if err != nil {
 		return err
