@@ -9,16 +9,34 @@ var subnetType = graphql.NewObject(
 			"uuid": &graphql.Field{
 				Type: graphql.String,
 			},
-			"name": &graphql.Field{
-				Type: graphql.String,
-			},
-			"ip": &graphql.Field{
+			"network_ip": &graphql.Field{
 				Type: graphql.String,
 			},
 			"netmask": &graphql.Field{
 				Type: graphql.String,
 			},
+			"gateway": &graphql.Field{
+				Type: graphql.String,
+			},
+			"next_server": &graphql.Field{
+				Type: graphql.String,
+			},
+			"name_server": &graphql.Field{
+				Type: graphql.String,
+			},
+			"domain_name": &graphql.Field{
+				Type: graphql.String,
+			},
+			"max_nodes": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"leader_node_uuid": &graphql.Field{
+				Type: graphql.String,
+			},
 			"os": &graphql.Field{
+				Type: graphql.String,
+			},
+			"name": &graphql.Field{
 				Type: graphql.String,
 			},
 			"created_at": &graphql.Field{
