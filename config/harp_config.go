@@ -5,10 +5,11 @@ import "github.com/Terry-Mao/goconf"
 var configLocation = "/etc/harp/harp.conf"
 
 type fluteConfig struct {
-	MysqlConfig *goconf.Section
-	HTTPConfig  *goconf.Section
-	FluteConfig *goconf.Section
-	DHCPDConfig *goconf.Section
+	MysqlConfig  *goconf.Section
+	HTTPConfig   *goconf.Section
+	FluteConfig  *goconf.Section
+	ViolinConfig *goconf.Section
+	DHCPDConfig  *goconf.Section
 }
 
 /*-----------------------------------
@@ -29,6 +30,11 @@ port 8888
 flute_server_address 222.222.222.222
 flute_server_port 3333
 flute_request_timeout_ms 5000
+
+[violin]
+violin_server_address 333.333.333.333
+violin_server_port 5555
+violin_request_timeout_ms 5000
 
 [dhcpd]
 dhcpd_local_config_file_location /usr/local/etc/dhcpd.conf

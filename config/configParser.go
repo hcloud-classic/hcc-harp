@@ -78,6 +78,29 @@ func parseFlute() {
 	}
 }
 
+func parseViolin() {
+	config.ViolinConfig = conf.Get("violin")
+	if config.ViolinConfig == nil {
+		logger.Logger.Panicln("no violin section")
+	}
+
+	Violin = violin{}
+	Violin.ServerAddress, err = config.ViolinConfig.String("violin_server_address")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Violin.ServerPort, err = config.ViolinConfig.Int("violin_server_port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Violin.RequestTimeoutMs, err = config.ViolinConfig.Int("violin_request_timeout_ms")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 func parseDHCPD() {
 	config.DHCPDConfig = conf.Get("dhcpd")
 	if config.DHCPDConfig == nil {
@@ -121,5 +144,6 @@ func Parser() {
 	parseMysql()
 	parseHTTP()
 	parseFlute()
+	parseViolin()
 	parseDHCPD()
 }
