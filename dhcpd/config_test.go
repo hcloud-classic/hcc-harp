@@ -7,7 +7,9 @@ import (
 	"testing"
 )
 
-func Test_CreateConfig(t *testing.T) {
+var testInitPass = false
+
+func testInit(t *testing.T) {
 	if !checkroot.CheckRoot() {
 		t.Fatal("Failed to get root permission!")
 	}
@@ -21,6 +23,14 @@ func Test_CreateConfig(t *testing.T) {
 
 	config.Parser()
 
+	testInitPass = true
+}
+
+func Test_CreateConfig(t *testing.T) {
+	if !testInitPass {
+		testInit(t)
+	}
+
 	var nodeUUIDs = []string{
 		"48d08a00-b652-11e8-906e-000ffee02d5c",
 		"d4f3a900-b674-11e8-906e-000ffee02d5c",
@@ -31,13 +41,24 @@ func Test_CreateConfig(t *testing.T) {
 		"172.18.0.10", "8.8.8.8", "google.com",
 		6, nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test1")
 	if err != nil {
-		logger.Logger.Panic(err)
+		t.Fatal(err)
 	}
 
 	err = CreateConfig("192.168.110.0", "255.255.255.0", "192.168.110.254",
 		"192.168.110.240", "8.8.8.8", "google.com",
 		10, nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test2")
 	if err != nil {
-		logger.Logger.Panic(err)
+		t.Fatal(err)
+	}
+}
+
+func Test_CheckLocalDHCPDConfig(t *testing.T) {
+	if !testInitPass {
+		testInit(t)
+	}
+
+	err := CheckLocalDHCPDConfig()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
