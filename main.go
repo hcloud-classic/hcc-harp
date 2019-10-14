@@ -66,7 +66,7 @@ func main() {
 	err = dhcpd.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Printf("Error occurred while restarting dhcpd service!\n" +
-							"==> Error messages\n%s\n", err.Error())
+							"==> Error messages\n%s\n", err)
 		logger.Logger.Panic(err)
 	}
 

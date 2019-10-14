@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"errors"
 	"github.com/graphql-go/graphql"
 	"hcc/harp/floatingip"
 	"hcc/harp/logger"
@@ -40,7 +41,11 @@ var queryTypes = graphql.NewObject(
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					floatingip.CreateFloatingIP()
+					err := floatingip.CreateFloatingIP()
+					if err != nil {
+						logger.Logger.Println(err)
+						return nil, err
+					}
 					return nil, nil
 				},
 			},
@@ -75,7 +80,7 @@ var queryTypes = graphql.NewObject(
 						err := mysql.Db.QueryRow(sql, requestedUUID).Scan(&uuid, &name, &networkIP, &netmask, &os, &createdAt)
 						if err != nil {
 							logger.Logger.Println(err)
-							return nil, nil
+							return nil, err
 						}
 
 						subnet.UUID = uuid
@@ -87,34 +92,9 @@ var queryTypes = graphql.NewObject(
 
 						return subnet, nil
 					}
-					return nil, nil
+					return nil, errors.New("need uuid argument")
 				},
 			},
-
-			/* Get the number of subnet */
-			// http://localhost:8001/graphql?query={createSubnet(uuid:"6b18ae6c-d834-479b-62e0-80b04f5deed7"){uuid}}
-			//"num_subnet": &graphql.Field{
-			//	Type:        subnetType,
-			//	Description: "Create subnet by uuid",
-			//	Args: graphql.FieldConfigArgument{
-			//		"uuid": &graphql.ArgumentConfig{
-			//			Type: graphql.String,
-			//		},
-			//	},
-			//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			//
-			//		sql := "select count(*) from subnet"
-			//		err := mysql.Db.QueryRow(sql).Scan()
-			//		if err != nil {
-			//			logger.Logger.Println(err)
-			//			return nil, nil
-			//		}
-			//
-			//		//subnet.CreateSubnet()
-			//		//return nil, nil
-			//		return num
-			//	},
-			//},
 
 			/* Get (read) subnet list
 			   http://localhost:8001/graphql?query={list_volume{uuid,size,type,server_uuid}}
@@ -137,14 +117,17 @@ var queryTypes = graphql.NewObject(
 					stmt, err := mysql.Db.Query(sql)
 					if err != nil {
 						logger.Logger.Println(err)
-						return nil, nil
+						return nil, err
 					}
-					defer stmt.Close()
+					defer func() {
+						_ = stmt.Close()
+					}()
 
 					for stmt.Next() {
 						err := stmt.Scan(&uuid, &name, &networkIP, &netmask, &os, &createdAt)
 						if err != nil {
 							logger.Logger.Println(err)
+							return nil, err
 						}
 
 						subnet := types.Subnet{UUID: uuid, Name: name, NetworkIP: networkIP, Netmask: netmask, Os: os, CreatedAt: createdAt}

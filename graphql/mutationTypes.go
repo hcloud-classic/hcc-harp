@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"errors"
 	"github.com/graphql-go/graphql"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
@@ -17,9 +18,6 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			Type:        subnetType,
 			Description: "Create new subnet",
 			Args: graphql.FieldConfigArgument{
-				"name": &graphql.ArgumentConfig{
-					Type: graphql.String,
-				},
 				"network_ip": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
@@ -33,10 +31,10 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				logger.Logger.Println("Resolving: create_subnet")
 
-				uuid, err := uuidgen.Uuidgen()
+				uuid, err := uuidgen.UUIDgen()
 				if err != nil {
 					logger.Logger.Println("Failed to generate uuid!")
-					return nil, nil
+					return nil, err
 				}
 
 				subnet := types.Subnet{
@@ -47,23 +45,19 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					Os:        params.Args["os"].(string),
 				}
 
-				//err = CheckServerUUID(subnet.ServerUUID)
-				//if err != nil {
-				//	logger.Logger.Println(err)
-				//	return nil, nil
-				//}
-
 				sql := "insert into subnet(uuid, name, network_ip, netmask, os, created_at) values (?, ?, ?, ?, ?, now())"
 				stmt, err := mysql.Db.Prepare(sql)
 				if err != nil {
-					logger.Logger.Println(err.Error())
-					return nil, nil
+					logger.Logger.Println(err)
+					return nil, err
 				}
-				defer stmt.Close()
+				defer func() {
+					_ = stmt.Close()
+				}()
 				result, err2 := stmt.Exec(subnet.UUID, subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os)
 				if err2 != nil {
 					logger.Logger.Println(err2)
-					return nil, nil
+					return nil, err2
 				}
 				logger.Logger.Println(result.LastInsertId())
 
@@ -114,20 +108,22 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					sql := "update subnet set name = ?, network_ip = ?, netmask = ?, os = ? where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
-						logger.Logger.Println(err.Error())
-						return nil, nil
+						logger.Logger.Println(err)
+						return nil, err
 					}
-					defer stmt.Close()
+					defer func() {
+						_ = stmt.Close()
+					}()
 					result, err2 := stmt.Exec(subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os, subnet.UUID)
 					if err2 != nil {
 						logger.Logger.Println(err2)
-						return nil, nil
+						return nil, err2
 					}
 					logger.Logger.Println(result.LastInsertId())
 
 					return subnet, nil
 				}
-				return nil, nil
+				return nil, errors.New("need ................... arguments")
 			},
 		},
 
@@ -149,20 +145,22 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					sql := "delete from subnet where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
 					if err != nil {
-						logger.Logger.Println(err.Error())
-						return nil, nil
+						logger.Logger.Println(err)
+						return nil, err
 					}
-					defer stmt.Close()
+					defer func() {
+						_ = stmt.Close()
+					}()
 					result, err2 := stmt.Exec(requestedUUID)
 					if err2 != nil {
 						logger.Logger.Println(err2)
-						return nil, nil
+						return nil, err2
 					}
 					logger.Logger.Println(result.RowsAffected())
 
 					return requestedUUID, nil
 				}
-				return nil, nil
+				return nil, errors.New("need uuid argument")
 			},
 		},
 	},

@@ -11,7 +11,7 @@ func CreateFloatingIP() error {
 	logger.Logger.Println("Create FloatingIP")
 
 	if err != nil {
-		logger.Logger.Println(err.Error())
+		logger.Logger.Println(err)
 		return err
 	}
 
