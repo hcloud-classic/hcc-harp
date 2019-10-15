@@ -6,6 +6,7 @@ import (
 	"hcc/harp/graphql"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
+	"hcc/harp/rabbitmq"
 	"net/http"
 	"strconv"
 )
@@ -30,6 +31,17 @@ func main() {
 	}
 	defer func() {
 		_ = mysql.Db.Close()
+	}()
+
+	err = rabbitmq.PrepareChannel()
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+	defer func() {
+		_ = rabbitmq.Channel.Close()
+	}()
+	defer func() {
+		_ = rabbitmq.Connection.Close()
 	}()
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
