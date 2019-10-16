@@ -62,22 +62,22 @@ func parseRabbitMQ() {
 	}
 
 	RabbitMQ = rabbitmq{}
-	RabbitMQ.ID, err = config.RabbitMQConfig.String("id")
+	RabbitMQ.ID, err = config.RabbitMQConfig.String("rabbitmq_id")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	RabbitMQ.Password, err = config.RabbitMQConfig.String("password")
+	RabbitMQ.Password, err = config.RabbitMQConfig.String("rabbitmq_password")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	RabbitMQ.Address, err = config.RabbitMQConfig.String("address")
+	RabbitMQ.Address, err = config.RabbitMQConfig.String("rabbitmq_address")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	RabbitMQ.Port, err = config.RabbitMQConfig.Int("port")
+	RabbitMQ.Port, err = config.RabbitMQConfig.Int("rabbitmq_port")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
