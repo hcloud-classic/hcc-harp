@@ -48,9 +48,10 @@ build:
   stage: build
   script:
     - gmake
+    - sudo /usr/sbin/service harp stop
     - sudo cp $PWD/harp /bin/harp
     - sudo chmod 755 /bin/harp
-    - service harp restart &
+    - sudo /usr/sbin/service harp start
     - echo "Finished"
 #  only:
 #  - master
