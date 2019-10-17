@@ -6,7 +6,7 @@ import (
 )
 
 var conf = goconf.New()
-var config = fluteConfig{}
+var config = harpConfig{}
 var err error
 
 func parseMysql() {

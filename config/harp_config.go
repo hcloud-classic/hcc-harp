@@ -4,7 +4,7 @@ import "github.com/Terry-Mao/goconf"
 
 var configLocation = "/etc/harp/harp.conf"
 
-type fluteConfig struct {
+type harpConfig struct {
 	MysqlConfig    *goconf.Section
 	HTTPConfig     *goconf.Section
 	RabbitMQConfig *goconf.Section
