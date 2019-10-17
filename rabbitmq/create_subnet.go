@@ -16,7 +16,7 @@ func CreateSubnet(subnet types.Subnet) error {
 		false,
 		nil)
 	if err != nil {
-		return errors.New("failed to declare a create queue")
+		return errors.New("failed to declare a create_subnet queue")
 	}
 
 	body, _ := json.Marshal(subnet)
