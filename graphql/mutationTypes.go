@@ -3,12 +3,10 @@ package graphql
 import (
 	"errors"
 	"github.com/graphql-go/graphql"
-	"hcc/harp/iputil"
 	"hcc/harp/logger"
 	"hcc/harp/mysql"
+	"hcc/harp/rabbitmq"
 	"hcc/harp/types"
-	"hcc/harp/uuidgen"
-	"net"
 )
 
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
@@ -17,7 +15,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 		/* Create new subnet */
 		// http://192.168.110.240:7400/graphql?query=mutation+_{create_subnet(network_ip:"192.168.110.0",netmask:"255.255.255.0",gateway:"192.168.110.254",next_server: "192.168.110.240",name:"hcc",name_server:"8.8.8.8",domain_name:"google.com"){network_ip,netmask,gateway,next_server,name,name_server,domain_name}}
 		"create_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphql.String,
 			Description: "Create new subnet",
 			Args: graphql.FieldConfigArgument{
 				"network_ip": &graphql.ArgumentConfig{
@@ -67,40 +65,9 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					return nil, errors.New("need name argument")
 				}
 
-				netIPnetworkIP := iputil.CheckValidIP(networkIP)
-				if netIPnetworkIP == nil {
-					return nil, errors.New("wrong network IP")
-				}
-
-				mask, err := iputil.CheckNetmask(netmask)
-				if err != nil {
-					return nil, err
-				}
-
-				ipNet := net.IPNet{
-					IP:   netIPnetworkIP,
-					Mask: mask,
-				}
-
-				err = iputil.CheckGateway(ipNet, gateway)
-				if err != nil {
-					return nil, err
-				}
-
-				netIPnextServer := net.ParseIP(nextServer)
-				if netIPnextServer == nil {
-					return nil, errors.New("wrong next server IP")
-				}
-
 				nameServer, nameServerOk := params.Args["name_server"].(string)
 				if !nameServerOk {
 					nameServer = ""
-				}
-				if len(nameServer) != 0 {
-					netIPnameServer := net.ParseIP(nameServer)
-					if netIPnameServer == nil {
-						return nil, errors.New("wrong name server IP")
-					}
 				}
 
 				domainName, domainNameOk := params.Args["domain_name"].(string)
@@ -108,14 +75,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					domainName = ""
 				}
 
-				uuid, err := uuidgen.UUIDgen()
-				if err != nil {
-					logger.Logger.Println("Failed to generate uuid!")
-					return nil, err
-				}
-
 				subnet := types.Subnet{
-					UUID:       uuid,
 					NetworkIP:  networkIP,
 					Netmask:    netmask,
 					Gateway:    gateway,
@@ -125,23 +85,12 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					DomainName: domainName,
 				}
 
-				sql := "insert into subnet(network_ip, netmask, gateway, next_server, name, name_server, domain_name, created_at) values (?, ?, ?, ?, ?, ?, ?, now())"
-				stmt, err := mysql.Db.Prepare(sql)
+				err := rabbitmq.CreateSubnet(subnet)
 				if err != nil {
-					logger.Logger.Println(err)
 					return nil, err
 				}
-				defer func() {
-					_ = stmt.Close()
-				}()
-				result, err2 := stmt.Exec(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.Name, subnet.NameServer, subnet.DomainName)
-				if err2 != nil {
-					logger.Logger.Println(err2)
-					return nil, err2
-				}
-				logger.Logger.Println(result.LastInsertId())
 
-				return subnet, nil
+				return "create_subnet queued successfully", nil
 			},
 		},
 		////////////////////////////////////////////////////////////////////////////////
