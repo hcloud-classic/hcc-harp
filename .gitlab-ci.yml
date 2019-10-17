@@ -48,10 +48,9 @@ build:
   stage: build
   script:
     - gmake
-    - sudo ezjail-admin stop harp
-    - sudo cp $PWD/harp /usr/jails/basejail/bin/
-    - sudo chmod 755 /usr/jails/basejail/bin/harp
-    - sudo ezjail-admin start harp &
+    - sudo cp $PWD/harp /bin/harp
+    - sudo chmod 755 /bin/harp
+    - service harp restart &
     - echo "Finished"
 #  only:
 #  - master
