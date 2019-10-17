@@ -320,7 +320,7 @@ func UpdateHarpDHCPDConfig() error {
 
 // RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
 func RestartDHCPDServer() error {
-	cmd := exec.Command("service", "isc-dhcpd", "restart")
+	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
 	err := cmd.Run()
 	if err != nil {
 		return err

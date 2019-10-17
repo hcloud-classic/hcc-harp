@@ -137,6 +137,11 @@ func parseDHCPD() {
 
 	DHCPD = dhcpd{}
 
+	DHCPD.LocalDHCPDServiceName, err = config.DHCPDConfig.String("dhcpd_local_dhcpd_service_name")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	DHCPD.LocalConfigFileLocation, err = config.DHCPDConfig.String("dhcpd_local_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)
