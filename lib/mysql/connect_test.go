@@ -1,14 +1,14 @@
 package mysql
 
 import (
-	"hcc/harp/checkroot"
-	"hcc/harp/config"
-	"hcc/harp/logger"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"testing"
 )
 
 func Test_DB_Prepare(t *testing.T) {
-	if !checkroot.CheckRoot() {
+	if !syscheck.CheckRoot() {
 		t.Fatal("Failed to get root permission!")
 	}
 

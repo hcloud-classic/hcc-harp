@@ -1,18 +1,18 @@
 package main
 
 import (
-	"hcc/harp/checkroot"
-	"hcc/harp/config"
-	"hcc/harp/graphql"
-	"hcc/harp/logger"
-	"hcc/harp/mysql"
-	"hcc/harp/rabbitmq"
+	"hcc/harp/action/graphql"
+	"hcc/harp/action/rabbitmq"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/logger"
+	"hcc/harp/lib/mysql"
+	"hcc/harp/lib/syscheck"
 	"net/http"
 	"strconv"
 )
 
 func main() {
-	if !checkroot.CheckRoot() {
+	if !syscheck.CheckRoot() {
 		return
 	}
 
@@ -43,6 +43,11 @@ func main() {
 	defer func() {
 		_ = rabbitmq.Connection.Close()
 	}()
+
+	err = rabbitmq.CreateDHCPDConfig()
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 

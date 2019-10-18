@@ -3,11 +3,11 @@ package graphql
 import (
 	"errors"
 	"github.com/graphql-go/graphql"
-	"hcc/harp/iputil"
-	"hcc/harp/logger"
-	"hcc/harp/mysql"
-	"hcc/harp/types"
-	"hcc/harp/uuidgen"
+	"hcc/harp/lib/iputil"
+	"hcc/harp/lib/logger"
+	"hcc/harp/lib/mysql"
+	"hcc/harp/lib/uuidgen"
+	"hcc/harp/model"
 	"net"
 )
 
@@ -114,7 +114,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					return nil, err
 				}
 
-				subnet := types.Subnet{
+				subnet := model.Subnet{
 					UUID:       uuid,
 					NetworkIP:  networkIP,
 					Netmask:    netmask,
@@ -176,14 +176,14 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				netmask, _netmask := params.Args["netmask"].(string)
 				os, _os := params.Args["os"].(string)
 
-				subnet := new(types.Subnet)
+				subnet := new(model.Subnet)
 
 				if _ip && _netmask && _os {
 					subnet.UUID = requestedUUID
 					subnet.Name = name
 					subnet.NetworkIP = ip
 					subnet.Netmask = netmask
-					subnet.Os = os
+					subnet.OS = os
 
 					sql := "update subnet set name = ?, network_ip = ?, netmask = ?, os = ? where uuid = ?"
 					stmt, err := mysql.Db.Prepare(sql)
@@ -194,7 +194,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					defer func() {
 						_ = stmt.Close()
 					}()
-					result, err2 := stmt.Exec(subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.Os, subnet.UUID)
+					result, err2 := stmt.Exec(subnet.Name, subnet.NetworkIP, subnet.Netmask, subnet.OS, subnet.UUID)
 					if err2 != nil {
 						logger.Logger.Println(err2)
 						return nil, err2

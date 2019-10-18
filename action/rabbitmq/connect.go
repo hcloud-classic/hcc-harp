@@ -3,8 +3,8 @@ package rabbitmq
 import (
 	"errors"
 	"github.com/streadway/amqp"
-	"hcc/harp/config"
-	"hcc/harp/logger"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/logger"
 	"strconv"
 )
 

@@ -1,7 +1,7 @@
 package floatingip
 
 import (
-	"hcc/harp/logger"
+	"hcc/harp/lib/logger"
 )
 
 // CreateFloatingIP : Create floating IP for server.

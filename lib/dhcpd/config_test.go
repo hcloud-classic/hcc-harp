@@ -1,16 +1,16 @@
 package dhcpd
 
 import (
-	"hcc/harp/checkroot"
-	"hcc/harp/config"
-	"hcc/harp/logger"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"testing"
 )
 
 var testInitPass = false
 
 func testInit(t *testing.T) {
-	if !checkroot.CheckRoot() {
+	if !syscheck.CheckRoot() {
 		t.Fatal("Failed to get root permission!")
 	}
 

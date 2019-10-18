@@ -3,10 +3,10 @@ package graphql
 import (
 	"errors"
 	"github.com/graphql-go/graphql"
-	"hcc/harp/floatingip"
-	"hcc/harp/logger"
-	"hcc/harp/mysql"
-	"hcc/harp/types"
+	"hcc/harp/lib/floatingip"
+	"hcc/harp/lib/logger"
+	"hcc/harp/lib/mysql"
+	"hcc/harp/model"
 	"time"
 )
 
@@ -67,7 +67,7 @@ var queryTypes = graphql.NewObject(
 
 					requestedUUID, ok := p.Args["uuid"].(string)
 					if ok {
-						subnet := new(types.Subnet)
+						subnet := new(model.Subnet)
 
 						var uuid string
 						var name string
@@ -87,7 +87,7 @@ var queryTypes = graphql.NewObject(
 						subnet.Name = name
 						subnet.NetworkIP = networkIP
 						subnet.Netmask = netmask
-						subnet.Os = os
+						subnet.OS = os
 						subnet.CreatedAt = createdAt
 
 						return subnet, nil
@@ -105,7 +105,7 @@ var queryTypes = graphql.NewObject(
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: list_subnet")
 
-					var subnets []types.Subnet
+					var subnets []model.Subnet
 					var uuid string
 					var name string
 					var networkIP string
@@ -130,7 +130,7 @@ var queryTypes = graphql.NewObject(
 							return nil, err
 						}
 
-						subnet := types.Subnet{UUID: uuid, Name: name, NetworkIP: networkIP, Netmask: netmask, Os: os, CreatedAt: createdAt}
+						subnet := model.Subnet{UUID: uuid, Name: name, NetworkIP: networkIP, Netmask: netmask, OS: os, CreatedAt: createdAt}
 
 						logger.Logger.Println(subnet)
 						subnets = append(subnets, subnet)
