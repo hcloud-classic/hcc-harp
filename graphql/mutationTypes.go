@@ -94,7 +94,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		////////////////////////////////////////////////////////////////////////////////
-		/* Update volume by uuid */
+		/* Update subnet by uuid */
 		// http://localhost:8001/graphql?query=mutation+_{update_subnet(uuid:"0ac56231-a0ee-4323-55ad-37c08c2d4a78",name:"aaaa",ip:"1234",netmask:"1234",os:"centos"){uuid,name,ip,netmask,os}}
 		"update_subnet": &graphql.Field{
 			Type:        subnetType,
