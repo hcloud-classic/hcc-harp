@@ -32,7 +32,7 @@ func CreateDHCPDConfig() error {
 		nil,
 	)
 	if err != nil {
-		logger.Logger.Println("create_dhcpd_config: Failed to register a create consumer")
+		logger.Logger.Println("create_dhcpd_config: Failed to register consumer")
 		return err
 	}
 
