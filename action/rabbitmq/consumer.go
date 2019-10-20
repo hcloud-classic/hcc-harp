@@ -8,6 +8,55 @@ import (
 	"log"
 )
 
+// UpdateSubnet : Consume 'update_subnet' queues from RabbitMQ channel
+func UpdateSubnet() error {
+	qCreate, err := Channel.QueueDeclare(
+		"update_subnet",
+		false,
+		false,
+		false,
+		false,
+		nil)
+	if err != nil {
+		logger.Logger.Println("update_subnet: Failed to declare a create queue")
+		return err
+	}
+
+	msgsCreate, err := Channel.Consume(
+		qCreate.Name,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		logger.Logger.Println("update_subnet: Failed to register consumer")
+		return err
+	}
+
+	go func() {
+		for d := range msgsCreate {
+			log.Printf("update_subnet: Received a create message: %s", d.Body)
+
+			var subnet model.Subnet
+			err = json.Unmarshal(d.Body, &subnet)
+			if err != nil {
+				logger.Logger.Println("update_subnet: Failed to unmarshal subnet data")
+				return
+			}
+
+			//TODO: update_subnet db query
+			//TODO: queue get_nodes to flute module
+
+			//logger.Logger.Println("update_subnet: UUID = " + subnet.UUID + ": " + result)
+		}
+	}()
+
+	return nil
+}
+
 // CreateDHCPDConfig : Consume 'create_dhcpd_config' queues from RabbitMQ channel
 func CreateDHCPDConfig() error {
 	qCreate, err := Channel.QueueDeclare(
