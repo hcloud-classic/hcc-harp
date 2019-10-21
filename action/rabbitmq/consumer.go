@@ -47,7 +47,6 @@ func UpdateSubnet() error {
 				return
 			}
 
-			//TODO: update_subnet db query
 			//TODO: queue get_nodes to flute module
 
 			//logger.Logger.Println("update_subnet: UUID = " + subnet.UUID + ": " + result)
