@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"hcc/harp/checkroot"
+	"hcc/harp/lib/syscheck"
 	"testing"
 )
 
@@ -13,12 +13,14 @@ func Test_CreateDirIfNotExist(t *testing.T) {
 }
 
 func Test_Logger_Prepare(t *testing.T) {
-	if !checkroot.CheckRoot() {
+	if !syscheck.CheckRoot() {
 		t.Fatal("Failed to get root permission!")
 	}
 
 	if !Prepare() {
 		t.Fatal("Failed to prepare logger!")
 	}
-	defer FpLog.Close()
+	defer func() {
+		_ = FpLog.Close()
+	}()
 }

@@ -2,12 +2,12 @@
 FROM ubuntu:latest
 MAINTAINER ish <ish@innogrid.com>
 
-RUN mkdir -p /GraphQL_harp/
-WORKDIR /GraphQL_harp/
+RUN mkdir -p /harp/
+WORKDIR /harp/
 
-ADD GraphQL_harp /GraphQL_harp/
-RUN chmod 755 /GraphQL_harp/GraphQL_harp
+ADD harp /harp/
+RUN chmod 755 /harp/harp
 
-EXPOSE 8001
+EXPOSE 7000
 
-CMD ["/GraphQL_harp/GraphQL_harp"]
+CMD ["/harp/harp"]
