@@ -1,18 +1,17 @@
 stages:
-    - init
-    - test
-    - build
-    - run
+  - init
+  - test
+  - build
+  - run
 
 before_script:
-    - export GOROOT="/opt/go"
-    - export GOPATH="/home/gitlab-runner/go"
-    - export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
-    - gmake dep
+  - export GOROOT="/opt/go"
+  - export GOPATH="/home/gitlab-runner/go"
+  - export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
 
 copy_dir:
-    stage: init
-    script:
+  stage: init
+  script:
     - gmake copy_dir
 
 unit_tests:
@@ -29,29 +28,30 @@ code_coverage:
   stage: test
   script:
     - gmake coverage
-  only:
-  - master
+#  only:
+#  - master
 
 go_report:
   stage: test
   script:
     - gmake goreport
-  only:
-  - master
+#  only:
+#  - master
 
-lint_code:
-  stage: test
-  script:
-    - gmake lint_dep
-    - gmake lint
+#lint_code:
+#  stage: test
+#  script:
+#    - gmake lint_dep
+#    - gmake lint
 
 build:
   stage: build
   script:
     - gmake
-    - if pgrep GraphQL_Cello; then killall GraphQL_Cello; fi
-    - nohup sudo $PWD/GraphQL_Cello &
+    - sudo /usr/sbin/service harp stop
+    - sudo cp $PWD/harp /bin/harp
+    - sudo chmod 755 /bin/harp
+    - sudo /usr/sbin/service harp start
     - echo "Finished"
-  only:
-  - master
-
+#  only:
+#  - master
