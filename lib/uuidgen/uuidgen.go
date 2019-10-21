@@ -7,7 +7,7 @@ import (
 )
 
 func checkDuplicateUUID(uuid string) (bool, error) {
-	sql := "select uuid from server"
+	sql := "select uuid from subnet"
 	stmt, err := mysql.Db.Query(sql)
 	if err != nil {
 		logger.Logger.Println(err)

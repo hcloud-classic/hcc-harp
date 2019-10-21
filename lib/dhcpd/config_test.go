@@ -84,6 +84,5 @@ func Test_RestartDHCPDServer(t *testing.T) {
 		logger.Logger.Printf("Error occurred while restarting dhcpd service!\n"+
 			"==> Error messages\n%s\n", err)
 		// Ignore this error because we just try for testing.
-		t.Log(err)
 	}
 }
