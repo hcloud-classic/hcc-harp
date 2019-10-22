@@ -137,11 +137,15 @@ func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNo
 }
 
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
-func CreateConfig(networkIP string, netmask string, gateway string,
+func CreateConfig(uuid string, networkIP string, netmask string, gateway string,
 	nextServer string, nameServer string,
 	domainName string, maxNodes int, nodeUUIDs []string,
 	leaderNodeUUID string, os string, name string) error {
 	var err error
+
+	if len(uuid) == 0 {
+		return errors.New("uuid is needed for make dhcpd config file")
+	}
 
 	if len(name) == 0 {
 		return errors.New("name is needed for make dhcpd config file")
@@ -242,12 +246,35 @@ func CreateConfig(networkIP string, netmask string, gateway string,
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	err = writeConfigFile(confContent, name)
+	err = writeConfigFile(confContent, uuid)
 	if err != nil {
 		return err
 	}
 
 	return err
+}
+
+func GetSubnetRange(uuid string, networkIP string, netmask string) ([]string, error) {
+	netIPnetworkIP := iputil.CheckValidIP(networkIP)
+	if netIPnetworkIP == nil {
+		return nil, errors.New("wrong network IP")
+	}
+
+	mask, err := iputil.CheckNetmask(netmask)
+	if err != nil {
+		return nil, err
+	}
+
+	ipNet := net.IPNet{
+		IP:   netIPnetworkIP,
+		Mask: mask,
+	}
+
+	firstIP, _ := cidr.AddressRange(&ipNet)
+	firstIP = cidr.Inc(firstIP)
+	lastIP := firstIP
+
+	return []string{firstIP.String(), lastIP.String()}, nil
 }
 
 // CheckLocalDHCPDConfig : Check if harp dhcpd config file is included in local dhcpd server config file
