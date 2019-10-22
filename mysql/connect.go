@@ -3,9 +3,8 @@ package mysql
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql" // Needed for connect mysql
-	"hcc/harp/lib/config"
-	"hcc/harp/lib/logger"
-	"strconv"
+	"hcc/harp/config"
+	"hcc/harp/logger"
 )
 
 // Db : Pointer of mysql connection
@@ -14,22 +13,20 @@ var Db *sql.DB
 // Prepare : Connect to mysql and prepare pointer of mysql connection
 func Prepare() error {
 	var err error
-	Db, err = sql.Open("mysql",
-		config.Mysql.ID+":"+config.Mysql.Password+"@tcp("+
-			config.Mysql.Address+":"+strconv.Itoa(int(config.Mysql.Port))+")/"+
-			config.Mysql.Database+"?parseTime=true")
-	if err != nil {
-		logger.Logger.Println(err)
-		return err
-	}
-
-	err = Db.Ping()
+	Db, err = sql.Open("mysql", config.MysqlID+":"+config.MysqlPassword+"@tcp("+
+		config.MysqlAddress+":"+config.MysqlPort+")/"+config.MysqlDatabase+"?parseTime=true")
 	if err != nil {
 		logger.Logger.Println(err)
 		return err
 	}
 
 	logger.Logger.Println("db is connected")
+
+	err = Db.Ping()
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return err
+	}
 
 	return nil
 }

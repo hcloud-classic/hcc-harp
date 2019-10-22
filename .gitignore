@@ -1,8 +1,7 @@
-harp
+GraphQL_Cello
 coverage.out
 goreport_grade
-.idea/
-.vscode/
-/vendor
-/_venodr-*
+
+.idea
+
 nohup.out
