@@ -7,6 +7,7 @@ type Subnet struct {
 	UUID           string    `json:"uuid"`
 	NetworkIP      string    `json:"network_ip"`
 	Netmask        string    `json:"netmask"`
+	Range          string    `json:"range"`
 	Gateway        string    `json:"gateway"`
 	NextServer     string    `json:"next_server"`
 	NameServer     string    `json:"name_server"`

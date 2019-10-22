@@ -47,9 +47,7 @@ func UpdateSubnet() error {
 				return
 			}
 
-			//TODO: queue get_nodes to flute module
-
-			//logger.Logger.Println("update_subnet: UUID = " + subnet.UUID + ": " + result)
+			//TODO: publish finished_update_subnet
 		}
 	}()
 
@@ -95,7 +93,7 @@ func CreateDHCPDConfig() error {
 				return
 			}
 
-			err := dhcpd.CreateConfig(subnet.NetworkIP, subnet.Netmask, subnet.Gateway,
+			err := dhcpd.CreateConfig(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway,
 				subnet.NextServer, subnet.NameServer, subnet.DomainName,
 				subnet.MaxNodes, subnet.NodeUUIDs, subnet.LeaderNodeUUID, subnet.OS, subnet.Name)
 			if err != nil {
