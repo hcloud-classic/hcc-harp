@@ -47,9 +47,6 @@ func UUIDgen() (string, error) {
 			logger.Logger.Println(err)
 			return "", err
 		}
-
-		logger.Logger.Println("UUIDgen(): Checking duplicated UUID")
-
 		found, err := checkDuplicateUUID(out.String())
 		if err != nil {
 			logger.Logger.Println(err)
