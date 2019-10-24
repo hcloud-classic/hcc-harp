@@ -4,11 +4,12 @@ import (
 	// "encoding/json"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
+	"hcc/harp/action/graphql"
 	"hcc/harp/dao"
-	"hcc/harp/model"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/model"
 	"io/ioutil"
 	"net"
 	// "net/http"
@@ -31,7 +32,7 @@ func getPXEFilename(serverUUID string) (string, error) {
 	if len(serverUUID) == 0 {
 		return "", errors.New("please provide serverUUID")
 	}
-	return model.DefaultPXEdir + "/" + serverUUID + "pxelinux.0", nil
+	return model.DefaultPXEdir + "/" + serverUUID + "/pxelinux.0", nil
 }
 
 type nodePXEMACAddr struct {
@@ -82,8 +83,12 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 */
 
 func getPXEMACAddress(nodeUUID string) (string, error) {
-	/////////////flute
-	return "", nil
+	nodePXEMACAddress, err := graphql.GetNodePXEMACAddress(nodeUUID)
+	if err != nil {
+		return "", err
+	}
+
+	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
 }
 
 func writeFile(fileLocation string, input string) error {
@@ -260,7 +265,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string,
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	err = writeConfigFile(confContent, subnetUUID)
+	err = writeConfigFile(confContent, subnet.ServerUUID)
 	if err != nil {
 		return err
 	}
@@ -336,7 +341,6 @@ func UpdateHarpDHCPDConfig() error {
 	var allIncludeLines = ""
 	for _, filename := range configFiles {
 		if strings.Contains(filename, "harp_dhcpd.conf") ||
-			strings.Contains(filename, "test") ||
 			filename == config.DHCPD.ConfigFileLocation {
 			continue
 		}
