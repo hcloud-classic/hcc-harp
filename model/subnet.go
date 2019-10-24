@@ -23,7 +23,7 @@ type Subnets struct {
 	Subnets []Subnet `json:"subnet"`
 }
 
-// ServerNum - cgs
+// SubnetNum - cgs
 type SubnetNum struct {
 	Number int `json:"number"`
 }
