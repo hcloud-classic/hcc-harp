@@ -46,12 +46,12 @@ func Test_CreateConfig(t *testing.T) {
 		"b9e43600-b4c8-11e8-906e-000ffee02d5c",
 		"18aada80-b696-11e8-906e-000ffee02d5c"}
 
-	err := CreateConfig("0ac56231-a0ee-4323-55ad-37c08c2d4a78", nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test1")
+	err := CreateConfig("0ac56231-a0ee-4323-55ad-37c08c2d4a78", nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "test1")
 	if err != nil {
 		t.Log(err)
 	}
 
-	err = CreateConfig("1f16b53e-082d-4e82-75da-7874ff59d82a", nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test2")
+	err = CreateConfig("1f16b53e-082d-4e82-75da-7874ff59d82a", nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "test2")
 	if err != nil {
 		t.Log(err)
 	}

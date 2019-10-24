@@ -147,8 +147,7 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 }
 
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
-func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string,
-	os string, subnetName string) error {
+func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, subnetName string) error {
 	var err error
 
 	if len(subnetUUID) == 0 {
