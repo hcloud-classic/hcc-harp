@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"errors"
+	"fmt"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/uuidgen"
@@ -273,8 +275,6 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 
 // UpdateSubnet - cgs
 func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
-	var err error
-
 	requestedUUID, requestedUUIDOk := args["uuid"].(string)
 	networkIP, networkIPOk := args["network_ip"].(string)
 	netmask, netmaskOk := args["netmask"].(string)
@@ -282,7 +282,7 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	nextServer, nextServerOk := args["next_server"].(string)
 	nameServer, nameServerOk := args["name_server"].(string)
 	domainName, domainNameOk := args["domain_name"].(string)
-	serverUUID, serverUUIDOk := args["sever_uuid"].(string)
+	serverUUID, serverUUIDOk := args["server_uuid"].(string)
 	leaderNodeUUID, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
@@ -302,7 +302,7 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 
 	if requestedUUIDOk {
 		if !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk {
-			return nil, nil
+			return nil, errors.New("need some arguments")
 		}
 
 		sql := "update subnet set"
@@ -385,7 +385,7 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 		return subnet, nil
 	}
 
-	return nil, err
+	return nil, errors.New("need uuid argument")
 }
 
 // DeleteSubnet - cgs

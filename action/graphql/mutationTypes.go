@@ -94,7 +94,6 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					logger.Logger.Print(err)
 					return nil, err
 				}
-				// TODO: CreateSubnet
 
 				return subnet, nil
 			},
