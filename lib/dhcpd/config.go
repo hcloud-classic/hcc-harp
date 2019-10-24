@@ -21,7 +21,6 @@ import (
 	// "time"
 )
 
-
 type nodeEntries struct {
 	PXEMACAddress string
 	IP            string
@@ -162,7 +161,6 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 		return err
 	}
 
-
 	var subnet = subnetInterface.(model.Subnet)
 
 	if len(subnet.SubnetName) == 0 {
@@ -198,7 +196,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 	if netIPnameServer == nil {
 		return errors.New("wrong name server IP")
 	}
-	
+
 	err = CheckNodeUUIDs(ipNet, nodeUUIDs, leaderNodeUUID)
 	if err != nil {
 		return err

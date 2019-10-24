@@ -151,7 +151,7 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 	defer func() {
-		_= stmt.Close()
+		_ = stmt.Close()
 	}()
 
 	for stmt.Next() {
@@ -251,8 +251,6 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		OS:             args["os"].(string),
 		SubnetName:     args["subnet_name"].(string),
 	}
-	
-	
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)

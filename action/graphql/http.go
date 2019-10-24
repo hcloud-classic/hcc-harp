@@ -25,8 +25,8 @@ func GetNodePXEMACAddress(nodeUUID string) (NodeData, error) {
 	var nodePXEMACAddressData NodeData
 
 	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
-	req, err := http.NewRequest("GET", "http://" + config.Flute.ServerAddress + ":" + strconv.Itoa(int(config.Flute.ServerPort)) +
-		"/graphql?query=query%20%7B%0A%20%20node(uuid%3A%20%22" +nodeUUID+ "%22)%20%7B%0A%20%20%20%20pxe_mac_addr%0A%20%20%7D%0A%7D", nil)
+	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+
+		"/graphql?query=query%20%7B%0A%20%20node(uuid%3A%20%22"+nodeUUID+"%22)%20%7B%0A%20%20%20%20pxe_mac_addr%0A%20%20%7D%0A%7D", nil)
 
 	if err != nil {
 		return nodePXEMACAddressData, err
