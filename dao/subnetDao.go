@@ -3,6 +3,7 @@ package dao
 import (
 	"errors"
 	"fmt"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/uuidgen"
@@ -286,6 +287,21 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	leaderNodeUUID, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
+
+	// TODO: Get UUIDs of nodes by algorithm
+	var nodeUUIDs = []string{
+		"18aada80-b696-11e8-906e-000ffee02d5c",
+		"48d08a00-b652-11e8-906e-000ffee02d5c"}
+
+	err := dhcpd.CreateConfig(requestedUUID, nodeUUIDs, nodeUUIDs[0], subnetName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dhcpd.RestartDHCPDServer()
+	if err != nil {
+		return nil, err
+	}
 
 	subnet := new(model.Subnet)
 	subnet.UUID = requestedUUID
