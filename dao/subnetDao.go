@@ -12,7 +12,6 @@ import (
 func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	var subnet model.Subnet
 
-	var err error
 	uuid := args["uuid"].(string)
 	var networkIP string
 	var netmask string
@@ -26,9 +25,8 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	var subnetName string
 	var createdAt time.Time
 
-	sql := "select * from subnet where uuid = ?"
-	err = mysql.Db.QueryRow(sql, uuid).Scan(
-		&uuid,
+	sql := "select network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
+	err := mysql.Db.QueryRow(sql, uuid).Scan(
 		&networkIP,
 		&netmask,
 		&gateway,
@@ -85,7 +83,7 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	sql := "select * from subnet where"
+	sql := "select * from subnet where 1 = 1 and "
 
 	if networkIPOk {
 		sql += " network_ip = '" + networkIP + "'"
@@ -152,7 +150,9 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		logger.Logger.Println(err.Error())
 		return nil, err
 	}
-	defer stmt.Close()
+	defer func() {
+		_= stmt.Close()
+	}()
 
 	for stmt.Next() {
 		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
@@ -196,7 +196,9 @@ func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 		logger.Logger.Println(err.Error())
 		return nil, err
 	}
-	defer stmt.Close()
+	defer func() {
+		_ = stmt.Close()
+	}()
 
 	for stmt.Next() {
 		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
@@ -249,6 +251,8 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		OS:             args["os"].(string),
 		SubnetName:     args["subnet_name"].(string),
 	}
+	
+	
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
@@ -256,7 +260,9 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		logger.Logger.Println(err.Error())
 		return nil, err
 	}
-	defer stmt.Close()
+	defer func() {
+		_ = stmt.Close()
+	}()
 	result, err := stmt.Exec(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.ServerUUID, subnet.LeaderNodeUUID, subnet.OS, subnet.SubnetName)
 	if err != nil {
 		logger.Logger.Println(err)
@@ -368,7 +374,9 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 			logger.Logger.Println(err.Error())
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			_ = stmt.Close()
+		}()
 
 		result, err2 := stmt.Exec(subnet.UUID)
 		if err2 != nil {
@@ -394,7 +402,9 @@ func DeleteSubnet(args map[string]interface{}) (interface{}, error) {
 			logger.Logger.Println(err.Error())
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			_ = stmt.Close()
+		}()
 		result, err2 := stmt.Exec(requestedUUID)
 		if err2 != nil {
 			logger.Logger.Println(err2)

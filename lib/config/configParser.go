@@ -55,34 +55,6 @@ func parseHTTP() {
 	}
 }
 
-func parseRabbitMQ() {
-	config.RabbitMQConfig = conf.Get("rabbitmq")
-	if config.RabbitMQConfig == nil {
-		logger.Logger.Panicln("no rabbitmq section")
-	}
-
-	RabbitMQ = rabbitmq{}
-	RabbitMQ.ID, err = config.RabbitMQConfig.String("rabbitmq_id")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	RabbitMQ.Password, err = config.RabbitMQConfig.String("rabbitmq_password")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	RabbitMQ.Address, err = config.RabbitMQConfig.String("rabbitmq_address")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	RabbitMQ.Port, err = config.RabbitMQConfig.Int("rabbitmq_port")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-}
-
 func parseFlute() {
 	config.FluteConfig = conf.Get("flute")
 	if config.FluteConfig == nil {
@@ -176,7 +148,6 @@ func Parser() {
 
 	parseMysql()
 	parseHTTP()
-	parseRabbitMQ()
 	parseFlute()
 	parseViolin()
 	parseDHCPD()

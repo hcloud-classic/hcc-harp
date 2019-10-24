@@ -89,7 +89,14 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				logger.Logger.Println("Resolving: update_subnet")
-				return dao.UpdateSubnet(params.Args)
+				subnet, err := dao.UpdateSubnet(params.Args)
+				if err != nil {
+					logger.Logger.Print(err)
+					return nil, err
+				}
+				// TODO: CreateSubnet
+
+				return subnet, nil
 			},
 		},
 		"delete_subnet": &graphql.Field{
