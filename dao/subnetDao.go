@@ -2,7 +2,6 @@ package dao
 
 import (
 	"errors"
-	"fmt"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
