@@ -210,7 +210,7 @@ func ConfigReadSubnet(args map[string]interface{}) (interface{}, error) {
 	var domainName string
 	var serverUUID string
 	var leaderNodeUUID string
-	var os string
+	var _os string
 	var subnetName string
 	var createdAt time.Time
 
@@ -224,7 +224,7 @@ func ConfigReadSubnet(args map[string]interface{}) (interface{}, error) {
 		&domainName,
 		&serverUUID,
 		&leaderNodeUUID,
-		&os,
+		&_os,
 		&subnetName,
 		&createdAt)
 	if err != nil {
@@ -241,7 +241,7 @@ func ConfigReadSubnet(args map[string]interface{}) (interface{}, error) {
 	subnet.DomainName = domainName
 	subnet.ServerUUID = serverUUID
 	subnet.LeaderNodeUUID = leaderNodeUUID
-	subnet.OS = os
+	subnet.OS = _os
 	subnet.SubnetName = subnetName
 	subnet.CreatedAt = createdAt
 
