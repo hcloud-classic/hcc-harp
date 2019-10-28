@@ -373,30 +373,6 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 	return err
 }
 
-// GetSubnetRange : Get subnet range (Currently not used)
-func GetSubnetRange(uuid string, networkIP string, netmask string) ([]string, error) {
-	netIPnetworkIP := iputil.CheckValidIP(networkIP)
-	if netIPnetworkIP == nil {
-		return nil, errors.New("wrong network IP")
-	}
-
-	mask, err := iputil.CheckNetmask(netmask)
-	if err != nil {
-		return nil, err
-	}
-
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
-	}
-
-	firstIP, _ := cidr.AddressRange(&ipNet)
-	firstIP = cidr.Inc(firstIP)
-	lastIP := firstIP
-
-	return []string{firstIP.String(), lastIP.String()}, nil
-}
-
 // CheckLocalDHCPDConfig : Check if harp dhcpd config file is included in local dhcpd server config file
 func CheckLocalDHCPDConfig() error {
 	include := includeStr
