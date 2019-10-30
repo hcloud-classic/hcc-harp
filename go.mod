@@ -10,6 +10,5 @@ require (
 	github.com/graphql-go/handler v0.2.3
 	github.com/mactsouk/go v0.0.0-20180603081621-6a282087f7bd // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	google.golang.org/appengine v1.6.5 // indirect
 )

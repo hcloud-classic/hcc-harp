@@ -1,10 +1,10 @@
 package dao
 
 import (
+	gouuid "github.com/nu7hatch/gouuid"
 	"errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/lib/uuidgen"
 	"hcc/harp/model"
 	"time"
 )
@@ -233,11 +233,12 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 
 // CreateSubnet - cgs
 func CreateSubnet(args map[string]interface{}) (interface{}, error) {
-	uuid, err := uuidgen.UUIDgen()
+	out, err := gouuid.NewV4()
 	if err != nil {
-		logger.Logger.Println("Failed to generate uuid!")
+		logger.Logger.Println(err)
 		return nil, err
 	}
+	uuid := out.String()
 
 	subnet := model.Subnet{
 		UUID:           uuid,
