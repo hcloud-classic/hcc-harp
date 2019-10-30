@@ -1,8 +1,8 @@
 package dao
 
 import (
-	gouuid "github.com/nu7hatch/gouuid"
 	"errors"
+	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"

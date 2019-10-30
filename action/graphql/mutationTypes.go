@@ -139,7 +139,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 
 				err = dhcpd.RestartDHCPDServer()
 				if err != nil {
-					logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName +")")
+					logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
 					return nil, err
 				}
 
