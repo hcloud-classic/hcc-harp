@@ -197,10 +197,64 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
+func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string) error {
+	confContent := confBase
+	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", subnet.NameServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", subnet.DomainName, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", subnet.Gateway, -1)
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
+
+	nextIP := cidr.Inc(firstIP)
+
+	var nodeEntryConfPart = ""
+	for i, uuid := range nodeUUIDs {
+		pxeMacAddr, err := getPXEMACAddress(uuid)
+		if err != nil {
+			return err
+		}
+		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
+
+		var node = new(nodeEntries)
+		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
+		node.PXEMACAddress = pxeMacAddr
+		if uuid == subnet.LeaderNodeUUID {
+			node.IP = firstIP.String()
+		} else {
+			node.IP = nextIP.String()
+			nextIP = cidr.Inc(nextIP)
+		}
+
+		var nodeConfPart = nodeEntry
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
+		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
+
+		nodeEntryConfPart += nodeConfPart
+	}
+
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
+
+	err := writeConfigFile(confContent, subnet.ServerUUID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
 func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
-	var err error
-
 	if len(subnetUUID) == 0 {
 		return errors.New("subnetUUID is needed for make dhcpd config file")
 	}
@@ -267,59 +321,12 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		lastIP = cidr.Inc(lastIP)
 	}
 
-	confContent := confBase
-	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
-
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
-
-	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", subnet.NameServer, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", subnet.DomainName, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", subnet.Gateway, -1)
-
-	confContent = strings.Replace(confContent, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_MAX_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MaxLeaseTime)), -1)
-
-	nextIP := cidr.Inc(firstIP)
-
-	var nodeEntryConfPart = ""
-	for i, uuid := range nodeUUIDs {
-		pxeMacAddr, err := getPXEMACAddress(uuid)
-		if err != nil {
-			return err
-		}
-		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
-
-		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
-		node.PXEMACAddress = pxeMacAddr
-		if uuid == subnet.LeaderNodeUUID {
-			node.IP = firstIP.String()
-		} else {
-			node.IP = nextIP.String()
-			nextIP = cidr.Inc(nextIP)
-		}
-
-		var nodeConfPart = nodeEntry
-		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
-		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
-		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
-
-		nodeEntryConfPart += nodeConfPart
-	}
-
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
-
-	err = writeConfigFile(confContent, subnet.ServerUUID)
+	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs)
 	if err != nil {
-		return err
+		return nil
 	}
 
-	return err
+	return nil
 }
 
 // CheckLocalDHCPDConfig : Check if harp dhcpd config file is included in local dhcpd server config file
