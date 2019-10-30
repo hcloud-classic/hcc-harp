@@ -2,7 +2,6 @@ package dao
 
 import (
 	"errors"
-	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/uuidgen"
@@ -12,7 +11,53 @@ import (
 
 // ReadSubnet - cgs
 func ReadSubnet(args map[string]interface{}) (interface{}, error) {
-	return dhcpd.ConfigReadSubnet(args)
+	var subnet model.Subnet
+
+	uuid := args["uuid"].(string)
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var serverUUID string
+	var leaderNodeUUID string
+	var _os string
+	var subnetName string
+	var createdAt time.Time
+
+	sql := "select network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
+	err := mysql.Db.QueryRow(sql, uuid).Scan(
+		&networkIP,
+		&netmask,
+		&gateway,
+		&nextServer,
+		&nameServer,
+		&domainName,
+		&serverUUID,
+		&leaderNodeUUID,
+		&_os,
+		&subnetName,
+		&createdAt)
+	if err != nil {
+		logger.Logger.Println(err)
+		return nil, err
+	}
+
+	subnet.UUID = uuid
+	subnet.NetworkIP = networkIP
+	subnet.Netmask = netmask
+	subnet.Gateway = gateway
+	subnet.NextServer = nextServer
+	subnet.NameServer = nameServer
+	subnet.DomainName = domainName
+	subnet.ServerUUID = serverUUID
+	subnet.LeaderNodeUUID = leaderNodeUUID
+	subnet.OS = _os
+	subnet.SubnetName = subnetName
+	subnet.CreatedAt = createdAt
+
+	return subnet, nil
 }
 
 // ReadSubnetList - cgs
@@ -240,21 +285,6 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	leaderNodeUUID, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
-
-	// TODO: Get UUIDs of nodes by algorithm
-	var nodeUUIDs = []string{
-		"18aada80-b696-11e8-906e-000ffee02d5c",
-		"48d08a00-b652-11e8-906e-000ffee02d5c"}
-
-	err := dhcpd.CreateConfig(requestedUUID, nodeUUIDs, nodeUUIDs[0], subnetName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = dhcpd.RestartDHCPDServer()
-	if err != nil {
-		return nil, err
-	}
 
 	subnet := new(model.Subnet)
 	subnet.UUID = requestedUUID

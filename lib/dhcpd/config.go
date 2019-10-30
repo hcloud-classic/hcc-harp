@@ -2,7 +2,7 @@ package dhcpd
 
 import (
 	"encoding/json"
-	"hcc/harp/lib/mysql"
+	"hcc/harp/dao"
 	"net/http"
 	"time"
 
@@ -32,18 +32,18 @@ type nodeEntries struct {
 
 func getPXEFilename(serverUUID string) (string, error) {
 	if len(serverUUID) == 0 {
-		return "", errors.New("please provide serverUUID")
+		return "", errors.New("failed to get server UUID")
 	}
 	return model.DefaultPXEdir + "/" + serverUUID + "/pxelinux.0", nil
 }
 
-type nodePXEMACAddr struct {
-	Data struct {
-		Node struct {
-			PxeMacAddr string `json:"pxe_mac_addr"`
-		} `json:"node"`
-	} `json:"data"`
-}
+//type nodePXEMACAddr struct {
+//	Data struct {
+//		Node struct {
+//			PxeMacAddr string `json:"pxe_mac_addr"`
+//		} `json:"node"`
+//	} `json:"data"`
+//}
 
 /*
 func getPXEMACAddress(nodeUUID string) (string, error) {
@@ -197,59 +197,8 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
-// ConfigReadSubnet : Get subnet info
-func ConfigReadSubnet(args map[string]interface{}) (interface{}, error) {
-	var subnet model.Subnet
-
-	uuid := args["uuid"].(string)
-	var networkIP string
-	var netmask string
-	var gateway string
-	var nextServer string
-	var nameServer string
-	var domainName string
-	var serverUUID string
-	var leaderNodeUUID string
-	var _os string
-	var subnetName string
-	var createdAt time.Time
-
-	sql := "select network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
-	err := mysql.Db.QueryRow(sql, uuid).Scan(
-		&networkIP,
-		&netmask,
-		&gateway,
-		&nextServer,
-		&nameServer,
-		&domainName,
-		&serverUUID,
-		&leaderNodeUUID,
-		&_os,
-		&subnetName,
-		&createdAt)
-	if err != nil {
-		logger.Logger.Println(err)
-		return nil, err
-	}
-
-	subnet.UUID = uuid
-	subnet.NetworkIP = networkIP
-	subnet.Netmask = netmask
-	subnet.Gateway = gateway
-	subnet.NextServer = nextServer
-	subnet.NameServer = nameServer
-	subnet.DomainName = domainName
-	subnet.ServerUUID = serverUUID
-	subnet.LeaderNodeUUID = leaderNodeUUID
-	subnet.OS = _os
-	subnet.SubnetName = subnetName
-	subnet.CreatedAt = createdAt
-
-	return subnet, nil
-}
-
 // CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
-func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, subnetName string) error {
+func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	var err error
 
 	if len(subnetUUID) == 0 {
@@ -259,7 +208,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 	args := make(map[string]interface{})
 	args["uuid"] = subnetUUID
 
-	subnetInterface, err := ConfigReadSubnet(args)
+	subnetInterface, err := dao.ReadSubnet(args)
 	if err != nil {
 		return err
 	}
@@ -300,7 +249,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 		return errors.New("wrong name server IP")
 	}
 
-	err = CheckNodeUUIDs(ipNet, nodeUUIDs, leaderNodeUUID)
+	err = CheckNodeUUIDs(ipNet, nodeUUIDs, subnet.LeaderNodeUUID)
 	if err != nil {
 		return err
 	}
@@ -346,9 +295,9 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string, leaderNodeUUID string, 
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + subnetName
+		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
 		node.PXEMACAddress = pxeMacAddr
-		if uuid == leaderNodeUUID {
+		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
 		} else {
 			node.IP = nextIP.String()

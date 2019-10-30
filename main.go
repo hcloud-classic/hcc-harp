@@ -3,6 +3,7 @@ package main
 import (
 	"hcc/harp/action/graphql"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/syscheck"
@@ -23,8 +24,12 @@ func main() {
 	}()
 
 	config.Parser()
+	err := dhcpd.CheckLocalDHCPDConfig()
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 
-	err := mysql.Prepare()
+	err = mysql.Prepare()
 	if err != nil {
 		return
 	}
