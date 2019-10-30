@@ -60,6 +60,13 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
+func checkReadSubnetListPageRow(args map[string]interface{}) bool {
+	_, rowOk := args["row"].(int)
+	_, pageOk := args["page"].(int)
+
+	return !rowOk || !pageOk
+}
+
 // ReadSubnetList - cgs
 func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	var err error
@@ -78,70 +85,43 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
 
-	row, rowOk := args["row"].(int)
-	page, pageOk := args["page"].(int)
-	if !rowOk || !pageOk {
+	row, _ := args["row"].(int)
+	page, _ := args["page"].(int)
+	if checkReadSubnetListPageRow(args) {
 		return nil, err
 	}
 
-	sql := "select * from subnet where 1 = 1 and "
+	sql := "select * from subnet where 1=1"
 
 	if networkIPOk {
-		sql += " network_ip = '" + networkIP + "'"
-		if netmaskOk || gatewayOk || nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and network_ip = '" + networkIP + "'"
 	}
 	if netmaskOk {
-		sql += " netmask = '" + netmask + "'"
-		if gatewayOk || nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and netmask = '" + netmask + "'"
 	}
 	if gatewayOk {
-		sql += " gateway = '" + gateway + "'"
-		if nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and gateway = '" + gateway + "'"
 	}
 	if nextServerOk {
-		sql += " next_server = '" + nextServer + "'"
-		if nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and next_server = '" + nextServer + "'"
 	}
 	if nameServerOk {
-		sql += " name_server = '" + nameServer + "'"
-		if domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and name_server = '" + nameServer + "'"
 	}
 	if domainNameOk {
-		sql += " domain_name = '" + domainName + "'"
-		if serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and domain_name = '" + domainName + "'"
 	}
 	if serverUUIDOk {
-		sql += " server_uuid = '" + serverUUID + "'"
-		if leaderNodeUUIDOk || osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and server_uuid = '" + serverUUID + "'"
 	}
 	if leaderNodeUUIDOk {
-		sql += " leader_node_uuid = '" + leaderNodeUUID + "'"
-		if osOk || subnetNameOk {
-			sql += " and"
-		}
+		sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
 	}
 	if osOk {
-		sql += " os = '" + os + "'"
-		if subnetNameOk {
-			sql += " and"
-		}
+		sql += " and os = '" + os + "'"
 	}
 	if subnetNameOk {
-		sql += " subnet_name = '" + subnetName + "'"
+		sql += " and subnet_name = '" + subnetName + "'"
 	}
 
 	sql += " order by created_at desc limit ? offset ?"
@@ -273,6 +253,21 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
+func checkUpdateSubnetArgs(args map[string]interface{}) bool {
+	_, networkIPOk := args["network_ip"].(string)
+	_, netmaskOk := args["netmask"].(string)
+	_, gatewayOk := args["gateway"].(string)
+	_, nextServerOk := args["next_server"].(string)
+	_, nameServerOk := args["name_server"].(string)
+	_, domainNameOk := args["domain_name"].(string)
+	_, serverUUIDOk := args["server_uuid"].(string)
+	_, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
+	_, osOk := args["os"].(string)
+	_, subnetNameOk := args["subnet_name"].(string)
+
+	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
+}
+
 // UpdateSubnet - cgs
 func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	requestedUUID, requestedUUIDOk := args["uuid"].(string)
@@ -301,69 +296,43 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	subnet.SubnetName = subnetName
 
 	if requestedUUIDOk {
-		if !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk {
+		if checkUpdateSubnetArgs(args) {
 			return nil, errors.New("need some arguments")
 		}
 
 		sql := "update subnet set"
+		var updateSet = ""
 		if networkIPOk {
-			sql += " network_ip = '" + subnet.NetworkIP + "'"
-			if netmaskOk || gatewayOk || nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " network_ip = '" + subnet.NetworkIP + "', "
 		}
 		if netmaskOk {
-			sql += " netmask = '" + subnet.Netmask + "'"
-			if gatewayOk || nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " netmask = '" + subnet.Netmask + "', "
 		}
 		if gatewayOk {
-			sql += " gateway = '" + subnet.Gateway + "'"
-			if nextServerOk || nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " gateway = '" + subnet.Gateway + "', "
 		}
 		if nextServerOk {
-			sql += " next_server = '" + subnet.NextServer + "'"
-			if nameServerOk || domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " next_server = '" + subnet.NextServer + "', "
 		}
 		if nameServerOk {
-			sql += " name_server = '" + subnet.NameServer + "'"
-			if domainNameOk || serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " name_server = '" + subnet.NameServer + "', "
 		}
 		if domainNameOk {
-			sql += " domain_name = '" + subnet.DomainName + "'"
-			if serverUUIDOk || leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " domain_name = '" + subnet.DomainName + "', "
 		}
 		if serverUUIDOk {
-			sql += " server_uuid = '" + subnet.ServerUUID + "'"
-			if leaderNodeUUIDOk || osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
 		}
 		if leaderNodeUUIDOk {
-			sql += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "'"
-			if osOk || subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
 		}
 		if osOk {
-			sql += " os = '" + subnet.OS + "'"
-			if subnetNameOk {
-				sql += ", "
-			}
+			updateSet += " os = '" + subnet.OS + "', "
 		}
 		if subnetNameOk {
-			sql += " subnet_name = '" + subnet.SubnetName
+			updateSet += " subnet_name = '" + subnet.SubnetName + "', "
 		}
-		sql += " where uuid = ?"
+		sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
 
 		logger.Logger.Println("update_subnet sql : ", sql)
 
