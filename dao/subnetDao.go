@@ -69,7 +69,6 @@ func checkReadSubnetListPageRow(args map[string]interface{}) bool {
 
 // ReadSubnetList - cgs
 func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
-	var err error
 	var subnets []model.Subnet
 	var uuid string
 	var createdAt time.Time
@@ -88,7 +87,7 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	row, _ := args["row"].(int)
 	page, _ := args["page"].(int)
 	if checkReadSubnetListPageRow(args) {
-		return nil, err
+		return nil, errors.New("need row and page arguments")
 	}
 
 	sql := "select * from subnet where 1=1"
@@ -149,7 +148,6 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 
 // ReadSubnetAll - cgs
 func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
-
 	var err error
 	var subnets []model.Subnet
 	var uuid string
