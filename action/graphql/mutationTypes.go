@@ -137,6 +137,11 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 					return nil, err
 				}
 
+				err = dhcpd.UpdateHarpDHCPDConfig()
+				if err != nil {
+					return nil, err
+				}
+
 				err = dhcpd.RestartDHCPDServer()
 				if err != nil {
 					logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
