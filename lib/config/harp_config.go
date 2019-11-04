@@ -48,7 +48,7 @@ violin_request_timeout_ms 5000
 [dhcpd]
 dhcpd_local_dhcpd_service_name isc-dhcpd
 dhcpd_local_config_file_location /usr/local/etc/dhcpd.conf
-dhcpd_config_file_location /etc/harp/dhcpd
+dhcpd_config_file_location /etc/hcc/harp/dhcpd
 dhcpd_min_lease_time 1200
 dhcpd_default_lease_time 1800
 dhcpd_max_lease_time 3600
@@ -58,6 +58,6 @@ arping_iface_name eno1
 
 [adaptiveip]
 adaptiveip_pf_local_config_file_location /etc/pf.rules
-adaptiveip_pf_config_file_location /etc/harp/pf
+adaptiveip_pf_config_file_location /etc/hcc/harp/pf
 
 -----------------------------------*/
