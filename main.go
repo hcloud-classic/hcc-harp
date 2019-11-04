@@ -33,6 +33,10 @@ func main() {
 		logger.Logger.Panicln(err)
 	}
 
+	if !syscheck.CheckIfaceExist(config.ARPING.IfaceName) {
+		return
+	}
+
 	err = mysql.Prepare()
 	if err != nil {
 		return

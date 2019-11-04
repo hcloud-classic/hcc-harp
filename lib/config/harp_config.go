@@ -11,6 +11,7 @@ type harpConfig struct {
 	FluteConfig    *goconf.Section
 	ViolinConfig   *goconf.Section
 	DHCPDConfig    *goconf.Section
+	ARPINGConfig   *goconf.Section
 }
 
 /*-----------------------------------
@@ -50,4 +51,7 @@ dhcpd_config_file_location /etc/harp/dhcpd
 dhcpd_min_lease_time 1200
 dhcpd_default_lease_time 1800
 dhcpd_max_lease_time 3600
+
+[arping]
+arping_iface_name eno1
 -----------------------------------*/

@@ -140,6 +140,20 @@ func parseDHCPD() {
 	}
 }
 
+func parseARPING() {
+	config.ARPINGConfig = conf.Get("arping")
+	if config.ARPINGConfig == nil {
+		logger.Logger.Panicln("no arping section")
+	}
+
+	ARPING = arping{}
+
+	ARPING.IfaceName, err = config.ARPINGConfig.String("arping_iface_name")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 // Parser : Parse config file
 func Parser() {
 	if err = conf.Parse(configLocation); err != nil {
@@ -151,4 +165,5 @@ func Parser() {
 	parseFlute()
 	parseViolin()
 	parseDHCPD()
+	parseARPING()
 }
