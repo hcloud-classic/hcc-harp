@@ -16,6 +16,10 @@ func main() {
 		return
 	}
 
+	if !syscheck.CheckArpingCommand() {
+		return
+	}
+
 	if !logger.Prepare() {
 		return
 	}
