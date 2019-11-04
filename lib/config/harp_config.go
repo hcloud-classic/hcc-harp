@@ -5,13 +5,14 @@ import "github.com/Terry-Mao/goconf"
 var configLocation = "/etc/hcc/harp/harp.conf"
 
 type harpConfig struct {
-	MysqlConfig    *goconf.Section
-	HTTPConfig     *goconf.Section
-	RabbitMQConfig *goconf.Section
-	FluteConfig    *goconf.Section
-	ViolinConfig   *goconf.Section
-	DHCPDConfig    *goconf.Section
-	ARPINGConfig   *goconf.Section
+	MysqlConfig      *goconf.Section
+	HTTPConfig       *goconf.Section
+	RabbitMQConfig   *goconf.Section
+	FluteConfig      *goconf.Section
+	ViolinConfig     *goconf.Section
+	DHCPDConfig      *goconf.Section
+	ARPINGConfig     *goconf.Section
+	AdaptiveIPConfig *goconf.Section
 }
 
 /*-----------------------------------
@@ -54,4 +55,9 @@ dhcpd_max_lease_time 3600
 
 [arping]
 arping_iface_name eno1
+
+[adaptiveip]
+adaptiveip_pf_local_config_file_location /etc/pf.rules
+adaptiveip_pf_config_file_location /etc/harp/pf
+
 -----------------------------------*/

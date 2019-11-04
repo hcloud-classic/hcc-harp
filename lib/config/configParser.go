@@ -154,6 +154,25 @@ func parseARPING() {
 	}
 }
 
+func parseAdaptiveIP() {
+	config.AdaptiveIPConfig = conf.Get("adaptiveip")
+	if config.AdaptiveIPConfig == nil {
+		logger.Logger.Panicln("no adaptiveip section")
+	}
+
+	AdaptiveIP = adaptiveIP{}
+
+	AdaptiveIP.PFLocalConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_local_config_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PFConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_config_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 // Parser : Parse config file
 func Parser() {
 	if err = conf.Parse(configLocation); err != nil {
@@ -166,4 +185,5 @@ func Parser() {
 	parseViolin()
 	parseDHCPD()
 	parseARPING()
+	parseAdaptiveIP()
 }

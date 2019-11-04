@@ -2,6 +2,7 @@ package main
 
 import (
 	"hcc/harp/action/graphql"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
@@ -29,6 +30,10 @@ func main() {
 
 	config.Parser()
 	err := dhcpd.CheckLocalDHCPDConfig()
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+	err = adaptiveip.CheckLocalPFConfig()
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
