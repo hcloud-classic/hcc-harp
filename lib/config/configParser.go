@@ -140,20 +140,6 @@ func parseDHCPD() {
 	}
 }
 
-func parseARPING() {
-	config.ARPINGConfig = conf.Get("arping")
-	if config.ARPINGConfig == nil {
-		logger.Logger.Panicln("no arping section")
-	}
-
-	ARPING = arping{}
-
-	ARPING.IfaceName, err = config.ARPINGConfig.String("arping_iface_name")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-}
-
 func parseAdaptiveIP() {
 	config.AdaptiveIPConfig = conf.Get("adaptiveip")
 	if config.AdaptiveIPConfig == nil {
@@ -161,6 +147,11 @@ func parseAdaptiveIP() {
 	}
 
 	AdaptiveIP = adaptiveIP{}
+
+	AdaptiveIP.ExternalIfaceName, err = config.AdaptiveIPConfig.String("adaptiveip_external_iface_name")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
 
 	AdaptiveIP.PFLocalConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_local_config_file_location")
 	if err != nil {
@@ -184,6 +175,5 @@ func Parser() {
 	parseFlute()
 	parseViolin()
 	parseDHCPD()
-	parseARPING()
 	parseAdaptiveIP()
 }

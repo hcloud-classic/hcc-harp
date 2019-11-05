@@ -53,10 +53,8 @@ dhcpd_min_lease_time 1200
 dhcpd_default_lease_time 1800
 dhcpd_max_lease_time 3600
 
-[arping]
-arping_iface_name eno1
-
 [adaptiveip]
+adaptiveip_external_iface_name eno1
 adaptiveip_pf_local_config_file_location /etc/pf.rules
 adaptiveip_pf_config_file_location /etc/hcc/harp/pf
 

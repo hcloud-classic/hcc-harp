@@ -38,7 +38,7 @@ func main() {
 		logger.Logger.Panicln(err)
 	}
 
-	if !syscheck.CheckIfaceExist(config.ARPING.IfaceName) {
+	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
 		return
 	}
 
