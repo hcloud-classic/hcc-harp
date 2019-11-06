@@ -39,7 +39,7 @@ func checkPFBaseConfig() error {
 	if isHarpbinatanchorRelaceStringIncluded {
 		lineCheckOk := scanText == harpBinatanchorRelaceString
 		if !lineCheckOk {
-			commented, err := regexp.MatchString("#[ ]+" +harpBinatanchorRelaceString, scanText)
+			commented, err := regexp.MatchString("#[ ]+"+harpBinatanchorRelaceString, scanText)
 			if err != nil {
 				return err
 			}
@@ -53,8 +53,8 @@ func checkPFBaseConfig() error {
 		return errors.New("cannot find binat anchor replace string from pf base config file")
 	}
 
-	if err := scanner.Err()
-	err != nil {
+	err = scanner.Err()
+	if err != nil {
 		return err
 	}
 

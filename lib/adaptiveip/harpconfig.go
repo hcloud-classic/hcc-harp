@@ -45,7 +45,7 @@ func checkHarpConfigNetwork() error {
 		return err
 	}
 
-	ipRangeCount, err  := iputil.GetIPRangeCount(netStartIP, netEndIP)
+	ipRangeCount, err := iputil.GetIPRangeCount(netStartIP, netEndIP)
 	if err != nil {
 		return err
 	}
