@@ -83,7 +83,7 @@ func replaceBaseConfigBinatAnchorString() error {
 
 	netStartIP := iputil.CheckValidIP(config.AdaptiveIP.PublicStartIP)
 	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
-	_, ipRangeCount := iputil.GetIPRangeCount(netStartIP, netEndIP)
+	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	var binatanchorConfPart = ""
 	for i := 0; i < ipRangeCount; i++ {
