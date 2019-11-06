@@ -21,10 +21,6 @@ func main() {
 		return
 	}
 
-	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
-		return
-	}
-
 	if !logger.Prepare() {
 		return
 	}
@@ -33,6 +29,9 @@ func main() {
 	}()
 
 	config.Parser()
+	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
+		return
+	}
 	err := dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		logger.Logger.Panicln(err)
