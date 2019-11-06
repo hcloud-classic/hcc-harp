@@ -2,8 +2,8 @@ package main
 
 import (
 	"hcc/harp/action/graphql"
-	"hcc/harp/action/rabbitmq"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/syscheck"
@@ -24,30 +24,18 @@ func main() {
 	}()
 
 	config.Parser()
+	err := dhcpd.CheckLocalDHCPDConfig()
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 
-	err := mysql.Prepare()
+	err = mysql.Prepare()
 	if err != nil {
 		return
 	}
 	defer func() {
 		_ = mysql.Db.Close()
 	}()
-
-	err = rabbitmq.PrepareChannel()
-	if err != nil {
-		logger.Logger.Panic(err)
-	}
-	defer func() {
-		_ = rabbitmq.Channel.Close()
-	}()
-	defer func() {
-		_ = rabbitmq.Connection.Close()
-	}()
-
-	err = rabbitmq.CreateDHCPDConfig()
-	if err != nil {
-		logger.Logger.Panic(err)
-	}
 
 	http.Handle("/graphql", graphql.GraphqlHandler)
 
