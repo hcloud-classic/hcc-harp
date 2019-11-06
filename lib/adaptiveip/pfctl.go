@@ -22,7 +22,7 @@ func flushPFRules() error {
 }
 
 func loadPFRules(pfRulesFileLocation string) error {
-	logger.Logger.Println("Loading pf rules from "+pfRulesFileLocation+"...")
+	logger.Logger.Println("Loading pf rules from " + pfRulesFileLocation + "...")
 
 	cmd := exec.Command("pfctl", "-f", pfRulesFileLocation)
 	err := cmd.Run()
@@ -64,11 +64,11 @@ func loadExstingBinatAnchorServersRules() error {
 		if !strings.Contains(filename, binatanchorFilenamePrefix) ||
 			!strings.Contains(filename, ".conf") {
 			logger.Logger.Println("Wrong binat anchor filename: " + filename)
-			logger.Logger.Println("Filename must be as '"+binatanchorFilenamePrefix+"XXX'")
+			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
 			continue
 		}
 
-		binatanchorName := filename[0:len(filename) - len(".conf")]
+		binatanchorName := filename[0 : len(filename)-len(".conf")]
 		err := LoadPFBinatAnchorRule(binatanchorName, config.AdaptiveIP.PFServersConfigFileLocation+"/"+filename)
 		if err != nil {
 			logger.Logger.Println(err)
@@ -79,7 +79,7 @@ func loadExstingBinatAnchorServersRules() error {
 }
 
 func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation string) error {
-	logger.Logger.Println("Loading binat anchor of "+binatanchorName+"...")
+	logger.Logger.Println("Loading binat anchor of " + binatanchorName + "...")
 
 	cmd := exec.Command("pfctl", "-a", binatanchorName, "-f", binatanchorConfigFileLocation)
 	err := cmd.Run()
@@ -91,7 +91,7 @@ func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation
 }
 
 func RemvoePFBinatAnchorRule(binatanchorName string) error {
-	logger.Logger.Println("Removing binat anchor rules of "+binatanchorName+"...")
+	logger.Logger.Println("Removing binat anchor rules of " + binatanchorName + "...")
 
 	cmd := exec.Command("pfctl", "-a", binatanchorName, "-F", "all")
 	err := cmd.Run()

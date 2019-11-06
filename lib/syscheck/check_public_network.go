@@ -10,33 +10,33 @@ import (
 func CheckPublicNetwork(iface net.Interface) bool {
 	var publicNetworkOk = false
 
-		addrs, err := iface.Addrs()
-		if err != nil {
-			logger.Logger.Println(err)
-			return false
+	addrs, err := iface.Addrs()
+	if err != nil {
+		logger.Logger.Println(err)
+		return false
+	}
+
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
+		config.AdaptiveIP.PublicNetworkNetmask)
+	ipNet := net.IPNet{
+		IP:   netIPnetworkIP,
+		Mask: mask,
+	}
+
+	for _, addr := range addrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
 		}
 
-		netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
-			config.AdaptiveIP.PublicNetworkNetmask)
-		ipNet := net.IPNet{
-			IP:   netIPnetworkIP,
-			Mask: mask,
+		if ipNet.Contains(ip) {
+			publicNetworkOk = true
+			break
 		}
-
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-
-			if ipNet.Contains(ip) {
-				publicNetworkOk = true
-				break
-			}
-		}
+	}
 
 	if !publicNetworkOk {
 		logger.Logger.Println("Configured public network address is not available for provided iface!")
