@@ -21,6 +21,10 @@ func main() {
 		return
 	}
 
+	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
+		return
+	}
+
 	if !logger.Prepare() {
 		return
 	}
@@ -36,10 +40,6 @@ func main() {
 	err = adaptiveip.PreparePFConfigFiles()
 	if err != nil {
 		logger.Logger.Panicln(err)
-	}
-
-	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
-		return
 	}
 
 	err = mysql.Prepare()
