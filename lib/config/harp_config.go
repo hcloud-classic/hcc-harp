@@ -2,7 +2,7 @@ package config
 
 import "github.com/Terry-Mao/goconf"
 
-var configLocation = "/etc/harp/harp.conf"
+var configLocation = "/etc/hcc/harp/harp.conf"
 
 type harpConfig struct {
 	MysqlConfig    *goconf.Section

@@ -2,20 +2,26 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"hcc/harp/dao"
+	"net/http"
+	"time"
+
+	// "encoding/json"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/model"
 	"io/ioutil"
 	"net"
-	"net/http"
+	// "net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
+	// "time"
 )
 
 type nodeEntries struct {
@@ -24,23 +30,22 @@ type nodeEntries struct {
 	NodeName      string
 }
 
-func getPXEFilename(os string) (string, error) {
-	// TODO: Need implement of how to get pxe file location for each OS
-	if os == "CentOS 6" {
-		return "/boot/pxeboot/centos6", nil
+func getPXEFilename(serverUUID string) (string, error) {
+	if len(serverUUID) == 0 {
+		return "", errors.New("failed to get server UUID")
 	}
-
-	return "", errors.New("not supported os")
+	return model.DefaultPXEdir + "/" + serverUUID + "/pxelinux.0", nil
 }
 
-type nodePXEMACAddr struct {
-	Data struct {
-		Node struct {
-			PxeMacAddr string `json:"pxe_mac_addr"`
-		} `json:"node"`
-	} `json:"data"`
-}
+//type nodePXEMACAddr struct {
+//	Data struct {
+//		Node struct {
+//			PxeMacAddr string `json:"pxe_mac_addr"`
+//		} `json:"node"`
+//	} `json:"data"`
+//}
 
+/*
 func getPXEMACAddress(nodeUUID string) (string, error) {
 	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
 	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+"/graphql?query={node(uuid:%22"+
@@ -77,6 +82,64 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 
 	return "", errors.New("http response returned error code")
 }
+*/
+
+// Flute
+
+// NodeData : Data structure of list_node
+type NodeData struct {
+	Data struct {
+		Node model.Node `json:"node"`
+	} `json:"data"`
+}
+
+func getNodePXEMACAddress(nodeUUID string) (NodeData, error) {
+	var nodePXEMACAddressData NodeData
+
+	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
+	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+
+		"/graphql?query=query%20%7B%0A%20%20node(uuid%3A%20%22"+nodeUUID+"%22)%20%7B%0A%20%20%20%20pxe_mac_addr%0A%20%20%7D%0A%7D", nil)
+
+	if err != nil {
+		return nodePXEMACAddressData, err
+	}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nodePXEMACAddressData, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		// Check response
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			str := string(respBody)
+
+			err = json.Unmarshal([]byte(str), &nodePXEMACAddressData)
+			if err != nil {
+				return nodePXEMACAddressData, err
+			}
+
+			return nodePXEMACAddressData, nil
+		}
+
+		return nodePXEMACAddressData, err
+	}
+
+	return nodePXEMACAddressData, errors.New("http response returned error code")
+}
+
+func getPXEMACAddress(nodeUUID string) (string, error) {
+	nodePXEMACAddress, err := getNodePXEMACAddress(nodeUUID)
+	if err != nil {
+		return "", err
+	}
+
+	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
+}
 
 func writeFile(fileLocation string, input string) error {
 	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
@@ -110,16 +173,14 @@ func writeConfigFile(input string, name string) error {
 	return nil
 }
 
-func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNodeUUID string) error {
+// CheckNodeUUIDs : Check UUIDs of nodes
+func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string) error {
 	if len(nodeUUIDs) == 0 {
 		return errors.New("provided nodeUUIDs[] is empty")
 	}
 	count := int(cidr.AddressCount(&subnet) - 2)
-	if len(nodeUUIDs) > maxNodes {
-		return errors.New("nodes count is bigger than provided max nodes value")
-	}
-	if maxNodes > count {
-		return errors.New("provided max nodes value is bigger than available IP addresses count")
+	if len(nodeUUIDs) > count {
+		return errors.New("node count is bigger than available IP addresses count")
 	}
 
 	var leaderNodeUUIDfound = false
@@ -136,81 +197,19 @@ func checkNodeUUIDs(subnet net.IPNet, maxNodes int, nodeUUIDs []string, leaderNo
 	return nil
 }
 
-// CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
-func CreateConfig(uuid string, networkIP string, netmask string, gateway string,
-	nextServer string, nameServer string,
-	domainName string, maxNodes int, nodeUUIDs []string,
-	leaderNodeUUID string, os string, name string) error {
-	var err error
-
-	if len(uuid) == 0 {
-		return errors.New("uuid is needed for make dhcpd config file")
-	}
-
-	if len(name) == 0 {
-		return errors.New("name is needed for make dhcpd config file")
-	}
-
-	netIPnetworkIP := iputil.CheckValidIP(networkIP)
-	if netIPnetworkIP == nil {
-		return errors.New("wrong network IP")
-	}
-
-	mask, err := iputil.CheckNetmask(netmask)
-	if err != nil {
-		return err
-	}
-
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
-	}
-
-	err = iputil.CheckGateway(ipNet, gateway)
-	if err != nil {
-		return err
-	}
-
-	netIPnextServer := net.ParseIP(nextServer)
-	if netIPnextServer == nil {
-		return errors.New("wrong next server IP")
-	}
-
-	netIPnameServer := net.ParseIP(nameServer)
-	if netIPnameServer == nil {
-		return errors.New("wrong name server IP")
-	}
-
-	err = checkNodeUUIDs(ipNet, maxNodes, nodeUUIDs, leaderNodeUUID)
-	if err != nil {
-		return err
-	}
-
-	pxeFileName, err := getPXEFilename(os)
-	if err != nil {
-		return err
-	}
-
-	firstIP, _ := cidr.AddressRange(&ipNet)
-	firstIP = cidr.Inc(firstIP)
-	lastIP := firstIP
-
-	for i := 0; i < maxNodes-1; i++ {
-		lastIP = cidr.Inc(lastIP)
-	}
-
+func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string) error {
 	confContent := confBase
-	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", networkIP, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", netmask, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
 
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", nextServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
 
-	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", nameServer, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", domainName, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", gateway, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", subnet.NameServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", subnet.DomainName, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_GATEWAY", subnet.Gateway, -1)
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_MIN_LEASE_TIME", strconv.Itoa(int(config.DHCPD.MinLeaseTime)), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DEFAULT_LEASE_TIME", strconv.Itoa(int(config.DHCPD.DefaultLeaseTime)), -1)
@@ -227,9 +226,9 @@ func CreateConfig(uuid string, networkIP string, netmask string, gateway string,
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + name
+		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
 		node.PXEMACAddress = pxeMacAddr
-		if uuid == leaderNodeUUID {
+		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
 		} else {
 			node.IP = nextIP.String()
@@ -246,23 +245,42 @@ func CreateConfig(uuid string, networkIP string, netmask string, gateway string,
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	err = writeConfigFile(confContent, uuid)
+	err := writeConfigFile(confContent, subnet.ServerUUID)
 	if err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
 
-func GetSubnetRange(uuid string, networkIP string, netmask string) ([]string, error) {
-	netIPnetworkIP := iputil.CheckValidIP(networkIP)
-	if netIPnetworkIP == nil {
-		return nil, errors.New("wrong network IP")
+// CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
+func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
+	if len(subnetUUID) == 0 {
+		return errors.New("subnetUUID is needed for make dhcpd config file")
 	}
 
-	mask, err := iputil.CheckNetmask(netmask)
+	args := make(map[string]interface{})
+	args["uuid"] = subnetUUID
+
+	subnetInterface, err := dao.ReadSubnet(args)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	var subnet = subnetInterface.(model.Subnet)
+
+	if len(subnet.SubnetName) == 0 {
+		return errors.New("name is needed for make dhcpd config file")
+	}
+
+	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIP)
+	if netIPnetworkIP == nil {
+		return errors.New("wrong network IP")
+	}
+
+	mask, err := iputil.CheckNetmask(subnet.Netmask)
+	if err != nil {
+		return err
 	}
 
 	ipNet := net.IPNet{
@@ -270,11 +288,45 @@ func GetSubnetRange(uuid string, networkIP string, netmask string) ([]string, er
 		Mask: mask,
 	}
 
+	err = iputil.CheckGateway(ipNet, subnet.Gateway)
+	if err != nil {
+		return err
+	}
+
+	netIPnextServer := net.ParseIP(subnet.NextServer)
+	if netIPnextServer == nil {
+		return errors.New("wrong next server IP")
+	}
+
+	netIPnameServer := net.ParseIP(subnet.NameServer)
+	if netIPnameServer == nil {
+		return errors.New("wrong name server IP")
+	}
+
+	err = CheckNodeUUIDs(ipNet, nodeUUIDs, subnet.LeaderNodeUUID)
+	if err != nil {
+		return err
+	}
+
+	pxeFileName, err := getPXEFilename(subnet.ServerUUID)
+	if err != nil {
+		return err
+	}
+
 	firstIP, _ := cidr.AddressRange(&ipNet)
 	firstIP = cidr.Inc(firstIP)
 	lastIP := firstIP
 
-	return []string{firstIP.String(), lastIP.String()}, nil
+	for i := 0; i < len(nodeUUIDs)-1; i++ {
+		lastIP = cidr.Inc(lastIP)
+	}
+
+	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs)
+	if err != nil {
+		return nil
+	}
+
+	return nil
 }
 
 // CheckLocalDHCPDConfig : Check if harp dhcpd config file is included in local dhcpd server config file
@@ -322,7 +374,6 @@ func UpdateHarpDHCPDConfig() error {
 	var allIncludeLines = ""
 	for _, filename := range configFiles {
 		if strings.Contains(filename, "harp_dhcpd.conf") ||
-			strings.Contains(filename, "test") ||
 			filename == config.DHCPD.ConfigFileLocation {
 			continue
 		}

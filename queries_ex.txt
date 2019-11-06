@@ -1,48 +1,118 @@
-//// volume
-// list
-query List_Volume {
-  list_volume {
+//// localhost:7400
+
+//// subnet
+
+// Read
+
+query {
+  subnet(uuid:"d0ba0bbd-32e7-4480-5019-ee672e8ddf1c"){
     uuid
-    size
-    type
+	network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
     server_uuid
+    leader_node_uuid
+    os
+    name
+    created_at
   }
 }
 
-// read
-query Select_Volume {
-  volume(uuid: "7284772e-3811-4030-a311-2da8ff705850") {
+query {
+  all_subnet(row:10, page:1){
     uuid
-    size
-    type
+	network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
     server_uuid
+    leader_node_uuid
+    os
+    name
+    created_at
   }
 }
 
-// create
-mutation Create_Volume {
-  create_volume(size: 1024000, type: "ext4", server_uuid: "7284772e-3811-4030-a311-2da8ff705850") {
-    size
-    type
-    server_uuid
-  }
-}
-
-// update
-mutation Update_Volume {
-  update_volume(uuid: "1dad3b09-acaf-44fe-9fdd-5d3a1323e5a2", size: 1024, type: "zfs", server_uuid: "7284772e-3811-4030-a311-2da8ff705850") {
+query {
+  list_subnet(network_ip:"192.168.110.1", row: 10, page: 1){
     uuid
-    size
-    type
+	network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
     server_uuid
+    leader_node_uuid
+    os
+    name
+    created_at
   }
 }
 
-// delete
+query {
+  num_subnet{
+    number
+  }
+}
+
+// Create
+
 mutation _ {
-  delete_volume(uuid: "05333605-561d-4e8c-b566-07c92d915657") {
+  create_subnet(
+    network_ip: "cgs",
+    netmask: "cgs",
+    gateway: "cgs",
+    next_server: "cgs",
+    name_server: "cgs",
+    domain_name: "cgs",
+    server_uuid: "cgs",
+    leader_node_uuid: "cgs",
+    os: "cgs",
+    subnet_name: "cgs") {
     uuid
+	network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
   }
 }
 
-// test
+// Update
+
+mutation _ {
+  update_subnet(uuid: "0ac56231-a0ee-4323-55ad-37c08c2d4a78", network_ip: "cgs"){
+    uuid
+	network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+// Delete
+
+mutation _ {
+  delete_subnet(uuid: "1c1b21b5-f6ff-4b1e-63c7-da272ea80de5"){
+    uuid
+  }
+}

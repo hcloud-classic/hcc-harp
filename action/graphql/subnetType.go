@@ -27,13 +27,16 @@ var subnetType = graphql.NewObject(
 			"domain_name": &graphql.Field{
 				Type: graphql.String,
 			},
+			"server_uuid": &graphql.Field{
+				Type: graphql.String,
+			},
 			"leader_node_uuid": &graphql.Field{
 				Type: graphql.String,
 			},
 			"os": &graphql.Field{
 				Type: graphql.String,
 			},
-			"name": &graphql.Field{
+			"subnet_name": &graphql.Field{
 				Type: graphql.String,
 			},
 			"created_at": &graphql.Field{

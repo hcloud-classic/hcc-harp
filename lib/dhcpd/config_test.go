@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/syscheck"
 	"testing"
 )
@@ -23,6 +24,11 @@ func testInit(t *testing.T) {
 
 	config.Parser()
 
+	err := mysql.Prepare()
+	if err != nil {
+		return
+	}
+
 	testInitPass = true
 }
 
@@ -30,6 +36,9 @@ func Test_CreateConfig(t *testing.T) {
 	if !testInitPass {
 		testInit(t)
 	}
+	defer func() {
+		_ = mysql.Db.Close()
+	}()
 
 	var nodeUUIDs = []string{
 		"48d08a00-b652-11e8-906e-000ffee02d5c",
@@ -37,18 +46,14 @@ func Test_CreateConfig(t *testing.T) {
 		"b9e43600-b4c8-11e8-906e-000ffee02d5c",
 		"18aada80-b696-11e8-906e-000ffee02d5c"}
 
-	err := CreateConfig("8d3f22a8-4010-49d4-8728-bb47889b13a6", "172.18.0.160", "255.255.255.240", "172.18.0.161",
-		"172.18.0.10", "8.8.8.8", "google.com",
-		6, nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test1")
+	err := CreateConfig("0ac56231-a0ee-4323-55ad-37c08c2d4a78", nodeUUIDs)
 	if err != nil {
-		t.Fatal(err)
+		t.Log(err)
 	}
 
-	err = CreateConfig("8d3f22a8-4010-49d4-8728-bb47889b13a6", "192.168.110.0", "255.255.255.0", "192.168.110.254",
-		"192.168.110.240", "8.8.8.8", "google.com",
-		10, nodeUUIDs, "48d08a00-b652-11e8-906e-000ffee02d5c", "CentOS 6", "test2")
+	err = CreateConfig("1f16b53e-082d-4e82-75da-7874ff59d82a", nodeUUIDs)
 	if err != nil {
-		t.Fatal(err)
+		t.Log(err)
 	}
 }
 
