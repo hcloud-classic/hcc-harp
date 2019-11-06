@@ -1,24 +1,24 @@
 package syscheck
 
 import (
-	"fmt"
+	"hcc/harp/lib/logger"
 	"net"
 )
 
 func CheckIfaceExist(ifaceName string) bool {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Println(err)
+		logger.Logger.Println(err)
 		return false
 	}
 
 	for _, iface := range interfaces {
 		if iface.Name == ifaceName {
-			fmt.Println("checkIfaceExist: '" + ifaceName + "' interface found.")
+			logger.Logger.Println("checkIfaceExist: '" + ifaceName + "' interface found.")
 			return true
 		}
 	}
 
-	fmt.Println("checkIfaceExist: '" + ifaceName + "' interface not found. Please check the configuration file.")
+	logger.Logger.Println("checkIfaceExist: '" + ifaceName + "' interface not found. Please check the configuration file.")
 	return false
 }
