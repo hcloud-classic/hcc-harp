@@ -187,6 +187,11 @@ func parseAdaptiveIP() {
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
+
+	AdaptiveIP.ArpingRetryCount, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_retry_count")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 }
 
 // Parser : Parse config file

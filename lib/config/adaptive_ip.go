@@ -9,6 +9,8 @@ type adaptiveIP struct {
 	PublicNetworkNetmask        string `goconf:"adaptiveip:adaptiveip_public_network_netmask"`          // PublicNetworkNetmask : Netmask of public network address
 	PublicStartIP               string `goconf:"adaptiveip:adaptiveip_public_start_ip"`                 // PublicStartIP : Public start IP address for using adaptive IP
 	PublicEndIP                 string `goconf:"adaptiveip:adaptiveip_public_end_ip"`                   // PublicEndIP : Public end IP address for using adaptive IP
+	ArpingRetryCount            int64  `goconf:"adaptiveip:adaptiveip_arping_retry_count"`              // ArpingRetryCount : Retry count for arping to check duplicated IP address
+
 }
 
 // AdaptiveIP : adaptiveIP config structure
