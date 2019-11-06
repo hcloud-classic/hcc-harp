@@ -56,6 +56,10 @@ func loadExstingBinatAnchorServersRules() error {
 	}
 
 	for _, filename := range configFiles {
+		if filename == config.AdaptiveIP.PFServersConfigFileLocation {
+			continue
+		}
+
 		binatanchorName := filename[0:len(filename) - len(".conf")]
 		err := LoadPFBinatAnchorRule(binatanchorName, config.AdaptiveIP.PFServersConfigFileLocation+"/"+filename)
 		if err != nil {
