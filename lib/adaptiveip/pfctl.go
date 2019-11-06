@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func flushPFRules() error {
@@ -57,6 +58,13 @@ func loadExstingBinatAnchorServersRules() error {
 
 	for _, filename := range configFiles {
 		if filename == config.AdaptiveIP.PFServersConfigFileLocation {
+			continue
+		}
+
+		if !strings.Contains(filename, binatanchorFilenamePrefix) ||
+			!strings.Contains(filename, ".conf") {
+			logger.Logger.Println("Wrong binat anchor filename: " + filename)
+			logger.Logger.Println("Filename must be as '"+binatanchorFilenamePrefix+"XXX'")
 			continue
 		}
 
