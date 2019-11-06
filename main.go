@@ -41,6 +41,11 @@ func main() {
 		logger.Logger.Panicln(err)
 	}
 
+	err = adaptiveip.LoadHarpPFRules()
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	err = mysql.Prepare()
 	if err != nil {
 		return
