@@ -3,18 +3,21 @@ package dhcpd
 import (
 	"encoding/json"
 	"hcc/harp/dao"
+	"hcc/harp/lib/fileutil"
 	"net/http"
 	"time"
 
 	// "encoding/json"
 	"errors"
-	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/model"
 	"io/ioutil"
 	"net"
+
+	"github.com/apparentlymart/go-cidr/cidr"
+
 	// "net/http"
 	"os"
 	"os/exec"
@@ -141,23 +144,6 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
 }
 
-func writeFile(fileLocation string, input string) error {
-	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = file.Close()
-	}()
-
-	_, err = file.WriteString(input)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func writeConfigFile(input string, name string) error {
 	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
@@ -165,7 +151,7 @@ func writeConfigFile(input string, name string) error {
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
-	err = writeFile(dhcpdConfLocation, input)
+	err = fileutil.WriteFile(dhcpdConfLocation, input)
 	if err != nil {
 		return err
 	}
@@ -275,7 +261,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 
 	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIP)
 	if netIPnetworkIP == nil {
-		return errors.New("wrong network IP")
+		return errors.New("wrong network IP address")
 	}
 
 	mask, err := iputil.CheckNetmask(subnet.Netmask)
@@ -293,12 +279,12 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return err
 	}
 
-	netIPnextServer := net.ParseIP(subnet.NextServer)
+	netIPnextServer := iputil.CheckValidIP(subnet.NextServer)
 	if netIPnextServer == nil {
 		return errors.New("wrong next server IP")
 	}
 
-	netIPnameServer := net.ParseIP(subnet.NameServer)
+	netIPnameServer := iputil.CheckValidIP(subnet.NameServer)
 	if netIPnameServer == nil {
 		return errors.New("wrong name server IP")
 	}
@@ -388,7 +374,7 @@ func UpdateHarpDHCPDConfig() error {
 		return err
 	}
 
-	err = writeFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
+	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
 	if err != nil {
 		return err
 	}

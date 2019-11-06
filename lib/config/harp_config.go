@@ -55,7 +55,12 @@ dhcpd_max_lease_time 3600
 
 [adaptiveip]
 adaptiveip_external_iface_name eno1
-adaptiveip_pf_local_config_file_location /etc/pf.rules
-adaptiveip_pf_config_file_location /etc/hcc/harp/pf
+adaptiveip_pf_base_config_file_location /etc/hcc/harp/pf/base.conf
+adaptiveip_pf_rules_file_location /etc/hcc/harp/pf/pf.rules
+adaptiveip_pf_servers_config_file_location /etc/hcc/harp/pf/servers
+adaptiveip_public_network_address 192.168.110.0
+adaptiveip_public_network_netmask 255.255.255.0
+adaptiveip_public_start_ip 192.168.110.50
+adaptiveip_public_end_ip 192.168.110.100
 
 -----------------------------------*/

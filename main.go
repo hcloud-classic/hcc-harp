@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
-	err = adaptiveip.CheckLocalPFConfig()
+	err = adaptiveip.PreparePFConfigFiles()
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}

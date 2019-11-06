@@ -153,12 +153,37 @@ func parseAdaptiveIP() {
 		logger.Logger.Panic(err)
 	}
 
-	AdaptiveIP.PFLocalConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_local_config_file_location")
+	AdaptiveIP.PFBaseConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_base_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PFConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_config_file_location")
+	AdaptiveIP.PFRulesFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_rules_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PFServersConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_servers_config_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PublicNetworkAddress, err = config.AdaptiveIPConfig.String("adaptiveip_public_network_address")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PublicNetworkNetmask, err = config.AdaptiveIPConfig.String("adaptiveip_public_network_netmask")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PublicStartIP, err = config.AdaptiveIPConfig.String("adaptiveip_public_start_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PublicEndIP, err = config.AdaptiveIPConfig.String("adaptiveip_public_end_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}

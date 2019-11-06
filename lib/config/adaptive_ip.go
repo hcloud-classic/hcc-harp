@@ -1,9 +1,14 @@
 package config
 
 type adaptiveIP struct {
-	ExternalIfaceName         string `goconf:"adaptiveip_external_iface_name"`                      // ExternalIfaceName : External interface name
-	PFLocalConfigFileLocation string `goconf:"adaptiveip:adaptiveip_pf_local_config_file_location"` // PFLocalConfigFileLocation : PF local configuration file location
-	PFConfigFileLocation      string `goconf:"adaptiveip:adaptiveip_pf_config_file_location"`       // PFConfigFileLocation : PF configuration file location
+	ExternalIfaceName           string `goconf:"adaptiveip_external_iface_name"`                        // ExternalIfaceName : External interface name
+	PFBaseConfigFileLocation    string `goconf:"adaptiveip:adaptiveip_pf_base_config_file_location"`    // PFBaseConfigFileLocation : Base configuration file location to make harp module's pf.rules
+	PFRulesFileLocation         string `goconf:"adaptiveip:adaptiveip_pf_rules_file_location"`          // PFRulesFileLocation : pf.rules file location to use in harp module
+	PFServersConfigFileLocation string `goconf:"adaptiveip:adaptiveip_pf_servers_config_file_location"` // PFServersConfigFileLocation : PF configuration file location of servers
+	PublicNetworkAddress        string `goconf:"adaptiveip:adaptiveip_public_network_address"`          // PublicNetworkAddress : Public network address for allocate adaptive IP address
+	PublicNetworkNetmask        string `goconf:"adaptiveip:adaptiveip_public_network_netmask"`          // PublicNetworkNetmask : Netmask of public network address
+	PublicStartIP               string `goconf:"adaptiveip:adaptiveip_public_start_ip"`                 // PublicStartIP : Public start IP address for using adaptive IP
+	PublicEndIP                 string `goconf:"adaptiveip:adaptiveip_public_end_ip"`                   // PublicEndIP : Public end IP address for using adaptive IP
 }
 
 // AdaptiveIP : adaptiveIP config structure
