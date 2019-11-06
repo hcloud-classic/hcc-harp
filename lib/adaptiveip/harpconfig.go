@@ -8,7 +8,7 @@ import (
 )
 
 func checkHarpConfigNetwork() error {
-	err, netIPnetworkIP, mask := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
 		config.AdaptiveIP.PublicNetworkNetmask)
 	if err != nil {
 		return err
@@ -39,13 +39,13 @@ func checkHarpConfigNetwork() error {
 		return errors.New("end IP address is not in the public network address")
 	}
 
-	err, totalAvailableIPs := iputil.GetTotalAvailableIPs(config.AdaptiveIP.PublicNetworkAddress,
+	totalAvailableIPs, err := iputil.GetTotalAvailableIPs(config.AdaptiveIP.PublicNetworkAddress,
 		config.AdaptiveIP.PublicNetworkNetmask)
 	if err != nil {
 		return err
 	}
 
-	err, ipRangeCount := iputil.GetIPRangeCount(netStartIP, netEndIP)
+	ipRangeCount, err  := iputil.GetIPRangeCount(netStartIP, netEndIP)
 	if err != nil {
 		return err
 	}

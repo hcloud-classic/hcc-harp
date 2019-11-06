@@ -5,6 +5,7 @@ import (
 	"net"
 )
 
+// CheckIfaceExist : Check if given network interface name is exist in local system.
 func CheckIfaceExist(ifaceName string) bool {
 	interfaces, err := net.Interfaces()
 	if err != nil {

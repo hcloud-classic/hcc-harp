@@ -5,6 +5,7 @@ import (
 	"os/exec"
 )
 
+// CheckArpingCommand : Check if 'arping' command is available from local system.
 func CheckArpingCommand() bool {
 	cmd := exec.Command("arping", "--help")
 	err := cmd.Run()

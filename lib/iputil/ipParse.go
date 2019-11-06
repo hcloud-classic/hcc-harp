@@ -6,24 +6,28 @@ import (
 	"net"
 )
 
-func CheckNetwork(networkIP string, networkNetmask string) (error, net.IP, net.IPMask){
+// CheckNetwork : Get network IP address and netmask as string value then check if valid.
+// Return network address as net.IP and netmask as net.IPMask if valid.
+func CheckNetwork(networkIP string, networkNetmask string) (net.IP, net.IPMask, error){
 	netIPnetworkIP := CheckValidIP(networkIP)
 	if netIPnetworkIP == nil {
-		return errors.New("wrong network IP address"), nil, nil
+		return nil, nil, errors.New("wrong network IP address")
 	}
 
 	mask, err := CheckNetmask(networkNetmask)
 	if err != nil {
-		return err, nil, nil
+		return nil, nil, err
 	}
 
-	return nil, netIPnetworkIP, mask
+	return netIPnetworkIP, mask, nil
 }
 
-func GetFirstAndLastIPs(networkIP string, networkNetmask string) (error, net.IP, net.IP) {
-	err, netIPnetworkIP, mask := CheckNetwork(networkIP, networkNetmask)
+// GetFirstAndLastIPs : Return first and last IP addresses from given network IP address and netmask.
+// Return as net.IP for both first and last IP addresses.
+func GetFirstAndLastIPs(networkIP string, networkNetmask string) (net.IP, net.IP, error) {
+	netIPnetworkIP, mask, err := CheckNetwork(networkIP, networkNetmask)
 	if err != nil {
-		return err, nil, nil
+		return nil, nil, err
 	}
 
 	ipNet := net.IPNet{
@@ -35,13 +39,14 @@ func GetFirstAndLastIPs(networkIP string, networkNetmask string) (error, net.IP,
 	firstIP = cidr.Inc(firstIP)
 	lastIP = cidr.Dec(lastIP)
 
-	return nil, firstIP, lastIP
+	return firstIP, lastIP, nil
 }
 
-func GetTotalAvailableIPs(networkIP string, networkNetmask string) (error, int) {
-	err, firstIP, lastIP := GetFirstAndLastIPs(networkIP, networkNetmask)
+// GetTotalAvailableIPs : Return total available IPs count for given network IP address and netmask.
+func GetTotalAvailableIPs(networkIP string, networkNetmask string) (int, error) {
+	firstIP, lastIP, err := GetFirstAndLastIPs(networkIP, networkNetmask)
 	if err != nil {
-		return err, 0
+		return 0, err
 	}
 
 	firstIPsum := int(firstIP[0]) + int(firstIP[1]) + int(firstIP[2]) + int(firstIP[3])
@@ -49,18 +54,19 @@ func GetTotalAvailableIPs(networkIP string, networkNetmask string) (error, int) 
 
 	totalAvailableIPs := lastIPsum - firstIPsum + 1
 
-	return nil, totalAvailableIPs
+	return totalAvailableIPs, nil
 }
 
-func GetIPRangeCount(startIP net.IP, endIP net.IP) (error, int) {
+// GetIPRangeCount : Calculate IPs count from given start IP address and end IP address.
+func GetIPRangeCount(startIP net.IP, endIP net.IP) (int, error) {
 	startIPsum := int(startIP[0]) + int(startIP[1]) + int(startIP[2]) + int(startIP[3])
 	endIPsum := int(endIP[0]) + int(endIP[1]) + int(endIP[2]) + int(endIP[3])
 
 	if startIPsum > endIPsum {
-		return errors.New("startIPsum is bigger than endIPsum"), 0
+		return 0, errors.New("startIPsum is bigger than endIPsum")
 	}
 
 	ipRangeCount := endIPsum - startIPsum + 1
 
-	return nil, ipRangeCount
+	return ipRangeCount, nil
 }

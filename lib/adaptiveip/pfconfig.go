@@ -30,16 +30,16 @@ func checkPFBaseConfig() error {
 
 	for scanner.Scan() {
 		scanText = scanner.Text()
-		isHarpbinatanchorRelaceStringIncluded = strings.Contains(scanText, HARPbinatanchorRelaceString)
+		isHarpbinatanchorRelaceStringIncluded = strings.Contains(scanText, harpBinatanchorRelaceString)
 		if isHarpbinatanchorRelaceStringIncluded {
 			break
 		}
 	}
 
 	if isHarpbinatanchorRelaceStringIncluded {
-		lineCheckOk := scanText == HARPbinatanchorRelaceString
+		lineCheckOk := scanText == harpBinatanchorRelaceString
 		if !lineCheckOk {
-			commented, err := regexp.MatchString("#[ ]+" + HARPbinatanchorRelaceString, scanText)
+			commented, err := regexp.MatchString("#[ ]+" +harpBinatanchorRelaceString, scanText)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func checkPFBaseConfig() error {
 			return errors.New("please add HARP_BINAT_ANCHOR_REPLACE_STRING string line correctly to base config file")
 		}
 	} else {
-		logger.Logger.Println("Please add this line to pf base config file!\n" + HARPbinatanchorRelaceString)
+		logger.Logger.Println("Please add this line to pf base config file!\n" + harpBinatanchorRelaceString)
 		return errors.New("cannot find binat anchor replace string from pf base config file")
 	}
 
@@ -94,7 +94,7 @@ func replaceBaseConfigBinatAnchorString() error {
 		binatanchorConfPart += binatanchorConfLine
 	}
 
-	pfRulesData := strings.Replace(string(baseConfigData), HARPbinatanchorRelaceString,
+	pfRulesData := strings.Replace(string(baseConfigData), harpBinatanchorRelaceString,
 		binatanchorConfPart, -1)
 
 	err = writePFRulesFile(pfRulesData)
@@ -105,6 +105,7 @@ func replaceBaseConfigBinatAnchorString() error {
 	return nil
 }
 
+// PreparePFConfigFiles : Prepare pf.rules config file for use in adaptive IP
 func PreparePFConfigFiles() error {
 	err := checkHarpConfigNetwork()
 	if err != nil {
