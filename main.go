@@ -29,9 +29,14 @@ func main() {
 	}()
 
 	config.Parser()
-	if !syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName) {
+	isIfaceExist, iface := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
+	if !isIfaceExist {
 		return
 	}
+	if !syscheck.CheckPublicNetwork(iface) {
+		return
+	}
+
 	err := dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		logger.Logger.Panicln(err)
