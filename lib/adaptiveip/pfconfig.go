@@ -87,8 +87,7 @@ func replaceBaseConfigBinatAnchorString() error {
 
 	var binatanchorConfPart = ""
 	for i := 0; i < ipRangeCount; i++ {
-		var binatanchorConfLine = binatanchorStr
-		binatanchorConfLine = strings.Replace(binatanchorStr, "HARP_SERVER_IP", netStartIP.String(), -1)
+		binatanchorConfLine := strings.Replace(binatanchorStr, "HARP_SERVER_IP", netStartIP.String(), -1)
 		netStartIP = cidr.Inc(netStartIP)
 
 		binatanchorConfPart += binatanchorConfLine
