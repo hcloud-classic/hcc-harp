@@ -5,7 +5,6 @@ import (
 	"errors"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/syscheck"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -14,7 +13,7 @@ import (
 func CheckDuplicatedIPAddress(IP string) error {
 	logger.Logger.Println("Checking duplicated IP address for " + IP + " by running arping command...")
 
-	if syscheck.LocalPublicIP == IP {
+	if localPublicIP == IP {
 		return errors.New(IP + " is your local public ip address")
 	}
 

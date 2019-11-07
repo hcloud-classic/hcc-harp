@@ -33,7 +33,7 @@ func main() {
 	if !isIfaceExist {
 		return
 	}
-	if !syscheck.CheckPublicNetwork(iface) {
+	if !adaptiveip.CheckPublicNetwork(iface) {
 		return
 	}
 
