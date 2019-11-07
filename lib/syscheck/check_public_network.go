@@ -7,6 +7,8 @@ import (
 	"net"
 )
 
+var LocalPublicIP string
+
 func CheckPublicNetwork(iface net.Interface) bool {
 	var publicNetworkOk = false
 
@@ -34,6 +36,9 @@ func CheckPublicNetwork(iface net.Interface) bool {
 
 		if ipNet.Contains(ip) {
 			publicNetworkOk = true
+			if ip != nil {
+				LocalPublicIP = ip.String()
+			}
 			break
 		}
 	}
