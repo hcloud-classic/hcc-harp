@@ -1,6 +1,7 @@
 package adaptiveip
 
 import (
+	"errors"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -9,13 +10,12 @@ import (
 
 var localPublicIP string
 
-func CheckPublicNetwork(iface net.Interface) bool {
+func CheckPublicNetwork(iface net.Interface) error {
 	var publicNetworkOk = false
 
 	addrs, err := iface.Addrs()
 	if err != nil {
-		logger.Logger.Println(err)
-		return false
+		return err
 	}
 
 	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
@@ -44,9 +44,8 @@ func CheckPublicNetwork(iface net.Interface) bool {
 	}
 
 	if !publicNetworkOk {
-		logger.Logger.Println("Configured public network address is not available for provided iface!")
-		return false
+		return errors.New("configured public network address is not available for provided iface")
 	}
 
-	return true
+	return nil
 }
