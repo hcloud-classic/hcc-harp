@@ -4,7 +4,6 @@ import (
 	"errors"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
-	"hcc/harp/lib/logger"
 	"net"
 )
 

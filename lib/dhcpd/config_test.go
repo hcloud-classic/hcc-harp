@@ -11,7 +11,8 @@ import (
 var testInitPass = false
 
 func testInit(t *testing.T) {
-	if !syscheck.CheckRoot() {
+	err := syscheck.CheckRoot()
+	if err != nil {
 		t.Fatal("Failed to get root permission!")
 	}
 
@@ -24,7 +25,7 @@ func testInit(t *testing.T) {
 
 	config.Parser()
 
-	err := mysql.Prepare()
+	err = mysql.Prepare()
 	if err != nil {
 		return
 	}
