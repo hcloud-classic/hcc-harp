@@ -7,7 +7,6 @@ var configLocation = "/etc/hcc/harp/harp.conf"
 type harpConfig struct {
 	MysqlConfig      *goconf.Section
 	HTTPConfig       *goconf.Section
-	RabbitMQConfig   *goconf.Section
 	FluteConfig      *goconf.Section
 	ViolinConfig     *goconf.Section
 	DHCPDConfig      *goconf.Section
@@ -28,12 +27,6 @@ database db_name
 
 [http]
 port 8888
-
-[rabbitmq]
-rabbitmq_id user
-rabbitmq_password pass
-rabbitmq_address 555.555.555.555
-rabbitmq_port 15672
 
 [flute]
 flute_server_address 222.222.222.222
