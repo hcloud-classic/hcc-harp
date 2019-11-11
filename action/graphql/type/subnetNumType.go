@@ -1,8 +1,9 @@
-package graphql
+package graphqlType
 
 import "github.com/graphql-go/graphql"
 
-var subnetNum = graphql.NewObject(
+// ServerNodeType : Graphql object type of SubnetNum
+var SubnetNumType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "SubnetNum",
 		Fields: graphql.Fields{

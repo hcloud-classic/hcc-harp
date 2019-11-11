@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
+	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
 	"hcc/harp/lib/logger"
 	"hcc/harp/model"
@@ -13,7 +14,7 @@ var queryTypes = graphql.NewObject(
 		Fields: graphql.Fields{
 			// subnet DB
 			"subnet": &graphql.Field{
-				Type:        subnetType,
+				Type:        graphqlType.SubnetType,
 				Description: "Get subnet by uuid",
 				Args: graphql.FieldConfigArgument{
 					"uuid": &graphql.ArgumentConfig{
@@ -26,7 +27,7 @@ var queryTypes = graphql.NewObject(
 				},
 			},
 			"list_subnet": &graphql.Field{
-				Type:        graphql.NewList(subnetType),
+				Type:        graphql.NewList(graphqlType.SubnetType),
 				Description: "Get subnet list",
 				Args: graphql.FieldConfigArgument{
 					"uuid": &graphql.ArgumentConfig{
@@ -75,7 +76,7 @@ var queryTypes = graphql.NewObject(
 				},
 			},
 			"all_subnet": &graphql.Field{
-				Type:        graphql.NewList(subnetType),
+				Type:        graphql.NewList(graphqlType.SubnetType),
 				Description: "Get all subnet list",
 				Args: graphql.FieldConfigArgument{
 					"row": &graphql.ArgumentConfig{
@@ -91,7 +92,7 @@ var queryTypes = graphql.NewObject(
 				},
 			},
 			"num_subnet": &graphql.Field{
-				Type:        subnetNum,
+				Type:        graphqlType.SubnetNumType,
 				Description: "Get the number of subnet",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: num_subnet")

@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
+	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
@@ -14,7 +15,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		// subnet DB
 		"create_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Create new subnet",
 			Args: graphql.FieldConfigArgument{
 				"network_ip": &graphql.ArgumentConfig{
@@ -53,7 +54,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"update_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Update subnet",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
@@ -102,7 +103,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"delete_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Delete subnet by uuid",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
