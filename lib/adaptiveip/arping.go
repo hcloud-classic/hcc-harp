@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// CheckDuplicatedIPAddress : Check duplicated IP address by running arping command
 func CheckDuplicatedIPAddress(IP string) error {
 	logger.Logger.Println("Checking duplicated IP address for " + IP + " by running arping command...")
 

@@ -110,6 +110,7 @@ func loadExstingBinatAnchorServersRules() error {
 	return nil
 }
 
+// LoadPFBinatAnchorRule : Load binat anchor rules configuration file and apply it to pf firewall
 func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation string) error {
 	logger.Logger.Println("Loading binat anchor of " + binatanchorName + "...")
 
@@ -128,6 +129,7 @@ func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation
 	return nil
 }
 
+// RemvoePFBinatAnchorRule : Remove binat anchor rules of provided name from pf firewall
 func RemvoePFBinatAnchorRule(binatanchorName string) error {
 	logger.Logger.Println("Removing binat anchor rules of " + binatanchorName + "...")
 
@@ -140,6 +142,7 @@ func RemvoePFBinatAnchorRule(binatanchorName string) error {
 	return nil
 }
 
+// LoadHarpPFRules : Load pf rules for harp module
 func LoadHarpPFRules() error {
 	err := flushPFRules()
 	if err != nil {

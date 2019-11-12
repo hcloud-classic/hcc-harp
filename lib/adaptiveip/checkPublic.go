@@ -9,6 +9,7 @@ import (
 
 var localPublicIP string
 
+// CheckPublicNetwork : Check if configured public network address is available by provided interface
 func CheckPublicNetwork(iface net.Interface) error {
 	var publicNetworkOk = false
 
@@ -19,6 +20,10 @@ func CheckPublicNetwork(iface net.Interface) error {
 
 	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
 		config.AdaptiveIP.PublicNetworkNetmask)
+	if err != nil {
+		return err
+	}
+
 	ipNet := net.IPNet{
 		IP:   netIPnetworkIP,
 		Mask: mask,
