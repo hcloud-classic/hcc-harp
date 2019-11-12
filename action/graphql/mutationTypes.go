@@ -4,10 +4,8 @@ import (
 	"github.com/graphql-go/graphql"
 	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
-	"hcc/harp/lib/config"
-	"hcc/harp/lib/dhcpd"
+	"hcc/harp/driver"
 	"hcc/harp/lib/logger"
-	"strings"
 )
 
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
@@ -128,28 +126,8 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				subnetUUID := params.Args["subnet_uuid"].(string)
-				nodeUUIDs := params.Args["node_uuids"].(string)
-
-				nodeUUIDsParts := strings.Split(nodeUUIDs, ",")
-
-				err := dhcpd.CreateConfig(subnetUUID, nodeUUIDsParts)
-				if err != nil {
-					return nil, err
-				}
-
-				err = dhcpd.UpdateHarpDHCPDConfig()
-				if err != nil {
-					return nil, err
-				}
-
-				err = dhcpd.RestartDHCPDServer()
-				if err != nil {
-					logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
-					return nil, err
-				}
-
-				return "CreateDHCPDConfig: succeed", nil
+				logger.Logger.Println("Resolving: create_dhcpd_conf")
+				return driver.CreateDHCPDConfig(params)
 			},
 		},
 	},
