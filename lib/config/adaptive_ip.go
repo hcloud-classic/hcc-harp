@@ -10,7 +10,7 @@ type adaptiveIP struct {
 	PublicStartIP               string `goconf:"adaptiveip:adaptiveip_public_start_ip"`                 // PublicStartIP : Public start IP address for using adaptive IP
 	PublicEndIP                 string `goconf:"adaptiveip:adaptiveip_public_end_ip"`                   // PublicEndIP : Public end IP address for using adaptive IP
 	ArpingRetryCount            int64  `goconf:"adaptiveip:adaptiveip_arping_retry_count"`              // ArpingRetryCount : Retry count for arping to check duplicated IP address
-
+	ArpingRoutineMaxNum         int64  `goconf:"adaptiveip:adaptiveip_arping_routine_max_num"`          // ArpingRoutineMaxNum : Max number of arping go routine jobs
 }
 
 // AdaptiveIP : adaptiveIP config structure

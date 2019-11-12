@@ -192,6 +192,11 @@ func parseAdaptiveIP() {
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
+
+	AdaptiveIP.ArpingRoutineMaxNum, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_routine_max_num")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 }
 
 // Parser : Parse config file

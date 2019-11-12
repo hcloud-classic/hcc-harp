@@ -23,11 +23,17 @@ func CheckDuplicatedIPAddress(IP string) error {
 	cmdOutput := &bytes.Buffer{}
 	cmd.Stdout = cmdOutput
 	err := cmd.Run()
+	cmdOutputStr := string(cmdOutput.Bytes())
+
+	if strings.Contains(cmdOutputStr, "Timeout") ||
+		strings.Contains(cmdOutputStr, "timeout") {
+		return nil
+	}
+
 	if err != nil {
 		logger.Logger.Println("arping: " + err.Error())
 	}
 
-	cmdOutputStr := string(cmdOutput.Bytes())
 	if strings.Contains(cmdOutputStr, "from") {
 		return errors.New("Found duplicated IP address for " + IP)
 	}

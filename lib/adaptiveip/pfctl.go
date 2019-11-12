@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func flushPFRules() error {
@@ -56,24 +57,54 @@ func loadExstingBinatAnchorServersRules() error {
 		return err
 	}
 
-	for _, filePath := range configFiles {
-		if filePath == config.AdaptiveIP.PFServersConfigFileLocation {
-			continue
+	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
+	if RoutineMAX == 0 {
+		RoutineMAX = 5
+	}
+	var routineMax = RoutineMAX
+	var wait sync.WaitGroup
+
+	for i := 0; i < len(configFiles); {
+		if len(configFiles)-i < RoutineMAX {
+			routineMax = len(configFiles) - i
 		}
 
-		binatanchorFileName := filePath[len(config.AdaptiveIP.PFServersConfigFileLocation+"/"):]
-		if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
-			!strings.Contains(binatanchorFileName, ".conf") {
-			logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
-			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
-			continue
+		wait.Add(routineMax)
+
+		for j := 0; j < routineMax; j++ {
+			if configFiles[i] == config.AdaptiveIP.PFServersConfigFileLocation {
+				j--
+				i++
+				continue
+			}
+
+			go func(file string) {
+				var binatanchorFileName string
+				var binatanchorName string
+				var err error
+
+				binatanchorFileName = file[len(config.AdaptiveIP.PFServersConfigFileLocation+"/"):]
+				if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
+					!strings.Contains(binatanchorFileName, ".conf") {
+					logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
+					logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
+					goto RoutineDone
+				}
+
+				binatanchorName = binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
+				err = LoadPFBinatAnchorRule(binatanchorName, file)
+				if err != nil {
+					logger.Logger.Println(err)
+				}
+
+			RoutineDone:
+				defer wait.Done()
+			}(configFiles[i])
+
+			i++
 		}
 
-		binatanchorName := binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
-		err := LoadPFBinatAnchorRule(binatanchorName, filePath)
-		if err != nil {
-			logger.Logger.Println(err)
-		}
+		wait.Wait()
 	}
 
 	return nil
