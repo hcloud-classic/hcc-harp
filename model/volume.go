@@ -2,12 +2,6 @@ package model
 
 import "time"
 
-// DefaultPXEdir : Default PXE directory
-var DefaultPXEdir = "/HCC"
-
-// OSDiskSize : Disk size for OS use
-var OSDiskSize = 20
-
 // Volume - cgs
 type Volume struct {
 	UUID       string    `json:"uuid"`
