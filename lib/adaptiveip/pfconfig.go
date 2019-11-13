@@ -118,3 +118,54 @@ func PreparePFConfigFiles() error {
 
 	return nil
 }
+
+func writeBinatAnchorConfigFile(binatAnchorFileLocation string, binatAnchorData string) error {
+	err := fileutil.WriteFile(binatAnchorFileLocation, binatAnchorData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TODO: NEED FIX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// CreateAndLoadBinatAnchorConfig : Create binat anchor config file to match private IP address
+// to available public IP address. Then load it to pf firewall.
+func CreateAndLoadBinatAnchorConfig(privateIP string) error {
+	netStartIP := iputil.CheckValidIP(config.AdaptiveIP.PublicStartIP)
+	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
+	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
+
+	var binatanchorConfData string
+	for i := 0; i < ipRangeCount; i++ {
+		err := CheckDuplicatedIPAddress(netStartIP.String())
+		if err != nil {
+			logger.Logger.Println(err)
+			continue
+		}
+
+		binatanchorConfData = binatStr
+		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_EXTERNAL_IFACE_NAME", config.AdaptiveIP.ExternalIfaceName, -1)
+		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PRIVATE_IP", privateIP, -1)
+		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PUBLIC_IP", netStartIP.String(), -1)
+		netStartIP = cidr.Inc(netStartIP)
+
+		binatanchorName := binatanchorFilenamePrefix + netStartIP.String()
+		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName + " (privateIP: " + privateIP + ")")
+		binatanchorConfigFileLocation := config.AdaptiveIP.PFServersConfigFileLocation + "/" + binatanchorName + ".conf"
+		err = writeBinatAnchorConfigFile(binatanchorConfigFileLocation, binatanchorConfData)
+		if err != nil {
+			return err
+		}
+
+		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Load binat anchor config file for " + binatanchorName)
+		err = LoadPFBinatAnchorRule(binatanchorName, binatanchorConfigFileLocation)
+		if err != nil {
+			return err
+		}
+
+		break
+	}
+
+	return nil
+}

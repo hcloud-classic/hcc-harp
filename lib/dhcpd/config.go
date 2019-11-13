@@ -183,7 +183,8 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
-func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string) error {
+func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
+				   useSamePXEFileForCompute bool) error {
 	confContent := confBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
@@ -191,7 +192,11 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	if useSamePXEFileForCompute {
+		confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	} else {
+		confContent = strings.Replace(confContent, "    filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
+	}
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", subnet.NameServer, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", subnet.DomainName, -1)
@@ -225,6 +230,17 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
+		if useSamePXEFileForCompute {
+			nodeConfPart = strings.Replace(nodeConfPart, "        filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
+		} else {
+			var otherPXEFileName = pxeFileName
+			if uuid == subnet.LeaderNodeUUID {
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID + "/Leader", -1)
+			} else {
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID + "/Compute", -1)
+			}
+			nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_PXE_FILENAME", otherPXEFileName, -1)
+		}
 
 		nodeEntryConfPart += nodeConfPart
 	}
@@ -307,10 +323,16 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		lastIP = cidr.Inc(lastIP)
 	}
 
-	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs)
+	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs, false)
 	if err != nil {
-		return nil
+		return err
 	}
+
+	//logger.Logger.Println("CreateConfig: Registering first IP to adaptive IP...")
+	//err = adaptiveip.CreateAndLoadBinatAnchorConfig(firstIP.String())
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
