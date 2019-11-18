@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"encoding/json"
 	"hcc/harp/dao"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/fileutil"
 	"net/http"
 	"time"
@@ -328,11 +329,11 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return err
 	}
 
-	//logger.Logger.Println("CreateConfig: Registering first IP to adaptive IP...")
-	//err = adaptiveip.CreateAndLoadBinatAnchorConfig(firstIP.String())
-	//if err != nil {
-	//	return err
-	//}
+	logger.Logger.Println("CreateConfig: Registering first IP to adaptive IP...")
+	err = adaptiveip.CreateAndLoadBinatAnchorConfig(firstIP.String())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

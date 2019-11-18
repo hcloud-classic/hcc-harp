@@ -128,7 +128,29 @@ func writeBinatAnchorConfigFile(binatAnchorFileLocation string, binatAnchorData 
 	return nil
 }
 
-// TODO: NEED FIX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+func checkBinatAnchorFileExist(privateIP string) error {
+	configFiles, err := getBinatAnchorConfigFiles()
+	if err != nil {
+		return err
+	}
+	if len(configFiles) == 1 {
+		return nil
+	}
+
+	for _, file := range configFiles {
+		if file == config.AdaptiveIP.PFServersConfigFileLocation {
+			continue
+		}
+
+		binatanchorFileName := file[len(config.AdaptiveIP.PFServersConfigFileLocation+"/"):]
+		if binatanchorFileName == binatanchorFilenamePrefix + privateIP + ".conf" {
+			return errors.New(privateIP + " is already used in binat anchor rules")
+		}
+	}
+
+	return nil
+}
+
 // CreateAndLoadBinatAnchorConfig : Create binat anchor config file to match private IP address
 // to available public IP address. Then load it to pf firewall.
 func CreateAndLoadBinatAnchorConfig(privateIP string) error {
@@ -138,9 +160,17 @@ func CreateAndLoadBinatAnchorConfig(privateIP string) error {
 
 	var binatanchorConfData string
 	for i := 0; i < ipRangeCount; i++ {
-		err := CheckDuplicatedIPAddress(netStartIP.String())
+		err := checkBinatAnchorFileExist(netStartIP.String())
 		if err != nil {
 			logger.Logger.Println(err)
+			netStartIP = cidr.Inc(netStartIP)
+			continue
+		}
+
+		err = CheckDuplicatedIPAddress(netStartIP.String())
+		if err != nil {
+			logger.Logger.Println(err)
+			netStartIP = cidr.Inc(netStartIP)
 			continue
 		}
 
@@ -148,7 +178,6 @@ func CreateAndLoadBinatAnchorConfig(privateIP string) error {
 		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_EXTERNAL_IFACE_NAME", config.AdaptiveIP.ExternalIfaceName, -1)
 		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PRIVATE_IP", privateIP, -1)
 		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PUBLIC_IP", netStartIP.String(), -1)
-		netStartIP = cidr.Inc(netStartIP)
 
 		binatanchorName := binatanchorFilenamePrefix + netStartIP.String()
 		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName + " (privateIP: " + privateIP + ")")

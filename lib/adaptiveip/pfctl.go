@@ -56,6 +56,9 @@ func loadExstingBinatAnchorServersRules() error {
 	if err != nil {
 		return err
 	}
+	if len(configFiles) == 1 {
+		return nil
+	}
 
 	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
 	if RoutineMAX == 0 {
@@ -102,6 +105,9 @@ func loadExstingBinatAnchorServersRules() error {
 			}(configFiles[i])
 
 			i++
+			if i == len(configFiles) {
+				break
+			}
 		}
 
 		wait.Wait()
