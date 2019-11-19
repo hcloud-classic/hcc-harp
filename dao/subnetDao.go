@@ -1,6 +1,7 @@
 package dao
 
 import (
+	dbsql "database/sql"
 	"errors"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/lib/logger"
@@ -148,7 +149,6 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 
 // ReadSubnetAll - cgs
 func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
-	var err error
 	var subnets []model.Subnet
 	var uuid string
 	var networkIP string
@@ -162,15 +162,23 @@ func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 	var os string
 	var subnetName string
 	var createdAt time.Time
+
 	row, rowOk := args["row"].(int)
 	page, pageOk := args["page"].(int)
-	if !rowOk || !pageOk {
-		return nil, err
+	var sql string
+	var stmt *dbsql.Rows
+	var err error
+
+	if !rowOk && !pageOk {
+		sql = "select * from subnet order by created_at desc"
+		stmt, err = mysql.Db.Query(sql)
+	} else if rowOk && pageOk {
+		sql = "select * from subnet order by created_at desc limit ? offset ?"
+		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+	} else {
+		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
 	}
 
-	sql := "select * from subnet order by created_at desc limit ? offset ?"
-
-	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
 	if err != nil {
 		logger.Logger.Println(err.Error())
 		return nil, err
