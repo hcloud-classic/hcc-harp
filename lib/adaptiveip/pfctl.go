@@ -78,6 +78,7 @@ func loadExstingBinatAnchorServersRules() error {
 			if configFiles[i] == config.AdaptiveIP.PFServersConfigFileLocation {
 				j--
 				i++
+				wait.Done()
 				continue
 			}
 
@@ -101,7 +102,7 @@ func loadExstingBinatAnchorServersRules() error {
 				}
 
 			RoutineDone:
-				defer wait.Done()
+				wait.Done()
 			}(configFiles[i])
 
 			i++
