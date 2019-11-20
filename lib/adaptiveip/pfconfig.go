@@ -167,7 +167,7 @@ func CreateAndLoadBinatAnchorConfig(privateIP string) error {
 			continue
 		}
 
-		err = CheckDuplicatedIPAddress(netStartIP.String())
+		err = checkDuplicatedIPAddress(netStartIP.String())
 		if err != nil {
 			logger.Logger.Println(err)
 			netStartIP = cidr.Inc(netStartIP)

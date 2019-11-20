@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 func flushPFRules() error {
@@ -49,8 +48,8 @@ func getBinatAnchorConfigFiles() ([]string, error) {
 	return files, nil
 }
 
-func loadExstingBinatAnchorServersRules() error {
-	logger.Logger.Println("Loading existing binat anchor servers rules...")
+func loadExstingBinatAndNATRules() error {
+	logger.Logger.Println("Loading existing binat and NAT rules...")
 
 	configFiles, err := getBinatAnchorConfigFiles()
 	if err != nil {
@@ -60,58 +59,35 @@ func loadExstingBinatAnchorServersRules() error {
 		return nil
 	}
 
-	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
-	if RoutineMAX == 0 {
-		RoutineMAX = 5
-	}
-	var routineMax = RoutineMAX
-	var wait sync.WaitGroup
+	ipMap := getAvailableIPsStatusMap()
 
-	for i := 0; i < len(configFiles); {
-		if len(configFiles)-i < RoutineMAX {
-			routineMax = len(configFiles) - i
+	var binatanchorFileName string
+	var binatanchorName string
+	var ip string
+
+	for i := 0; i < len(configFiles); i++ {
+		if configFiles[i] == config.AdaptiveIP.PFBinatConfigFileLocation {
+			continue
 		}
 
-		wait.Add(routineMax)
-
-		for j := 0; j < routineMax; j++ {
-			if configFiles[i] == config.AdaptiveIP.PFBinatConfigFileLocation {
-				j--
-				i++
-				wait.Done()
-				continue
-			}
-
-			go func(file string) {
-				var binatanchorFileName string
-				var binatanchorName string
-				var err error
-
-				binatanchorFileName = file[len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
-				if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
-					!strings.Contains(binatanchorFileName, ".conf") {
-					logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
-					logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
-					goto RoutineDone
-				}
-
-				binatanchorName = binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
-				err = LoadPFBinatAnchorRule(binatanchorName, file)
-				if err != nil {
-					logger.Logger.Println(err)
-				}
-
-			RoutineDone:
-				wait.Done()
-			}(configFiles[i])
-
-			i++
-			if i == len(configFiles) {
-				break
-			}
+		binatanchorFileName = configFiles[i][len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
+		if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
+			!strings.Contains(binatanchorFileName, ".conf") {
+			logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
+			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
+			continue
 		}
 
-		wait.Wait()
+		binatanchorName = binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
+		ip = binatanchorName[len(binatanchorFilenamePrefix):]
+		if !ipMap[ip] {
+			logger.Logger.Println("Skipping for not available IP address: " + ip)
+			continue
+		}
+		err = LoadPFBinatAnchorRule(binatanchorName, configFiles[i])
+		if err != nil {
+			logger.Logger.Println(err)
+		}
 	}
 
 	return nil
@@ -121,14 +97,8 @@ func loadExstingBinatAnchorServersRules() error {
 func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation string) error {
 	logger.Logger.Println("Loading binat anchor of " + binatanchorName + "...")
 
-	IP := binatanchorName[len(binatanchorFilenamePrefix):]
-	err := CheckDuplicatedIPAddress(IP)
-	if err != nil {
-		return err
-	}
-
 	cmd := exec.Command("pfctl", "-a", binatanchorName, "-f", binatanchorConfigFileLocation)
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
@@ -161,7 +131,7 @@ func LoadHarpPFRules() error {
 		return err
 	}
 
-	err = loadExstingBinatAnchorServersRules()
+	err = loadExstingBinatAndNATRules()
 	if err != nil {
 		return err
 	}
