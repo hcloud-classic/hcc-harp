@@ -163,7 +163,7 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PFServersConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_servers_config_file_location")
+	AdaptiveIP.PFBinatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_binat_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}

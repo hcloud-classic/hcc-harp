@@ -138,12 +138,12 @@ func checkBinatAnchorFileExist(privateIP string) error {
 	}
 
 	for _, file := range configFiles {
-		if file == config.AdaptiveIP.PFServersConfigFileLocation {
+		if file == config.AdaptiveIP.PFBinatConfigFileLocation {
 			continue
 		}
 
-		binatanchorFileName := file[len(config.AdaptiveIP.PFServersConfigFileLocation+"/"):]
-		if binatanchorFileName == binatanchorFilenamePrefix + privateIP + ".conf" {
+		binatanchorFileName := file[len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
+		if binatanchorFileName == binatanchorFilenamePrefix+privateIP+".conf" {
 			return errors.New(privateIP + " is already used in binat anchor rules")
 		}
 	}
@@ -181,7 +181,7 @@ func CreateAndLoadBinatAnchorConfig(privateIP string) error {
 
 		binatanchorName := binatanchorFilenamePrefix + netStartIP.String()
 		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName + " (privateIP: " + privateIP + ")")
-		binatanchorConfigFileLocation := config.AdaptiveIP.PFServersConfigFileLocation + "/" + binatanchorName + ".conf"
+		binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
 		err = writeBinatAnchorConfigFile(binatanchorConfigFileLocation, binatanchorConfData)
 		if err != nil {
 			return err

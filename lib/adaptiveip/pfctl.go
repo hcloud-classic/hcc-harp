@@ -37,7 +37,7 @@ func loadPFRules(pfRulesFileLocation string) error {
 func getBinatAnchorConfigFiles() ([]string, error) {
 	var files []string
 
-	folder := config.AdaptiveIP.PFServersConfigFileLocation
+	folder := config.AdaptiveIP.PFBinatConfigFileLocation
 	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
@@ -75,7 +75,7 @@ func loadExstingBinatAnchorServersRules() error {
 		wait.Add(routineMax)
 
 		for j := 0; j < routineMax; j++ {
-			if configFiles[i] == config.AdaptiveIP.PFServersConfigFileLocation {
+			if configFiles[i] == config.AdaptiveIP.PFBinatConfigFileLocation {
 				j--
 				i++
 				wait.Done()
@@ -87,7 +87,7 @@ func loadExstingBinatAnchorServersRules() error {
 				var binatanchorName string
 				var err error
 
-				binatanchorFileName = file[len(config.AdaptiveIP.PFServersConfigFileLocation+"/"):]
+				binatanchorFileName = file[len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
 				if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
 					!strings.Contains(binatanchorFileName, ".conf") {
 					logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
