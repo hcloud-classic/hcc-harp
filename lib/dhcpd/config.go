@@ -234,7 +234,7 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 		if useSamePXEFileForCompute {
 			nodeConfPart = strings.Replace(nodeConfPart, "        filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
 		} else {
-			var otherPXEFileName = pxeFileName
+			var otherPXEFileName string
 			if uuid == subnet.LeaderNodeUUID {
 				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID+"/Leader", -1)
 			} else {
