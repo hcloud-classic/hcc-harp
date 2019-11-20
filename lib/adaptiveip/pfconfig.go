@@ -3,13 +3,14 @@ package adaptiveip
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/model"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -26,8 +27,10 @@ func checkPFBaseConfig() error {
 
 	scanner := bufio.NewScanner(file)
 	isHarpbinatanchorRelaceStringIncluded := false
+	isHarpnatanchorRelaceStringIncluded := false
 	var scanText string
 
+	// binat
 	for scanner.Scan() {
 		scanText = scanner.Text()
 		isHarpbinatanchorRelaceStringIncluded = strings.Contains(scanText, harpBinatanchorRelaceString)
@@ -38,19 +41,32 @@ func checkPFBaseConfig() error {
 
 	if isHarpbinatanchorRelaceStringIncluded {
 		lineCheckOk := scanText == harpBinatanchorRelaceString
+		fmt.Println(scanText)
 		if !lineCheckOk {
-			commented, err := regexp.MatchString("#[ ]+"+harpBinatanchorRelaceString, scanText)
-			if err != nil {
-				return err
-			}
-			if commented {
-				return errors.New("please comment out HARP_BINAT_ANCHOR_REPLACE_STRING string in base config file")
-			}
 			return errors.New("please add HARP_BINAT_ANCHOR_REPLACE_STRING string line correctly to base config file")
 		}
 	} else {
 		logger.Logger.Println("Please add this line to pf base config file!\n" + harpBinatanchorRelaceString)
 		return errors.New("cannot find binat anchor replace string from pf base config file")
+	}
+
+	// NAT
+	for scanner.Scan() {
+		scanText = scanner.Text()
+		isHarpnatanchorRelaceStringIncluded = strings.Contains(scanText, harpNatanchorRelaceString)
+		if isHarpnatanchorRelaceStringIncluded {
+			break
+		}
+	}
+
+	if isHarpnatanchorRelaceStringIncluded {
+		lineCheckOk := scanText == harpNatanchorRelaceString
+		if !lineCheckOk {
+			return errors.New("please add HARP_NAT_ANCHOR_REPLACE_STRING string line correctly to base config file")
+		}
+	} else {
+		logger.Logger.Println("Please add this line to pf base config file!\n" + harpNatanchorRelaceString)
+		return errors.New("cannot find nat anchor replace string from pf base config file")
 	}
 
 	err = scanner.Err()
@@ -70,7 +86,7 @@ func writePFRulesFile(pfRulesData string) error {
 	return nil
 }
 
-func replaceBaseConfigBinatAnchorString() error {
+func replaceBaseConfigAnchorStrings() error {
 	err := checkPFBaseConfig()
 	if err != nil {
 		return err
@@ -85,16 +101,31 @@ func replaceBaseConfigBinatAnchorString() error {
 	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
+	// binat
 	var binatanchorConfPart = ""
+	netStartIPtemp := netStartIP
 	for i := 0; i < ipRangeCount; i++ {
-		binatanchorConfLine := strings.Replace(binatanchorStr, "HARP_SERVER_IP", netStartIP.String(), -1)
-		netStartIP = cidr.Inc(netStartIP)
+		binatanchorConfLine := strings.Replace(binatanchorStr, "HARP_SERVER_IP", netStartIPtemp.String(), -1)
+		netStartIPtemp = cidr.Inc(netStartIPtemp)
 
 		binatanchorConfPart += binatanchorConfLine
 	}
 
 	pfRulesData := strings.Replace(string(baseConfigData), harpBinatanchorRelaceString,
 		binatanchorConfPart, -1)
+
+	// NAT
+	var natanchorConfPart = ""
+	netStartIPtemp = netStartIP
+	for i := 0; i < ipRangeCount; i++ {
+		natanchorConfLine := strings.Replace(natanchorStr, "HARP_SERVER_IP", netStartIPtemp.String(), -1)
+		netStartIPtemp = cidr.Inc(netStartIPtemp)
+
+		natanchorConfPart += natanchorConfLine
+	}
+
+	pfRulesData = strings.Replace(pfRulesData, harpNatanchorRelaceString,
+		natanchorConfPart, -1)
 
 	err = writePFRulesFile(pfRulesData)
 	if err != nil {
@@ -111,7 +142,7 @@ func PreparePFConfigFiles() error {
 		return err
 	}
 
-	err = replaceBaseConfigBinatAnchorString()
+	err = replaceBaseConfigAnchorStrings()
 	if err != nil {
 		return err
 	}
@@ -119,8 +150,8 @@ func PreparePFConfigFiles() error {
 	return nil
 }
 
-func writeBinatAnchorConfigFile(binatAnchorFileLocation string, binatAnchorData string) error {
-	err := fileutil.WriteFile(binatAnchorFileLocation, binatAnchorData)
+func writeAnchorConfigFile(anchorFileLocation string, anchorData string) error {
+	err := fileutil.WriteFile(anchorFileLocation, anchorData)
 	if err != nil {
 		return err
 	}
@@ -151,50 +182,109 @@ func checkBinatAnchorFileExist(privateIP string) error {
 	return nil
 }
 
-// CreateAndLoadBinatAnchorConfig : Create binat anchor config file to match private IP address
-// to available public IP address. Then load it to pf firewall.
-func CreateAndLoadBinatAnchorConfig(privateIP string) error {
+func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
+	var binatanchorConfData string
+
+	binatanchorConfData = binatStr
+	binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_EXTERNAL_IFACE_NAME", config.AdaptiveIP.ExternalIfaceName, -1)
+	binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PRIVATE_IP", privateIP, -1)
+	binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PUBLIC_IP", publicIP, -1)
+
+	binatanchorName := binatanchorFilenamePrefix + publicIP
+	logger.Logger.Println("createAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName +
+		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
+	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
+	err := writeAnchorConfigFile(binatanchorConfigFileLocation, binatanchorConfData)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("createAndLoadBinatAnchorConfig: Load binat anchor config file for " + binatanchorName)
+	err = LoadPFAnchorRule(binatanchorName, binatanchorConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
+	var natanchorConfData string
+
+	natanchorConfData = natStr
+	natanchorConfData = strings.Replace(natanchorConfData, "HARP_INTERNAL_IFACE_NAME", config.AdaptiveIP.InternalIfaceName, -1)
+	natanchorConfData = strings.Replace(natanchorConfData, "HARP_PF_PRIVATE_IP", privateIP, -1)
+	natanchorConfData = strings.Replace(natanchorConfData, "HARP_PF_PUBLIC_IP", publicIP, -1)
+
+	natanchorName := natanchorFilenamePrefix + publicIP
+	logger.Logger.Println("createAndLoadnatAnchorConfig: Creating config file for " + natanchorName +
+		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
+	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
+	err := writeAnchorConfigFile(natanchorConfigFileLocation, natanchorConfData)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("createAndLoadnatAnchorConfig: Load nat anchor config file for " + natanchorName)
+	err = LoadPFAnchorRule(natanchorName, natanchorConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
+// to available public IP address. Then load them to pf firewall.
+func CreateAndLoadAnchorConfig(privateIP string, subnet model.Subnet) error {
 	netStartIP := iputil.CheckValidIP(config.AdaptiveIP.PublicStartIP)
 	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
-	var binatanchorConfData string
+	ipMap := getAvailableIPsStatusMap()
+
 	for i := 0; i < ipRangeCount; i++ {
 		err := checkBinatAnchorFileExist(netStartIP.String())
 		if err != nil {
-			logger.Logger.Println(err)
-			netStartIP = cidr.Inc(netStartIP)
-			continue
+			goto CheckError
 		}
 
-		err = checkDuplicatedIPAddress(netStartIP.String())
-		if err != nil {
-			logger.Logger.Println(err)
-			netStartIP = cidr.Inc(netStartIP)
-			continue
-		}
-
-		binatanchorConfData = binatStr
-		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_EXTERNAL_IFACE_NAME", config.AdaptiveIP.ExternalIfaceName, -1)
-		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PRIVATE_IP", privateIP, -1)
-		binatanchorConfData = strings.Replace(binatanchorConfData, "HARP_PF_PUBLIC_IP", netStartIP.String(), -1)
-
-		binatanchorName := binatanchorFilenamePrefix + netStartIP.String()
-		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName + " (privateIP: " + privateIP + ")")
-		binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
-		err = writeBinatAnchorConfigFile(binatanchorConfigFileLocation, binatanchorConfData)
-		if err != nil {
-			return err
-		}
-
-		logger.Logger.Println("CreateAndLoadBinatAnchorConfig: Load binat anchor config file for " + binatanchorName)
-		err = LoadPFBinatAnchorRule(binatanchorName, binatanchorConfigFileLocation)
-		if err != nil {
-			return err
+		if !ipMap[netStartIP.String()] {
+			err = errors.New("CreateAndLoadAnchorConfig: " + netStartIP.String() + " is a duplicated IP address")
 		}
 
 		break
+
+	CheckError:
+		logger.Logger.Println(err)
+		netStartIP = cidr.Inc(netStartIP)
+		continue
+	}
+
+	// Add public IP address alias
+	err := ifconfigAlias(config.AdaptiveIP.ExternalIfaceName, netStartIP.String(), config.AdaptiveIP.PublicNetworkNetmask, true)
+	if err != nil {
+		goto Error
+	}
+
+	// Add private IP address alias
+	err = ifconfigAlias(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask, true)
+	if err != nil {
+		goto Error
+	}
+
+	err = createAndLoadBinatAnchorConfig(privateIP, netStartIP.String())
+	if err != nil {
+		goto Error
+	}
+
+	err = createAndLoadnatAnchorConfig(privateIP, netStartIP.String())
+	if err != nil {
+		goto Error
 	}
 
 	return nil
+
+	Error:
+		return err
 }

@@ -153,6 +153,11 @@ func parseAdaptiveIP() {
 		logger.Logger.Panic(err)
 	}
 
+	AdaptiveIP.InternalIfaceName, err = config.AdaptiveIPConfig.String("adaptiveip_internal_iface_name")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
 	AdaptiveIP.PFBaseConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_base_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)
@@ -164,6 +169,11 @@ func parseAdaptiveIP() {
 	}
 
 	AdaptiveIP.PFBinatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_binat_config_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.PFnatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_nat_config_file_location")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}

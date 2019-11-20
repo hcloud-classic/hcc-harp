@@ -48,8 +48,23 @@ func getBinatAnchorConfigFiles() ([]string, error) {
 	return files, nil
 }
 
-func loadExstingBinatAndNATRules() error {
-	logger.Logger.Println("Loading existing binat and NAT rules...")
+func getnatAnchorConfigFiles() ([]string, error) {
+	var files []string
+
+	folder := config.AdaptiveIP.PFnatConfigFileLocation
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func loadExstingBinatRules(ipMap map[string]bool) error {
+	logger.Logger.Println("Loading existing binat rules...")
 
 	configFiles, err := getBinatAnchorConfigFiles()
 	if err != nil {
@@ -58,8 +73,6 @@ func loadExstingBinatAndNATRules() error {
 	if len(configFiles) == 1 {
 		return nil
 	}
-
-	ipMap := getAvailableIPsStatusMap()
 
 	var binatanchorFileName string
 	var binatanchorName string
@@ -84,7 +97,7 @@ func loadExstingBinatAndNATRules() error {
 			logger.Logger.Println("Skipping for not available IP address: " + ip)
 			continue
 		}
-		err = LoadPFBinatAnchorRule(binatanchorName, configFiles[i])
+		err = LoadPFAnchorRule(binatanchorName, configFiles[i])
 		if err != nil {
 			logger.Logger.Println(err)
 		}
@@ -93,12 +106,57 @@ func loadExstingBinatAndNATRules() error {
 	return nil
 }
 
-// LoadPFBinatAnchorRule : Load binat anchor rules configuration file and apply it to pf firewall
-func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation string) error {
-	logger.Logger.Println("Loading binat anchor of " + binatanchorName + "...")
+func loadExstingnatRules(ipMap map[string]bool) error {
+	logger.Logger.Println("Loading existing NAT rules...")
 
-	cmd := exec.Command("pfctl", "-a", binatanchorName, "-f", binatanchorConfigFileLocation)
-	err := cmd.Run()
+	configFiles, err := getnatAnchorConfigFiles()
+	if err != nil {
+		return err
+	}
+	if len(configFiles) == 1 {
+		return nil
+	}
+
+	var natanchorFileName string
+	var natanchorName string
+	var ip string
+
+	for i := 0; i < len(configFiles); i++ {
+		if configFiles[i] == config.AdaptiveIP.PFnatConfigFileLocation {
+			continue
+		}
+
+		natanchorFileName = configFiles[i][len(config.AdaptiveIP.PFnatConfigFileLocation+"/"):]
+		if !strings.Contains(natanchorFileName, natanchorFilenamePrefix) ||
+			!strings.Contains(natanchorFileName, ".conf") {
+			logger.Logger.Println("Wrong nat anchor filename: " + natanchorFileName)
+			logger.Logger.Println("Filename must be as '" + natanchorFilenamePrefix + "XXX'")
+			continue
+		}
+
+		natanchorName = natanchorFileName[0 : len(natanchorFileName)-len(".conf")]
+		ip = natanchorName[len(natanchorFilenamePrefix):]
+		if !ipMap[ip] {
+			logger.Logger.Println("Skipping for not available IP address: " + ip)
+			continue
+		}
+		err = LoadPFAnchorRule(natanchorName, configFiles[i])
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+	}
+
+	return nil
+}
+
+func loadExstingBinatAndNATRules() error {
+	ipMap := getAvailableIPsStatusMap()
+
+	err := loadExstingBinatRules(ipMap)
+	if err != nil {
+		return err
+	}
+	err = loadExstingnatRules(ipMap)
 	if err != nil {
 		return err
 	}
@@ -106,11 +164,29 @@ func LoadPFBinatAnchorRule(binatanchorName string, binatanchorConfigFileLocation
 	return nil
 }
 
-// RemvoePFBinatAnchorRule : Remove binat anchor rules of provided name from pf firewall
-func RemvoePFBinatAnchorRule(binatanchorName string) error {
-	logger.Logger.Println("Removing binat anchor rules of " + binatanchorName + "...")
+// LoadPFAnchorRule : Load anchor rules configuration file and apply it to pf firewall
+func LoadPFAnchorRule(anchorName string, anchorConfigFileLocation string) error {
+	err := removePFAnchorRule(anchorName)
+	if err != nil {
+		return err
+	}
 
-	cmd := exec.Command("pfctl", "-a", binatanchorName, "-F", "all")
+	logger.Logger.Println("Loading anchor of " + anchorName + "...")
+
+	cmd := exec.Command("pfctl", "-a", anchorName, "-f", anchorConfigFileLocation)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// removePFAnchorRule : Remove anchor rules of provided name from pf firewall
+func removePFAnchorRule(anchorName string) error {
+	logger.Logger.Println("Removing anchor rules of " + anchorName + "...")
+
+	cmd := exec.Command("pfctl", "-a", anchorName, "-F", "all")
 	err := cmd.Run()
 	if err != nil {
 		return err

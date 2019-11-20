@@ -329,8 +329,8 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return err
 	}
 
-	logger.Logger.Println("CreateConfig: Registering first IP to adaptive IP...")
-	err = adaptiveip.CreateAndLoadBinatAnchorConfig(firstIP.String())
+	logger.Logger.Println("CreateConfig: Registering first IP(" + firstIP.String() + ") to adaptive IP...")
+	err = adaptiveip.CreateAndLoadAnchorConfig(firstIP.String(), subnet)
 	if err != nil {
 		return err
 	}

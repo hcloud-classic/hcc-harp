@@ -19,6 +19,11 @@ func configInit() error {
 		return err
 	}
 
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
+	if err != nil {
+		return err
+	}
+
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		return err
