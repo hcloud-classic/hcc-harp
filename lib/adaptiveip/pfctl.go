@@ -87,7 +87,7 @@ func loadExstingBinatRules(ipMap map[string]bool) error {
 		if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
 			!strings.Contains(binatanchorFileName, ".conf") {
 			logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
-			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX'")
+			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX.conf'")
 			continue
 		}
 
@@ -130,7 +130,7 @@ func loadExstingnatRules(ipMap map[string]bool) error {
 		if !strings.Contains(natanchorFileName, natanchorFilenamePrefix) ||
 			!strings.Contains(natanchorFileName, ".conf") {
 			logger.Logger.Println("Wrong nat anchor filename: " + natanchorFileName)
-			logger.Logger.Println("Filename must be as '" + natanchorFilenamePrefix + "XXX'")
+			logger.Logger.Println("Filename must be as '" + natanchorFilenamePrefix + "XXX.conf'")
 			continue
 		}
 
@@ -208,6 +208,11 @@ func LoadHarpPFRules() error {
 	}
 
 	err = loadExstingBinatAndNATRules()
+	if err != nil {
+		return err
+	}
+
+	err = loadExistingIfconfigScripts()
 	if err != nil {
 		return err
 	}

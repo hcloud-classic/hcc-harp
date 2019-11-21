@@ -3,7 +3,6 @@ package adaptiveip
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/iputil"
@@ -41,7 +40,6 @@ func checkPFBaseConfig() error {
 
 	if isHarpbinatanchorRelaceStringIncluded {
 		lineCheckOk := scanText == harpBinatanchorRelaceString
-		fmt.Println(scanText)
 		if !lineCheckOk {
 			return errors.New("please add HARP_BINAT_ANCHOR_REPLACE_STRING string line correctly to base config file")
 		}
@@ -242,6 +240,7 @@ func CreateAndLoadAnchorConfig(privateIP string, subnet model.Subnet) error {
 
 		if !ipMap[netStartIP.String()] {
 			err = errors.New("CreateAndLoadAnchorConfig: " + netStartIP.String() + " is a duplicated IP address")
+			goto CheckError
 		}
 
 		break
@@ -252,19 +251,7 @@ func CreateAndLoadAnchorConfig(privateIP string, subnet model.Subnet) error {
 		continue
 	}
 
-	// Add public IP address alias
-	err := ifconfigAlias(config.AdaptiveIP.ExternalIfaceName, netStartIP.String(), config.AdaptiveIP.PublicNetworkNetmask, true)
-	if err != nil {
-		goto Error
-	}
-
-	// Add private IP address alias
-	err = ifconfigAlias(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask, true)
-	if err != nil {
-		goto Error
-	}
-
-	err = createAndLoadBinatAnchorConfig(privateIP, netStartIP.String())
+	err := createAndLoadBinatAnchorConfig(privateIP, netStartIP.String())
 	if err != nil {
 		goto Error
 	}
@@ -274,8 +261,14 @@ func CreateAndLoadAnchorConfig(privateIP string, subnet model.Subnet) error {
 		goto Error
 	}
 
+	err = createAndLoadIfconfigScript(config.AdaptiveIP.InternalIfaceName, config.AdaptiveIP.ExternalIfaceName,
+		subnet.Gateway, netStartIP.String(), subnet.Netmask, config.AdaptiveIP.PublicNetworkNetmask, true)
+	if err != nil {
+		goto Error
+	}
+
 	return nil
 
-	Error:
-		return err
+Error:
+	return err
 }

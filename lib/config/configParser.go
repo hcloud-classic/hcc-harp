@@ -178,6 +178,11 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
+	AdaptiveIP.IfconfigScriptFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_ifconfig_script_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	AdaptiveIP.PublicNetworkAddress, err = config.AdaptiveIPConfig.String("adaptiveip_public_network_address")
 	if err != nil {
 		logger.Logger.Panicln(err)
