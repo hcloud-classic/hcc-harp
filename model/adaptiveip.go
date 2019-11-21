@@ -5,7 +5,7 @@ import "time"
 // AdaptiveIP - ish
 type AdaptiveIP struct {
 	UUID           string    `json:"uuid"`
-	NetworkAddress string    `json:"network_addres"`
+	NetworkAddress string    `json:"network_address"`
 	Netmask        string    `json:"netmask"`
 	Gateway        string    `json:"gateway"`
 	StartIPAddress string    `json:"start_ip_address"`
