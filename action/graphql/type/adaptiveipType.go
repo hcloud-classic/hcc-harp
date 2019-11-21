@@ -10,7 +10,7 @@ var AdaptiveIPType = graphql.NewObject(
 			"uuid": &graphql.Field{
 				Type: graphql.String,
 			},
-			"network_addres": &graphql.Field{
+			"network_address": &graphql.Field{
 				Type: graphql.String,
 			},
 			"netmask": &graphql.Field{
