@@ -176,11 +176,11 @@ func ReadAdaptiveIPServerNum(args map[string]interface{}) (model.AdaptiveIPServe
 // CreateAdaptiveIPServer - ish
 func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	adaptiveipServer := model.AdaptiveIPServer{
-		AdaptiveIPUUID:           args["adaptiveip_uuid"].(string),
-		ServerUUID:      args["server_uuid"].(string),
-		PublicIP:        args["public_ip"].(string),
-		PrivateIP:        args["private_ip"].(string),
-		PrivateGateway:     args["private_gateway"].(string),
+		AdaptiveIPUUID: args["adaptiveip_uuid"].(string),
+		ServerUUID:     args["server_uuid"].(string),
+		PublicIP:       args["public_ip"].(string),
+		PrivateIP:      args["private_ip"].(string),
+		PrivateGateway: args["private_gateway"].(string),
 	}
 
 	sql := "insert into adaptiveip_server(adaptiveip_uuid, server_uuid, public_ip, private_ip, private_gateway) values (?, ?, ?, ?, ?)"

@@ -188,11 +188,11 @@ func CreateAdaptiveIP(args map[string]interface{}) (interface{}, error) {
 
 	adaptiveip := model.AdaptiveIP{
 		UUID:           uuid,
-		NetworkAddress:      args["network_address"].(string),
+		NetworkAddress: args["network_address"].(string),
 		Netmask:        args["netmask"].(string),
 		Gateway:        args["gateway"].(string),
-		StartIPAddress:     args["start_ip_address"].(string),
-		EndIPAddress:     args["end_ip_address"].(string),
+		StartIPAddress: args["start_ip_address"].(string),
+		EndIPAddress:   args["end_ip_address"].(string),
 	}
 
 	sql := "insert into adaptiveip(uuid, network_address, netmask, gateway, start_ip_address, end_ip_address, created_at) values (?, ?, ?, ?, ?, ?, now())"
