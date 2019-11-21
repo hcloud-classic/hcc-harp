@@ -127,7 +127,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 		},
 		// adaptive IP
 		"create_adaptiveip": &graphql.Field{
-			Type:        graphqlType.SubnetType,
+			Type:        graphqlType.AdaptiveIPType,
 			Description: "Create new adaptiveip",
 			Args: graphql.FieldConfigArgument{
 				"network_address": &graphql.ArgumentConfig{
@@ -152,7 +152,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"update_adaptiveip": &graphql.Field{
-			Type:        graphqlType.SubnetType,
+			Type:        graphqlType.AdaptiveIPType,
 			Description: "Update adaptiveip",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
@@ -180,7 +180,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"delete_adaptiveip": &graphql.Field{
-			Type:        graphqlType.SubnetType,
+			Type:        graphqlType.AdaptiveIPType,
 			Description: "Delete adaptiveip by uuid",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
@@ -193,7 +193,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"create_adaptiveip_server": &graphql.Field{
-			Type:        graphqlType.SubnetType,
+			Type:        graphqlType.AdaptiveIPServerType,
 			Description: "Create new adaptiveip_server",
 			Args: graphql.FieldConfigArgument{
 				"server_uuid": &graphql.ArgumentConfig{
@@ -215,7 +215,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"delete_adaptiveip_server": &graphql.Field{
-			Type:        graphqlType.SubnetType,
+			Type:        graphqlType.AdaptiveIPServerType,
 			Description: "Delete adaptiveip_server by server_uuid",
 			Args: graphql.FieldConfigArgument{
 				"server_uuid": &graphql.ArgumentConfig{
