@@ -204,7 +204,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err := stmt.Exec(adaptiveipServer.AdaptiveIPUUID, adaptiveipServer.ServerUUID, adaptiveipServer.PrivateIP, adaptiveipServer.PrivateGateway)
+	result, err := stmt.Exec(adaptiveipServer.AdaptiveIPUUID, adaptiveipServer.ServerUUID, adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, adaptiveipServer.PrivateGateway)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
