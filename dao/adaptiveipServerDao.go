@@ -184,7 +184,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 
 	subnet, err := ReadSubnetByServer(adaptiveipServer.ServerUUID)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("provided server_uuid is not allocated to one of private subnet")
 	}
 
 	firstIP, _, err := iputil.GetFirstAndLastIPs(subnet.(model.Subnet).NetworkIP, subnet.(model.Subnet).Netmask)
