@@ -74,7 +74,7 @@ func loadExistingIfconfigScripts() error {
 
 func createAndLoadIfconfigScript(internelIfacename string, externelIfacename string,
 	privateGatewayIP string, publicIP string, netmaskPrivate string,
-	netmaskPublic string, isAdd bool) error {
+	netmaskPublic string) error {
 	var ifconfigInternalScriptData string
 	ifconfigInternalScriptData = ifconfigReplaceString
 	ifconfigInternalScriptData = strings.Replace(ifconfigInternalScriptData, "IFCONFIG_IFACE_NAME", internelIfacename, -1)
@@ -89,14 +89,7 @@ func createAndLoadIfconfigScript(internelIfacename string, externelIfacename str
 
 	var ifconfigScriptData string
 	ifconfigScriptData = ifconfigSHELL + ifconfigInternalScriptData + ifconfigExternalScriptData
-
-	var aliasState string
-	if isAdd {
-		aliasState = "alias"
-	} else {
-		aliasState = "-alias"
-	}
-	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", aliasState, -1)
+	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("createAndLoadIfconfigScript: Creating ifconfig script file: " + ifconfigScriptFileName)
