@@ -99,7 +99,7 @@ func createAndLoadIfconfigScript(internelIfacename string, externelIfacename str
 	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", aliasState, -1)
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
-	logger.Logger.Println("createAndLoadIfconfigScript: Creating ifconfig script file: ifconfigScriptFileName")
+	logger.Logger.Println("createAndLoadIfconfigScript: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
 	err := fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
 	if err != nil {
