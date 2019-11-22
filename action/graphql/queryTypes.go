@@ -114,7 +114,7 @@ var queryTypes = graphql.NewObject(
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: adaptiveip")
-					return dao.ReadAdaptiveIP(params.Args)
+					return dao.ReadAdaptiveIP(params.Args["uuid"].(string))
 				},
 			},
 			"list_adaptiveip": &graphql.Field{
@@ -155,7 +155,7 @@ var queryTypes = graphql.NewObject(
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: all_adaptiveip")
-					return dao.ReadSubnetAll(params.Args)
+					return dao.ReadAdaptiveIPAll(params.Args)
 				},
 			},
 			"num_adaptiveip": &graphql.Field{

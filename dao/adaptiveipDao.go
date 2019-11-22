@@ -11,10 +11,9 @@ import (
 )
 
 // ReadAdaptiveIP - ish
-func ReadAdaptiveIP(args map[string]interface{}) (interface{}, error) {
+func ReadAdaptiveIP(uuid string) (interface{}, error) {
 	var adaptiveip model.AdaptiveIP
 
-	uuid := args["uuid"].(string)
 	var networkAddress string
 	var netmask string
 	var gateway string

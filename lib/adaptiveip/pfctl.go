@@ -63,7 +63,7 @@ func getnatAnchorConfigFiles() ([]string, error) {
 	return files, nil
 }
 
-func loadExstingBinatRules(ipMap map[string]bool) error {
+func loadExstingBinatRules() error {
 	logger.Logger.Println("Loading existing binat rules...")
 
 	configFiles, err := getBinatAnchorConfigFiles()
@@ -76,7 +76,6 @@ func loadExstingBinatRules(ipMap map[string]bool) error {
 
 	var binatanchorFileName string
 	var binatanchorName string
-	var ip string
 
 	for i := 0; i < len(configFiles); i++ {
 		if configFiles[i] == config.AdaptiveIP.PFBinatConfigFileLocation {
@@ -92,11 +91,6 @@ func loadExstingBinatRules(ipMap map[string]bool) error {
 		}
 
 		binatanchorName = binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
-		ip = binatanchorName[len(binatanchorFilenamePrefix):]
-		if !ipMap[ip] {
-			logger.Logger.Println("Skipping for not available IP address: " + ip)
-			continue
-		}
 		err = LoadPFAnchorRule(binatanchorName, configFiles[i])
 		if err != nil {
 			logger.Logger.Println(err)
@@ -106,7 +100,7 @@ func loadExstingBinatRules(ipMap map[string]bool) error {
 	return nil
 }
 
-func loadExstingnatRules(ipMap map[string]bool) error {
+func loadExstingnatRules() error {
 	logger.Logger.Println("Loading existing NAT rules...")
 
 	configFiles, err := getnatAnchorConfigFiles()
@@ -119,7 +113,6 @@ func loadExstingnatRules(ipMap map[string]bool) error {
 
 	var natanchorFileName string
 	var natanchorName string
-	var ip string
 
 	for i := 0; i < len(configFiles); i++ {
 		if configFiles[i] == config.AdaptiveIP.PFnatConfigFileLocation {
@@ -135,11 +128,6 @@ func loadExstingnatRules(ipMap map[string]bool) error {
 		}
 
 		natanchorName = natanchorFileName[0 : len(natanchorFileName)-len(".conf")]
-		ip = natanchorName[len(natanchorFilenamePrefix):]
-		if !ipMap[ip] {
-			logger.Logger.Println("Skipping for not available IP address: " + ip)
-			continue
-		}
 		err = LoadPFAnchorRule(natanchorName, configFiles[i])
 		if err != nil {
 			logger.Logger.Println(err)
@@ -150,13 +138,11 @@ func loadExstingnatRules(ipMap map[string]bool) error {
 }
 
 func loadExstingBinatAndNATRules() error {
-	ipMap := getAvailableIPsStatusMap()
-
-	err := loadExstingBinatRules(ipMap)
+	err := loadExstingBinatRules()
 	if err != nil {
 		return err
 	}
-	err = loadExstingnatRules(ipMap)
+	err = loadExstingnatRules()
 	if err != nil {
 		return err
 	}

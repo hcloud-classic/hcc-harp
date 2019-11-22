@@ -4,10 +4,12 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
+	"net"
 )
 
 // ReadAdaptiveIPServer - ish
@@ -49,15 +51,15 @@ func checkReadAdaptiveIPServerListPageRow(args map[string]interface{}) bool {
 // ReadAdaptiveIPServerList - ish
 func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) {
 	var adaptiveipServers []model.AdaptiveIPServer
-	var adaptiveipUUID string
+	var serverUUID string
 
 	publicIP, publicIPOk := args["public_ip"].(string)
 	privateIP, privateIPOk := args["private_ip"].(string)
 	privateGateway, privateGatewayOk := args["private_gateway"].(string)
 
-	serverUUID, serverUUIDOk := args["server_uuid"].(string)
-	if !serverUUIDOk {
-		return nil, errors.New("need a server_uuid argument")
+	adaptiveipUUID, adaptiveipUUIDOk := args["adaptiveip_uuid"].(string)
+	if !adaptiveipUUIDOk {
+		return nil, errors.New("need a adaptiveip_uuid argument")
 	}
 
 	row, _ := args["row"].(int)
@@ -66,7 +68,7 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		return nil, errors.New("need row and page arguments")
 	}
 
-	sql := "select * from adaptiveip_server where 1=1" + " and server_uuid = '" + serverUUID + "'"
+	sql := "select * from adaptiveip_server where adaptiveip_uuid = '" + adaptiveipUUID + "'"
 
 	if publicIPOk {
 		sql += " and public_ip = '" + publicIP + "'"
@@ -98,21 +100,45 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		adaptiveipServer := model.AdaptiveIPServer{AdaptiveIPUUID: adaptiveipUUID, ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP, PrivateGateway: privateGateway}
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
+
+	adaptiveIP, err := ReadAdaptiveIP(adaptiveipUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(adaptiveIP.(model.AdaptiveIP).NetworkAddress, adaptiveIP.(model.AdaptiveIP).Netmask)
+	if err != nil {
+		return nil, err
+	}
+
+	ipNet := net.IPNet{
+		IP:   netIPnetworkIP,
+		Mask: mask,
+	}
+
+	for _, adaptiveIPServer := range adaptiveipServers {
+		netIP := iputil.CheckValidIP(adaptiveIPServer.PublicIP)
+		if !ipNet.Contains(netIP) {
+			adaptiveIPServer.Status = "Invalid"
+			continue
+		}
+		adaptiveIPServer.Status = "Using"
+	}
+
 	return adaptiveipServers, nil
 }
 
 // ReadAdaptiveIPServerAll - ish
 func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 	var adaptiveipServers []model.AdaptiveIPServer
-	var adaptiveipUUID string
 	var serverUUID string
 	var publicIP string
 	var privateIP string
 	var privateGateway string
 
-	serverUUID, serverUUIDOk := args["server_uuid"].(string)
-	if !serverUUIDOk {
-		return nil, errors.New("need a server_uuid argument")
+	adaptiveipUUID, adaptiveipUUIDOk := args["adaptiveip_uuid"].(string)
+	if !adaptiveipUUIDOk {
+		return nil, errors.New("need a adaptiveip_uuid argument")
 	}
 
 	row, rowOk := args["row"].(int)
@@ -122,10 +148,10 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 	var err error
 
 	if !rowOk && !pageOk {
-		sql = "select * from adaptiveip_server where server_uuid = '" + serverUUID + "'"
+		sql = "select * from adaptiveip_server where adaptiveip_uuid = '" + adaptiveipUUID + "'"
 		stmt, err = mysql.Db.Query(sql)
 	} else if rowOk && pageOk {
-		sql = "select * from adaptiveip_server " + "where server_uuid = " + serverUUID + " order by created_at desc limit ? offset ?"
+		sql = "select * from adaptiveip_server " + "where adaptiveip_uuid = " + adaptiveipUUID + " order by created_at desc limit ? offset ?"
 		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
 	} else {
 		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
@@ -147,6 +173,30 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 		}
 		adaptiveipServer := model.AdaptiveIPServer{AdaptiveIPUUID: adaptiveipUUID, ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP, PrivateGateway: privateGateway}
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
+	}
+
+	adaptiveIP, err := ReadAdaptiveIP(adaptiveipUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(adaptiveIP.(model.AdaptiveIP).NetworkAddress, adaptiveIP.(model.AdaptiveIP).Netmask)
+	if err != nil {
+		return nil, err
+	}
+
+	ipNet := net.IPNet{
+		IP:   netIPnetworkIP,
+		Mask: mask,
+	}
+
+	for _, adaptiveIPServer := range adaptiveipServers {
+		netIP := iputil.CheckValidIP(adaptiveIPServer.PublicIP)
+		if !ipNet.Contains(netIP) {
+			adaptiveIPServer.Status = "Invalid"
+			continue
+		}
+		adaptiveIPServer.Status = "Using"
 	}
 
 	return adaptiveipServers, nil
