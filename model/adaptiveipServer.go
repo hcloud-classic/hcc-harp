@@ -7,7 +7,7 @@ type AdaptiveIPServer struct {
 	PublicIP       string `json:"public_ip"`
 	PrivateIP      string `json:"private_ip"`
 	PrivateGateway string `json:"private_gateway"`
-	Status string `json:"status"`
+	Status         string `json:"status"`
 }
 
 // AdaptiveIPServers - ish
