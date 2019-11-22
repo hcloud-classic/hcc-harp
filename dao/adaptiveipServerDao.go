@@ -7,7 +7,6 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
-	"net"
 )
 
 // ReadAdaptiveIPServer - ish
