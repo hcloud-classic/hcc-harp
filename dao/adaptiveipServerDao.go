@@ -3,6 +3,7 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -194,6 +195,11 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 
 	adaptiveipServer.PrivateIP = firstIP.String()
 	adaptiveipServer.PrivateGateway = subnet.(model.Subnet).Gateway
+
+	err = adaptiveip.CreateAndLoadAnchorConfig(adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, subnet.(model.Subnet))
+	if err != nil {
+		return nil, err
+	}
 
 	sql := "insert into adaptiveip_server(adaptiveip_uuid, server_uuid, public_ip, private_ip, private_gateway) values (?, ?, ?, ?, ?)"
 	stmt, err := mysql.Db.Prepare(sql)

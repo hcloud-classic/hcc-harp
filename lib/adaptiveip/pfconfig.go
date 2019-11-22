@@ -225,50 +225,36 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
-func CreateAndLoadAnchorConfig(privateIP string, subnet model.Subnet) error {
-	netStartIP := iputil.CheckValidIP(config.AdaptiveIP.PublicStartIP)
-	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
-	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
-
+func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.Subnet) error {
 	ipMap := getAvailableIPsStatusMap()
 
-	for i := 0; i < ipRangeCount; i++ {
-		err := checkBinatAnchorFileExist(netStartIP.String())
-		if err != nil {
-			goto CheckError
-		}
-
-		if !ipMap[netStartIP.String()] {
-			err = errors.New("CreateAndLoadAnchorConfig: " + netStartIP.String() + " is a duplicated IP address")
-			goto CheckError
-		}
-
-		break
-
-	CheckError:
-		logger.Logger.Println(err)
-		netStartIP = cidr.Inc(netStartIP)
-		continue
-	}
-
-	err := createAndLoadBinatAnchorConfig(privateIP, netStartIP.String())
+	err := checkBinatAnchorFileExist(publicIP)
 	if err != nil {
 		goto Error
 	}
 
-	err = createAndLoadnatAnchorConfig(privateIP, netStartIP.String())
+	if !ipMap[publicIP] {
+		err = errors.New("CreateAndLoadAnchorConfig: " + publicIP + " is a duplicated IP address")
+		goto Error
+	}
+
+	err = createAndLoadBinatAnchorConfig(privateIP, publicIP)
+	if err != nil {
+		goto Error
+	}
+
+	err = createAndLoadnatAnchorConfig(privateIP, publicIP)
 	if err != nil {
 		goto Error
 	}
 
 	err = createAndLoadIfconfigScript(config.AdaptiveIP.InternalIfaceName, config.AdaptiveIP.ExternalIfaceName,
-		subnet.Gateway, netStartIP.String(), subnet.Netmask, config.AdaptiveIP.PublicNetworkNetmask, true)
+		subnet.Gateway, publicIP, subnet.Netmask, config.AdaptiveIP.PublicNetworkNetmask, true)
 	if err != nil {
 		goto Error
 	}
 
 	return nil
-
 Error:
 	return err
 }
