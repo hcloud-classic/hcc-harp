@@ -196,16 +196,13 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			Type:        graphqlType.AdaptiveIPServerType,
 			Description: "Create new adaptiveip_server",
 			Args: graphql.FieldConfigArgument{
+				"adaptiveip_uuid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 				"server_uuid": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 				"public_ip": &graphql.ArgumentConfig{
-					Type: graphql.String,
-				},
-				"private_ip": &graphql.ArgumentConfig{
-					Type: graphql.String,
-				},
-				"private_gateway": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
