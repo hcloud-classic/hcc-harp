@@ -226,15 +226,13 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
 func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.Subnet) error {
-	ipMap := getAvailableIPsStatusMap()
-
 	err := checkBinatAnchorFileExist(publicIP)
 	if err != nil {
 		goto Error
 	}
 
-	if !ipMap[publicIP] {
-		err = errors.New("CreateAndLoadAnchorConfig: " + publicIP + " is a duplicated IP address")
+	err = checkDuplicatedIPAddress(publicIP)
+	if err != nil {
 		goto Error
 	}
 
