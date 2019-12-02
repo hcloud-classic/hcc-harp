@@ -124,6 +124,11 @@ func parseDHCPD() {
 		logger.Logger.Panicln(err)
 	}
 
+	DHCPD.IfconfigScriptFileLocation, err = config.DHCPDConfig.String("dhcpd_ifconfig_file_location")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	DHCPD.MinLeaseTime, err = config.DHCPDConfig.Int("dhcpd_min_lease_time")
 	if err != nil {
 		logger.Logger.Panicln(err)

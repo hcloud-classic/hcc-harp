@@ -246,8 +246,8 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.S
 		goto Error
 	}
 
-	err = createAndLoadIfconfigScript(config.AdaptiveIP.InternalIfaceName, config.AdaptiveIP.ExternalIfaceName,
-		subnet.Gateway, publicIP, subnet.Netmask, config.AdaptiveIP.PublicNetworkNetmask)
+	err = createAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
+											  config.AdaptiveIP.PublicNetworkNetmask)
 	if err != nil {
 		goto Error
 	}

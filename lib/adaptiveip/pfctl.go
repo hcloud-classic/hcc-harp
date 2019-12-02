@@ -183,7 +183,12 @@ func removePFAnchorRule(anchorName string) error {
 
 // LoadHarpPFRules : Load pf rules for harp module
 func LoadHarpPFRules() error {
-	err := flushPFRules()
+	err := loadExistingIfconfigScriptsInternal()
+	if err != nil {
+		return err
+	}
+
+	err = flushPFRules()
 	if err != nil {
 		return err
 	}
@@ -198,7 +203,7 @@ func LoadHarpPFRules() error {
 		return err
 	}
 
-	err = loadExistingIfconfigScripts()
+	err = loadExistingIfconfigScriptsExternal()
 	if err != nil {
 		return err
 	}

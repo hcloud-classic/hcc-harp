@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"encoding/json"
 	"hcc/harp/dao"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/fileutil"
 	"net/http"
 	"time"
@@ -324,6 +325,12 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs, false)
+	if err != nil {
+		return err
+	}
+
+	// Allocate gateway IP address to internal interface
+	err = adaptiveip.CreateAndLoadIfconfigScriptInternal(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
