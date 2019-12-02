@@ -135,14 +135,20 @@ func CreateAndLoadIfconfigScriptInternal(internelIfacename string, privateGatewa
 	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + privateGatewayIP + ".sh"
-	logger.Logger.Println("createAndLoadIfconfigScript: Creating ifconfig script file: " + ifconfigScriptFileName)
+	logger.Logger.Println("CreateAndLoadIfconfigScriptInternal: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.DHCPD.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
-	err := fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
+
+	err := logger.CreateDirIfNotExist(config.DHCPD.IfconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}
 
-	logger.Logger.Println("createAndLoadIfconfigScript: Running ifconfig script file: " + ifconfigScriptFileName)
+	err = fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("CreateAndLoadIfconfigScriptInternal: Running ifconfig script file: " + ifconfigScriptFileName)
 	err = loadIfconfigScript(ifconfigScriptFileLocation)
 	if err != nil {
 		return err
@@ -163,14 +169,20 @@ func createAndLoadIfconfigScriptExternal(externelIfacename string, publicIP stri
 	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
-	logger.Logger.Println("createAndLoadIfconfigScript: Creating ifconfig script file: " + ifconfigScriptFileName)
+	logger.Logger.Println("createAndLoadIfconfigScriptExternal: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
-	err := fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
+
+	err := logger.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}
 
-	logger.Logger.Println("createAndLoadIfconfigScript: Running ifconfig script file: " + ifconfigScriptFileName)
+	err = fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("createAndLoadIfconfigScriptExternal: Running ifconfig script file: " + ifconfigScriptFileName)
 	err = loadIfconfigScript(ifconfigScriptFileLocation)
 	if err != nil {
 		return err

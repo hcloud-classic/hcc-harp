@@ -76,7 +76,12 @@ func checkPFBaseConfig() error {
 }
 
 func writePFRulesFile(pfRulesData string) error {
-	err := fileutil.WriteFile(config.AdaptiveIP.PFRulesFileLocation, pfRulesData)
+	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFRulesFileLocation)
+	if err != nil {
+		return err
+	}
+
+	err = fileutil.WriteFile(config.AdaptiveIP.PFRulesFileLocation, pfRulesData)
 	if err != nil {
 		return err
 	}
@@ -183,7 +188,13 @@ func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
 	logger.Logger.Println("createAndLoadBinatAnchorConfig: Creating config file for " + binatanchorName +
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
-	err := fileutil.WriteFile(binatanchorConfigFileLocation, binatanchorConfData)
+
+	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFBinatConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	err = fileutil.WriteFile(binatanchorConfigFileLocation, binatanchorConfData)
 	if err != nil {
 		return err
 	}
@@ -209,7 +220,13 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 	logger.Logger.Println("createAndLoadnatAnchorConfig: Creating config file for " + natanchorName +
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
-	err := fileutil.WriteFile(natanchorConfigFileLocation, natanchorConfData)
+
+	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFnatConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	err = fileutil.WriteFile(natanchorConfigFileLocation, natanchorConfData)
 	if err != nil {
 		return err
 	}
