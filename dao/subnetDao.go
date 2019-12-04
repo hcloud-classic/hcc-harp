@@ -1,6 +1,7 @@
 package dao
 
 import (
+	dbsql "database/sql"
 	"errors"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/lib/logger"
@@ -35,6 +36,56 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 		&nameServer,
 		&domainName,
 		&serverUUID,
+		&leaderNodeUUID,
+		&_os,
+		&subnetName,
+		&createdAt)
+	if err != nil {
+		logger.Logger.Println(err)
+		return nil, err
+	}
+
+	subnet.UUID = uuid
+	subnet.NetworkIP = networkIP
+	subnet.Netmask = netmask
+	subnet.Gateway = gateway
+	subnet.NextServer = nextServer
+	subnet.NameServer = nameServer
+	subnet.DomainName = domainName
+	subnet.ServerUUID = serverUUID
+	subnet.LeaderNodeUUID = leaderNodeUUID
+	subnet.OS = _os
+	subnet.SubnetName = subnetName
+	subnet.CreatedAt = createdAt
+
+	return subnet, nil
+}
+
+// ReadSubnetByServer : Get subnet info by server UUID
+func ReadSubnetByServer(serverUUID string) (interface{}, error) {
+	var subnet model.Subnet
+
+	var uuid string
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var leaderNodeUUID string
+	var _os string
+	var subnetName string
+	var createdAt time.Time
+
+	sql := "select uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, leader_node_uuid, os, subnet_name, created_at from subnet where server_uuid = ?"
+	err := mysql.Db.QueryRow(sql, serverUUID).Scan(
+		&uuid,
+		&networkIP,
+		&netmask,
+		&gateway,
+		&nextServer,
+		&nameServer,
+		&domainName,
 		&leaderNodeUUID,
 		&_os,
 		&subnetName,
@@ -148,7 +199,6 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 
 // ReadSubnetAll - cgs
 func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
-	var err error
 	var subnets []model.Subnet
 	var uuid string
 	var networkIP string
@@ -162,15 +212,23 @@ func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 	var os string
 	var subnetName string
 	var createdAt time.Time
+
 	row, rowOk := args["row"].(int)
 	page, pageOk := args["page"].(int)
-	if !rowOk || !pageOk {
-		return nil, err
+	var sql string
+	var stmt *dbsql.Rows
+	var err error
+
+	if !rowOk && !pageOk {
+		sql = "select * from subnet order by created_at desc"
+		stmt, err = mysql.Db.Query(sql)
+	} else if rowOk && pageOk {
+		sql = "select * from subnet order by created_at desc limit ? offset ?"
+		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+	} else {
+		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
 	}
 
-	sql := "select * from subnet order by created_at desc limit ? offset ?"
-
-	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
 	if err != nil {
 		logger.Logger.Println(err.Error())
 		return nil, err

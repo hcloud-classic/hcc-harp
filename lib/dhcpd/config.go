@@ -3,18 +3,22 @@ package dhcpd
 import (
 	"encoding/json"
 	"hcc/harp/dao"
+	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/fileutil"
 	"net/http"
 	"time"
 
 	// "encoding/json"
 	"errors"
-	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/model"
 	"io/ioutil"
 	"net"
+
+	"github.com/apparentlymart/go-cidr/cidr"
+
 	// "net/http"
 	"os"
 	"os/exec"
@@ -141,23 +145,6 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
 }
 
-func writeFile(fileLocation string, input string) error {
-	file, err := os.OpenFile(fileLocation, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = file.Close()
-	}()
-
-	_, err = file.WriteString(input)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func writeConfigFile(input string, name string) error {
 	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
@@ -165,7 +152,7 @@ func writeConfigFile(input string, name string) error {
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + name + ".conf"
-	err = writeFile(dhcpdConfLocation, input)
+	err = fileutil.WriteFile(dhcpdConfLocation, input)
 	if err != nil {
 		return err
 	}
@@ -197,7 +184,8 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
-func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string) error {
+func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
+	useSamePXEFileForCompute bool) error {
 	confContent := confBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
@@ -205,7 +193,11 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
-	confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	if useSamePXEFileForCompute {
+		confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
+	} else {
+		confContent = strings.Replace(confContent, "    filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
+	}
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME_SERVER", subnet.NameServer, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_DOMAIN_NAME", subnet.DomainName, -1)
@@ -239,6 +231,17 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_IP", node.IP, -1)
+		if useSamePXEFileForCompute {
+			nodeConfPart = strings.Replace(nodeConfPart, "        filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
+		} else {
+			var otherPXEFileName string
+			if uuid == subnet.LeaderNodeUUID {
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID+"/Leader", -1)
+			} else {
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID+"/Compute", -1)
+			}
+			nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_PXE_FILENAME", otherPXEFileName, -1)
+		}
 
 		nodeEntryConfPart += nodeConfPart
 	}
@@ -275,7 +278,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 
 	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIP)
 	if netIPnetworkIP == nil {
-		return errors.New("wrong network IP")
+		return errors.New("wrong network IP address")
 	}
 
 	mask, err := iputil.CheckNetmask(subnet.Netmask)
@@ -293,12 +296,12 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return err
 	}
 
-	netIPnextServer := net.ParseIP(subnet.NextServer)
+	netIPnextServer := iputil.CheckValidIP(subnet.NextServer)
 	if netIPnextServer == nil {
 		return errors.New("wrong next server IP")
 	}
 
-	netIPnameServer := net.ParseIP(subnet.NameServer)
+	netIPnameServer := iputil.CheckValidIP(subnet.NameServer)
 	if netIPnameServer == nil {
 		return errors.New("wrong name server IP")
 	}
@@ -321,9 +324,15 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		lastIP = cidr.Inc(lastIP)
 	}
 
-	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs)
+	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs, false)
 	if err != nil {
-		return nil
+		return err
+	}
+
+	// Allocate gateway IP address to internal interface
+	err = adaptiveip.CreateAndLoadIfconfigScriptInternal(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -388,7 +397,7 @@ func UpdateHarpDHCPDConfig() error {
 		return err
 	}
 
-	err = writeFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
+	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
 	if err != nil {
 		return err
 	}
