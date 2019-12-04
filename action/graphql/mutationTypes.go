@@ -2,11 +2,10 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
+	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
-	"hcc/harp/lib/config"
-	"hcc/harp/lib/dhcpd"
+	"hcc/harp/driver"
 	"hcc/harp/lib/logger"
-	"strings"
 )
 
 var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
@@ -14,7 +13,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		// subnet DB
 		"create_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Create new subnet",
 			Args: graphql.FieldConfigArgument{
 				"network_ip": &graphql.ArgumentConfig{
@@ -49,11 +48,12 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: create_subnet")
 				return dao.CreateSubnet(params.Args)
 			},
 		},
 		"update_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Update subnet",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
@@ -92,17 +92,11 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				logger.Logger.Println("Resolving: update_subnet")
-				subnet, err := dao.UpdateSubnet(params.Args)
-				if err != nil {
-					logger.Logger.Print(err)
-					return nil, err
-				}
-
-				return subnet, nil
+				return dao.UpdateSubnet(params.Args)
 			},
 		},
 		"delete_subnet": &graphql.Field{
-			Type:        subnetType,
+			Type:        graphqlType.SubnetType,
 			Description: "Delete subnet by uuid",
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
@@ -114,7 +108,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				return dao.DeleteSubnet(params.Args)
 			},
 		},
-
+		// dhcpd
 		"create_dhcpd_conf": &graphql.Field{
 			Type:        graphql.String,
 			Description: "Create new dhcpd config",
@@ -127,28 +121,107 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				subnetUUID := params.Args["subnet_uuid"].(string)
-				nodeUUIDs := params.Args["node_uuids"].(string)
-
-				nodeUUIDsParts := strings.Split(nodeUUIDs, ",")
-
-				err := dhcpd.CreateConfig(subnetUUID, nodeUUIDsParts)
-				if err != nil {
-					return nil, err
-				}
-
-				err = dhcpd.UpdateHarpDHCPDConfig()
-				if err != nil {
-					return nil, err
-				}
-
-				err = dhcpd.RestartDHCPDServer()
-				if err != nil {
-					logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
-					return nil, err
-				}
-
-				return "CreateDHCPDConfig: succeed", nil
+				logger.Logger.Println("Resolving: create_dhcpd_conf")
+				return driver.CreateDHCPDConfig(params)
+			},
+		},
+		// adaptive IP
+		"create_adaptiveip": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPType,
+			Description: "Create new adaptiveip",
+			Args: graphql.FieldConfigArgument{
+				"network_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"netmask": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"gateway": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"start_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"end_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: create_adaptiveip")
+				return dao.CreateAdaptiveIP(params.Args)
+			},
+		},
+		"update_adaptiveip": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPType,
+			Description: "Update adaptiveip",
+			Args: graphql.FieldConfigArgument{
+				"uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"network_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"netmask": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"gateway": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"start_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"end_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: update_adaptiveip")
+				return dao.UpdateAdaptiveIP(params.Args)
+			},
+		},
+		"delete_adaptiveip": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPType,
+			Description: "Delete adaptiveip by uuid",
+			Args: graphql.FieldConfigArgument{
+				"uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: delete_subnet")
+				return dao.DeleteAdaptiveIP(params.Args)
+			},
+		},
+		"create_adaptiveip_server": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPServerType,
+			Description: "Create new adaptiveip_server",
+			Args: graphql.FieldConfigArgument{
+				"adaptiveip_uuid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"server_uuid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"public_ip": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: create_adaptiveip_server")
+				return dao.CreateAdaptiveIPServer(params.Args)
+			},
+		},
+		"delete_adaptiveip_server": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPServerType,
+			Description: "Delete adaptiveip_server by server_uuid",
+			Args: graphql.FieldConfigArgument{
+				"server_uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: delete_adaptiveip_server")
+				return dao.DeleteAdaptiveIPServer(params.Args)
 			},
 		},
 	},
