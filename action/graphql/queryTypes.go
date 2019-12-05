@@ -104,79 +104,10 @@ var queryTypes = graphql.NewObject(
 				},
 			},
 			// adaptive IP
-			"adaptiveip": &graphql.Field{
-				Type:        graphqlType.AdaptiveIPType,
-				Description: "Get adaptiveip by uuid",
-				Args: graphql.FieldConfigArgument{
-					"uuid": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-				},
-				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					logger.Logger.Println("Resolving: adaptiveip")
-					return dao.ReadAdaptiveIP(params.Args["uuid"].(string))
-				},
-			},
-			"list_adaptiveip": &graphql.Field{
-				Type:        graphql.NewList(graphqlType.AdaptiveIPType),
-				Description: "Get adaptiveip list",
-				Args: graphql.FieldConfigArgument{
-					"network_address": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-					"netmask": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-					"gateway": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-					"start_ip_address": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-					"end_ip_address": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
-				},
-				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					logger.Logger.Println("Resolving: list_adaptiveip")
-					return dao.ReadAdaptiveIPList(params.Args)
-				},
-			},
-			"all_adaptiveip": &graphql.Field{
-				Type:        graphql.NewList(graphqlType.AdaptiveIPType),
-				Description: "Get all adaptiveip list",
-				Args: graphql.FieldConfigArgument{
-					"row": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-					"page": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-				},
-				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					logger.Logger.Println("Resolving: all_adaptiveip")
-					return dao.ReadAdaptiveIPAll(params.Args)
-				},
-			},
-			"num_adaptiveip": &graphql.Field{
-				Type:        graphqlType.AdaptiveIPNumType,
-				Description: "Get the number of adaptiveip",
-				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					logger.Logger.Println("Resolving: num_adaptiveip")
-					var adaptiveIPNum model.AdaptiveIPNum
-					var err error
-					adaptiveIPNum, err = dao.ReadAdaptiveIPNum()
-
-					return adaptiveIPNum, err
-				},
-			},
 			"adaptiveip_server": &graphql.Field{
 				Type:        graphqlType.AdaptiveIPServerType,
 				Description: "Get adaptiveip by uuid",
 				Args: graphql.FieldConfigArgument{
-					"adaptiveip_uuid": &graphql.ArgumentConfig{
-						Type: graphql.String,
-					},
 					"server_uuid": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
@@ -201,6 +132,12 @@ var queryTypes = graphql.NewObject(
 					},
 					"private_gateway": &graphql.ArgumentConfig{
 						Type: graphql.String,
+					},
+					"row": &graphql.ArgumentConfig{
+						Type: graphql.Int,
+					},
+					"page": &graphql.ArgumentConfig{
+						Type: graphql.Int,
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {

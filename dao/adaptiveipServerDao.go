@@ -4,38 +4,41 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
 	"net"
+	"time"
 )
 
 // ReadAdaptiveIPServer - ish
 func ReadAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	var adaptiveipServer model.AdaptiveIPServer
 
-	adaptiveIPUUID := args["adaptiveip_uuid"].(string)
 	serverUUID := args["server_uuid"].(string)
 	var publicIP string
 	var privateIP string
 	var privateGateway string
+	var createdAt time.Time
 
-	sql := "select server_uuid, public_ip, private_ip, private_gateway from adaptiveip_server where adaptiveip_uuid = ? and server_uuid = ?"
-	err := mysql.Db.QueryRow(sql, adaptiveIPUUID, serverUUID).Scan(
+	sql := "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where server_uuid = ?"
+	err := mysql.Db.QueryRow(sql, serverUUID).Scan(
 		&serverUUID,
 		&publicIP,
 		&privateIP,
-		&privateGateway)
+		&privateGateway,
+		&createdAt)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
 	}
 
-	adaptiveipServer.AdaptiveIPUUID = adaptiveIPUUID
 	adaptiveipServer.PublicIP = publicIP
 	adaptiveipServer.PrivateIP = privateIP
 	adaptiveipServer.PrivateGateway = privateGateway
+	adaptiveipServer.CreatedAt = createdAt
 
 	return adaptiveipServer, nil
 }
@@ -50,16 +53,12 @@ func checkReadAdaptiveIPServerListPageRow(args map[string]interface{}) bool {
 // ReadAdaptiveIPServerList - ish
 func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) {
 	var adaptiveipServers []model.AdaptiveIPServer
-	var serverUUID string
 
+	serverUUID, serverUUIDOk := args["server_uuid"].(string)
 	publicIP, publicIPOk := args["public_ip"].(string)
 	privateIP, privateIPOk := args["private_ip"].(string)
 	privateGateway, privateGatewayOk := args["private_gateway"].(string)
-
-	adaptiveipUUID, adaptiveipUUIDOk := args["adaptiveip_uuid"].(string)
-	if !adaptiveipUUIDOk {
-		return nil, errors.New("need a adaptiveip_uuid argument")
-	}
+	var createdAt time.Time
 
 	row, _ := args["row"].(int)
 	page, _ := args["page"].(int)
@@ -67,8 +66,11 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		return nil, errors.New("need row and page arguments")
 	}
 
-	sql := "select * from adaptiveip_server where adaptiveip_uuid = '" + adaptiveipUUID + "'"
+	sql := "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where 1=1"
 
+	if serverUUIDOk {
+		sql += " and server_uuid = '" + serverUUID + "'"
+	}
 	if publicIPOk {
 		sql += " and public_ip = '" + publicIP + "'"
 	}
@@ -91,21 +93,17 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&adaptiveipUUID, &serverUUID, &publicIP, &privateIP, &privateGateway)
+		err := stmt.Scan(&serverUUID, &publicIP, &privateIP, &privateGateway, &createdAt)
 		if err != nil {
 			logger.Logger.Println(err.Error())
 			return nil, err
 		}
-		adaptiveipServer := model.AdaptiveIPServer{AdaptiveIPUUID: adaptiveipUUID, ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP, PrivateGateway: privateGateway}
+		adaptiveipServer := model.AdaptiveIPServer{ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP,
+			PrivateGateway: privateGateway, CreatedAt: createdAt}
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP, err := ReadAdaptiveIP(adaptiveipUUID)
-	if err != nil {
-		return nil, err
-	}
-
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(adaptiveIP.(model.AdaptiveIP).NetworkAddress, adaptiveIP.(model.AdaptiveIP).Netmask)
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress, config.AdaptiveIP.PublicNetworkNetmask)
 	if err != nil {
 		return nil, err
 	}
@@ -134,11 +132,7 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 	var publicIP string
 	var privateIP string
 	var privateGateway string
-
-	adaptiveipUUID, adaptiveipUUIDOk := args["adaptiveip_uuid"].(string)
-	if !adaptiveipUUIDOk {
-		return nil, errors.New("need a adaptiveip_uuid argument")
-	}
+	var createdAt time.Time
 
 	row, rowOk := args["row"].(int)
 	page, pageOk := args["page"].(int)
@@ -147,10 +141,10 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 	var err error
 
 	if !rowOk && !pageOk {
-		sql = "select * from adaptiveip_server where adaptiveip_uuid = '" + adaptiveipUUID + "'"
+		sql = "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server"
 		stmt, err = mysql.Db.Query(sql)
 	} else if rowOk && pageOk {
-		sql = "select * from adaptiveip_server " + "where adaptiveip_uuid = " + adaptiveipUUID + " order by created_at desc limit ? offset ?"
+		sql = "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server order by created_at desc limit ? offset ?"
 		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
 	} else {
 		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
@@ -165,21 +159,17 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&adaptiveipUUID, &serverUUID, &publicIP, &privateIP, &privateGateway)
+		err := stmt.Scan(&serverUUID, &publicIP, &privateIP, &privateGateway, &createdAt)
 		if err != nil {
 			logger.Logger.Println(err)
 			return nil, err
 		}
-		adaptiveipServer := model.AdaptiveIPServer{AdaptiveIPUUID: adaptiveipUUID, ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP, PrivateGateway: privateGateway}
+		adaptiveipServer := model.AdaptiveIPServer{ServerUUID: serverUUID, PublicIP: publicIP, PrivateIP: privateIP,
+			PrivateGateway: privateGateway, CreatedAt: createdAt}
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP, err := ReadAdaptiveIP(adaptiveipUUID)
-	if err != nil {
-		return nil, err
-	}
-
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(adaptiveIP.(model.AdaptiveIP).NetworkAddress, adaptiveIP.(model.AdaptiveIP).Netmask)
+	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress, config.AdaptiveIP.PublicNetworkNetmask)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +217,6 @@ func ReadAdaptiveIPServerNum(args map[string]interface{}) (model.AdaptiveIPServe
 // CreateAdaptiveIPServer - ish
 func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	adaptiveipServer := model.AdaptiveIPServer{
-		AdaptiveIPUUID: args["adaptiveip_uuid"].(string),
 		ServerUUID:     args["server_uuid"].(string),
 		PublicIP:       args["public_ip"].(string),
 	}
@@ -250,7 +239,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	sql := "insert into adaptiveip_server(adaptiveip_uuid, server_uuid, public_ip, private_ip, private_gateway) values (?, ?, ?, ?, ?)"
+	sql := "insert into adaptiveip_server(server_uuid, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
 		logger.Logger.Println(err.Error())
@@ -259,7 +248,8 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err := stmt.Exec(adaptiveipServer.AdaptiveIPUUID, adaptiveipServer.ServerUUID, adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, adaptiveipServer.PrivateGateway)
+	result, err := stmt.Exec(adaptiveipServer.ServerUUID, adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP,
+		adaptiveipServer.PrivateGateway, adaptiveipServer.CreatedAt)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
