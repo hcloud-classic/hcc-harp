@@ -175,11 +175,7 @@ var queryTypes = graphql.NewObject(
 				Description: "Get the number of adaptiveip_server",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: num_adaptiveip_server")
-					var adaptiveIPServerNum model.AdaptiveIPServerNum
-					var err error
-					adaptiveIPServerNum, err = dao.ReadAdaptiveIPServerNum(params.Args)
-
-					return adaptiveIPServerNum, err
+					return dao.ReadAdaptiveIPServerNum(params.Args)
 				},
 			},
 		},
