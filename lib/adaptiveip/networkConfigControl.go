@@ -100,6 +100,11 @@ func WriteNetworkConfigAndReloadHarpNetwork(args map[string]interface{}) (interf
 	}
 
 	go func() {
+		err = settingExternalNetwork()
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+
 		err = restartNetwork()
 		if err != nil {
 			logger.Logger.Println(err)
