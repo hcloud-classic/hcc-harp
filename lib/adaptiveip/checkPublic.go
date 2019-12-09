@@ -2,7 +2,6 @@ package adaptiveip
 
 import (
 	"errors"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"net"
 )
@@ -16,15 +15,11 @@ func CheckPublicNetwork(iface net.Interface) error {
 		return err
 	}
 
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
-		config.AdaptiveIP.PublicNetworkNetmask)
+	adaptiveIP := GetAdaptiveIPNetwork()
+
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return err
-	}
-
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
 	}
 
 	for _, addr := range addrs {
@@ -36,7 +31,7 @@ func CheckPublicNetwork(iface net.Interface) error {
 			ip = v.IP
 		}
 
-		if ipNet.Contains(ip) {
+		if netNetwork.Contains(ip) {
 			publicNetworkOk = true
 		}
 	}

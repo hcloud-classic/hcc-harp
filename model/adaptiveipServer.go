@@ -4,12 +4,12 @@ import "time"
 
 // AdaptiveIPServer - ish
 type AdaptiveIPServer struct {
-	ServerUUID     string `json:"server_uuid"`
-	PublicIP       string `json:"public_ip"`
-	PrivateIP      string `json:"private_ip"`
-	PrivateGateway string `json:"private_gateway"`
-	Status         string `json:"status"`
-	CreatedAt	time.Time `json:"created_at"`
+	ServerUUID     string    `json:"server_uuid"`
+	PublicIP       string    `json:"public_ip"`
+	PrivateIP      string    `json:"private_ip"`
+	PrivateGateway string    `json:"private_gateway"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // AdaptiveIPServers - ish

@@ -188,22 +188,32 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PublicNetworkAddress, err = config.AdaptiveIPConfig.String("adaptiveip_public_network_address")
+	AdaptiveIP.NetworkConfigFile, err = config.AdaptiveIPConfig.String("adaptiveip_network_config_file")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PublicNetworkNetmask, err = config.AdaptiveIPConfig.String("adaptiveip_public_network_netmask")
+	AdaptiveIP.DefaultExtIfaceIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_ext_iface_ip_addr")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PublicStartIP, err = config.AdaptiveIPConfig.String("adaptiveip_public_start_ip")
+	AdaptiveIP.DefaultNetmask, err = config.AdaptiveIPConfig.String("adaptiveip_default_netmask")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.PublicEndIP, err = config.AdaptiveIPConfig.String("adaptiveip_public_end_ip")
+	AdaptiveIP.DefaultGatewayAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_gateway_addr")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.DefaultStartIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_start_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.DefaultEndIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_end_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -231,4 +241,53 @@ func Parser() {
 	parseViolin()
 	parseDHCPD()
 	parseAdaptiveIP()
+}
+
+func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {
+	config.AdaptiveIPNetworkConfig = adaptiveipNetworkConf.Get("adaptiveip_network")
+	if config.AdaptiveIPNetworkConfig == nil {
+		logger.Logger.Panicln("no adaptiveip_network section")
+	}
+
+	AdaptiveIPNetwork = adaptiveIPNetwork{}
+
+	AdaptiveIPNetwork.ExtIfaceIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_ext_iface_ip_addr")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.Netmask, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_netmask")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.GatewayAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_gateway_addr")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.StartIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_start_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.EndIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_end_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
+
+// AdaptiveIPNetworkConfigParser : Parse Adaptive IP network config
+func AdaptiveIPNetworkConfigParser() error {
+	adaptiveipNetworkConf := goconf.New()
+
+	err := adaptiveipNetworkConf.Parse(AdaptiveIP.NetworkConfigFile)
+	if err != nil {
+		logger.Logger.Println(err)
+		return err
+	}
+
+	parseAdaptiveIPNetwork(adaptiveipNetworkConf)
+	return nil
 }

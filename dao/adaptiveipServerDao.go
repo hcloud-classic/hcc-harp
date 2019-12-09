@@ -4,12 +4,10 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"hcc/harp/lib/adaptiveip"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
-	"net"
 	"time"
 )
 
@@ -103,19 +101,15 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress, config.AdaptiveIP.PublicNetworkNetmask)
+	adaptiveIP := adaptiveip.GetAdaptiveIPNetwork()
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err
 	}
 
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
-	}
-
 	for _, adaptiveIPServer := range adaptiveipServers {
 		netIP := iputil.CheckValidIP(adaptiveIPServer.PublicIP)
-		if !ipNet.Contains(netIP) {
+		if !netNetwork.Contains(netIP) {
 			adaptiveIPServer.Status = "Invalid"
 			continue
 		}
@@ -169,19 +163,15 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress, config.AdaptiveIP.PublicNetworkNetmask)
+	adaptiveIP := adaptiveip.GetAdaptiveIPNetwork()
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err
 	}
 
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
-	}
-
 	for _, adaptiveIPServer := range adaptiveipServers {
 		netIP := iputil.CheckValidIP(adaptiveIPServer.PublicIP)
-		if !ipNet.Contains(netIP) {
+		if !netNetwork.Contains(netIP) {
 			adaptiveIPServer.Status = "Invalid"
 			continue
 		}
@@ -217,8 +207,8 @@ func ReadAdaptiveIPServerNum(args map[string]interface{}) (model.AdaptiveIPServe
 // CreateAdaptiveIPServer - ish
 func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	adaptiveipServer := model.AdaptiveIPServer{
-		ServerUUID:     args["server_uuid"].(string),
-		PublicIP:       args["public_ip"].(string),
+		ServerUUID: args["server_uuid"].(string),
+		PublicIP:   args["public_ip"].(string),
 	}
 
 	subnet, err := ReadSubnetByServer(adaptiveipServer.ServerUUID)

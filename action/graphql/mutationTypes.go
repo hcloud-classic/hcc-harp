@@ -5,6 +5,7 @@ import (
 	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
 	"hcc/harp/driver"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/logger"
 )
 
@@ -126,6 +127,31 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		// adaptive IP
+		"create_adaptiveip": &graphql.Field{
+			Type:        graphqlType.AdaptiveIPType,
+			Description: "Create new adaptiveip",
+			Args: graphql.FieldConfigArgument{
+				"ext_iface_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"netmask": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"gateway": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"start_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"end_ip_address": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				logger.Logger.Println("Resolving: create_adaptiveip")
+				return adaptiveip.WriteNetworkConfigAndReloadHarpNetwork(params.Args)
+			},
+		},
 		"create_adaptiveip_server": &graphql.Field{
 			Type:        graphqlType.AdaptiveIPServerType,
 			Description: "Create new adaptiveip_server",

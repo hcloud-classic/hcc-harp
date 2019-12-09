@@ -2,45 +2,45 @@ package adaptiveip
 
 import (
 	"errors"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
+	"hcc/harp/model"
 	"net"
 )
 
-func checkHarpConfigNetwork() error {
-	netIPnetworkIP, mask, err := iputil.CheckNetwork(config.AdaptiveIP.PublicNetworkAddress,
-		config.AdaptiveIP.PublicNetworkNetmask)
+// CheckAdaptiveIPConfig : Check configuration of Adaptive IP
+func CheckAdaptiveIPConfig(adaptiveIP model.AdaptiveIP) error {
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress,
+		adaptiveIP.Netmask)
 	if err != nil {
 		return err
 	}
 
-	netStartIP := iputil.CheckValidIP(config.AdaptiveIP.PublicStartIP)
+	err = iputil.CheckGateway(*netNetwork, adaptiveIP.GatewayAddress)
+	if err != nil {
+		return err
+	}
+
+	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
 	if netStartIP == nil {
 		return errors.New("wrong public start IP address")
 	}
 
-	netEndIP := iputil.CheckValidIP(config.AdaptiveIP.PublicEndIP)
+	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	if netEndIP == nil {
 		return errors.New("wrong public end IP address")
 	}
 
-	ipNet := net.IPNet{
-		IP:   netIPnetworkIP,
-		Mask: mask,
-	}
-
-	isStartIPContainedInNetwork := ipNet.Contains(netStartIP)
+	isStartIPContainedInNetwork := netNetwork.Contains(netStartIP)
 	if isStartIPContainedInNetwork == false {
 		return errors.New("start IP address is not in the public network address")
 	}
 
-	isEndIPContainedInNetwork := ipNet.Contains(netEndIP)
+	isEndIPContainedInNetwork := netNetwork.Contains(netEndIP)
 	if isEndIPContainedInNetwork == false {
 		return errors.New("end IP address is not in the public network address")
 	}
 
-	totalAvailableIPs, err := iputil.GetTotalAvailableIPs(config.AdaptiveIP.PublicNetworkAddress,
-		config.AdaptiveIP.PublicNetworkNetmask)
+	totalAvailableIPs, err := iputil.GetTotalAvailableIPs(netNetwork.IP.String(), net.IP(netNetwork.Mask).String())
 	if err != nil {
 		return err
 	}
