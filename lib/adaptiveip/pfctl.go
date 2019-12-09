@@ -183,7 +183,17 @@ func removePFAnchorRule(anchorName string) error {
 
 // LoadHarpPFRules : Load pf rules for harp module
 func LoadHarpPFRules() error {
-	err := loadExistingIfconfigScriptsInternal()
+	err := settingExternalNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = restartNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = loadExistingIfconfigScriptsInternal()
 	if err != nil {
 		return err
 	}
