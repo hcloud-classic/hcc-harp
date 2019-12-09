@@ -9,12 +9,7 @@ import (
 
 func configInit() error {
 	config.Parser()
-	iface, err := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
-	if err != nil {
-		return err
-	}
-
-	err = adaptiveip.CheckPublicNetwork(iface)
+	_, err := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
 		return err
 	}
