@@ -277,7 +277,6 @@ func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {
 	}
 }
 
-
 // AdaptiveIPNetworkConfigParser : Parse Adaptive IP network config
 func AdaptiveIPNetworkConfigParser() error {
 	adaptiveipNetworkConf := goconf.New()

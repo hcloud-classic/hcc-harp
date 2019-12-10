@@ -156,7 +156,7 @@ func PreparePFConfigFiles() error {
 	return nil
 }
 
-func checkBinatAnchorFileExist(privateIP string) error {
+func checkBinatAnchorFileExist(publicIP string) error {
 	configFiles, err := getBinatAnchorConfigFiles()
 	if err != nil {
 		return err
@@ -171,8 +171,8 @@ func checkBinatAnchorFileExist(privateIP string) error {
 		}
 
 		binatanchorFileName := file[len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
-		if binatanchorFileName == binatanchorFilenamePrefix+privateIP+".conf" {
-			return errors.New(privateIP + " is already used in binat anchor rules")
+		if binatanchorFileName == binatanchorFilenamePrefix+publicIP+".conf" {
+			return errors.New(publicIP + " is already used in binat anchor rules")
 		}
 	}
 

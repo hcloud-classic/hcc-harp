@@ -8,3 +8,7 @@ type AdaptiveIP struct {
 	StartIPAddress    string `json:"start_ip_address"`
 	EndIPAddress      string `json:"end_ip_address"`
 }
+
+type AdaptiveIPAvailableIPList struct {
+	AvailableIPList []string `json:"available_ip_list"`
+}

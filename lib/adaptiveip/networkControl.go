@@ -10,8 +10,8 @@ import (
 func settingExternalInterface() error {
 	logger.Logger.Println("Setting external interface...")
 
-	cmd := exec.Command("/usr/bin/sed", "-i", "", "/ifconfig_" +
-		config.AdaptiveIP.ExternalIfaceName + "/d", "/etc/rc.conf")
+	cmd := exec.Command("/usr/bin/sed", "-i", "", "/ifconfig_"+
+		config.AdaptiveIP.ExternalIfaceName+"/d", "/etc/rc.conf")
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -20,7 +20,7 @@ func settingExternalInterface() error {
 	adaptiveip := GetAdaptiveIPNetwork()
 
 	externalInterfaceString := "ifconfig_" + config.AdaptiveIP.ExternalIfaceName +
-	"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
+		"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", externalInterfaceString)
 	if err != nil {
 		return err

@@ -113,6 +113,14 @@ var queryTypes = graphql.NewObject(
 					return adaptiveip.GetAdaptiveIPNetwork(), nil
 				},
 			},
+			"adaptiveip_available_ip_list": &graphql.Field{
+				Type:        graphqlType.AdaptiveIPAvailableIPListType,
+				Description: "Get available ip list for adaptive ip",
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					logger.Logger.Println("Resolving: adaptiveip_available_ip_list")
+					return adaptiveip.GetAvailableIPList(), nil
+				},
+			},
 			"adaptiveip_server": &graphql.Field{
 				Type:        graphqlType.AdaptiveIPServerType,
 				Description: "Get adaptiveip by uuid",
