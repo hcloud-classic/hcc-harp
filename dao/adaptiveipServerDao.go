@@ -239,7 +239,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 		_ = stmt.Close()
 	}()
 	result, err := stmt.Exec(adaptiveipServer.ServerUUID, adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP,
-		adaptiveipServer.PrivateGateway, adaptiveipServer.CreatedAt)
+		adaptiveipServer.PrivateGateway)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
