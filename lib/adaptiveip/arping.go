@@ -3,12 +3,13 @@ package adaptiveip
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"hcc/harp/model"
+	"net"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -101,14 +102,39 @@ func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
-	fmt.Println("ipRangeCount", ipRangeCount)
+
+	extIface, _ := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
+	extIPaddrs, err := extIface.Addrs()
+	if err != nil {
+		logger.Logger.Println(err)
+		return availableIPList
+	}
 
 	ipMap := getAvailableIPsStatusMap()
 
 	for i := 0; i < ipRangeCount; i++ {
 		ip := netStartIP.String()
+		var ipUsed  = false
 		if checkBinatAnchorFileExist(ip) == nil && ipMap[ip] {
-			availableIPList.AvailableIPList = append(availableIPList.AvailableIPList, ip)
+			for _, addr := range extIPaddrs {
+				var extIP net.IP
+				switch v := addr.(type) {
+				case *net.IPNet:
+					extIP = v.IP
+				case *net.IPAddr:
+					extIP = v.IP
+				}
+
+				if extIP.String() == ip {
+					logger.Logger.Println("GetAvailableIPList: " + ip + " is already used in external interface.")
+					ipUsed = true
+					break
+				}
+			}
+
+			if !ipUsed {
+				availableIPList.AvailableIPList = append(availableIPList.AvailableIPList, ip)
+			}
 		}
 
 		netStartIP = cidr.Inc(netStartIP)
