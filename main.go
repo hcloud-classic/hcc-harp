@@ -1,37 +1,33 @@
 package main
 
 import (
+	"hcc/piano/action/graphql"
+	"hcc/piano/lib/config"
+	"hcc/piano/lib/influxdb"
+	"hcc/piano/lib/logger"
+	"hcc/piano/lib/syscheck"
 	"net/http"
-	"strconv"
 )
 
 func main() {
 	if !syscheck.CheckRoot() {
 		return
 	}
-
 	if !logger.Prepare() {
 		return
 	}
-	defer func() {
-		_ = logger.FpLog.Close()
-	}()
+	defer logger.FpLog.Close()
 
-	config.Parser()
-	err := dhcpd.CheckLocalDHCPDConfig()
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	err = mysql.Prepare()
+	err := influxdb.Prepare()
 	if err != nil {
 		return
 	}
-	defer func() {
-		_ = mysql.Db.Close()
-	}()
-	http.Handle("/graphql", graphql.GraphqlHandler)
+	logger.Logger.Println("InfluxDB is listening on port " + config.InfluxPort)
 
-	logger.Logger.Println("Server is running on port " + strconv.Itoa(int(config.HTTP.Port)))
-	err = http.ListenAndServe(":"+strconv.Itoa(int(config.HTTP.Port)), nil)
+	http.Handle("/graphql", graphql.GraphqlHandler)
+	logger.Logger.Println("Opening server on port " + config.HTTPPort)
+	err = http.ListenAndServe(":"+config.HTTPPort, nil)
+	if err != nil {
+		logger.Logger.Println("Failed to prepare http server!")
+	}
 }
