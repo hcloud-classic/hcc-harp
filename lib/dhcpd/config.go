@@ -200,3 +200,79 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 
 	return nil
 }
+
+// CreateConfig : Get needed parameters for make dhcpd config file then generate config file for each subnet
+func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
+	if len(subnetUUID) == 0 {
+		return errors.New("subnetUUID is needed for make dhcpd config file")
+	}
+
+	args := make(map[string]interface{})
+	args["uuid"] = subnetUUID
+
+	subnetInterface, err := dao.ReadSubnet(args)
+	if err != nil {
+		return err
+	}
+
+	var subnet = subnetInterface.(model.Subnet)
+
+	if len(subnet.SubnetName) == 0 {
+		return errors.New("name is needed for make dhcpd config file")
+	}
+
+	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIP)
+	if netIPnetworkIP == nil {
+		return errors.New("wrong network IP")
+	}
+
+	mask, err := iputil.CheckNetmask(subnet.Netmask)
+	if err != nil {
+		return err
+	}
+
+	ipNet := net.IPNet{
+		IP:   netIPnetworkIP,
+		Mask: mask,
+	}
+
+	err = iputil.CheckGateway(ipNet, subnet.Gateway)
+	if err != nil {
+		return err
+	}
+
+	netIPnextServer := net.ParseIP(subnet.NextServer)
+	if netIPnextServer == nil {
+		return errors.New("wrong next server IP")
+	}
+
+	netIPnameServer := net.ParseIP(subnet.NameServer)
+	if netIPnameServer == nil {
+		return errors.New("wrong name server IP")
+	}
+
+	err = CheckNodeUUIDs(ipNet, nodeUUIDs, subnet.LeaderNodeUUID)
+	if err != nil {
+		return err
+	}
+
+	pxeFileName, err := getPXEFilename(subnet.ServerUUID)
+	if err != nil {
+		return err
+	}
+
+	firstIP, _ := cidr.AddressRange(&ipNet)
+	firstIP = cidr.Inc(firstIP)
+	lastIP := firstIP
+
+	for i := 0; i < len(nodeUUIDs)-1; i++ {
+		lastIP = cidr.Inc(lastIP)
+	}
+
+	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs)
+	if err != nil {
+		return nil
+	}
+
+	return nil
+}
