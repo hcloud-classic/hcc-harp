@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"encoding/json"
 	"net/http"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -338,6 +339,17 @@ func UpdateHarpDHCPDConfig() error {
 	}
 
 	err = writeFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
+func RestartDHCPDServer() error {
+	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
