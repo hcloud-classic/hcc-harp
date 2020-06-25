@@ -3,14 +3,15 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
-	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
 	"time"
+
+	gouuid "github.com/nu7hatch/gouuid"
 )
 
-// ReadSubnet - cgs
+// ReadSubnet : Get infos of a subnet
 func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	var subnet model.Subnet
 
@@ -61,7 +62,7 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
-// ReadSubnetByServer : Get subnet info by server UUID
+// ReadSubnetByServer : Get infos of a subnet by server UUID
 func ReadSubnetByServer(serverUUID string) (interface{}, error) {
 	var subnet model.Subnet
 
@@ -118,7 +119,7 @@ func checkReadSubnetListPageRow(args map[string]interface{}) bool {
 	return !rowOk || !pageOk
 }
 
-// ReadSubnetList - cgs
+// ReadSubnetList : Get list of subnet with selected infos
 func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	var subnets []model.Subnet
 	var uuid string
@@ -197,7 +198,7 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	return subnets, nil
 }
 
-// ReadSubnetAll - cgs
+// ReadSubnetAll : Get list of subnet with all of infos
 func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 	var subnets []model.Subnet
 	var uuid string
@@ -250,7 +251,7 @@ func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 	return subnets, nil
 }
 
-// ReadSubnetNum - cgs
+// ReadSubnetNum : Get the number of subnets
 func ReadSubnetNum() (model.SubnetNum, error) {
 	var subnetNum model.SubnetNum
 	var subnetNr int
@@ -267,7 +268,7 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 	return subnetNum, nil
 }
 
-// CreateSubnet - cgs
+// CreateSubnet : Create a subnet
 func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	out, err := gouuid.NewV4()
 	if err != nil {
@@ -324,7 +325,7 @@ func checkUpdateSubnetArgs(args map[string]interface{}) bool {
 	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
 
-// UpdateSubnet - cgs
+// UpdateSubnet : Update infos of a subnet
 func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	requestedUUID, requestedUUIDOk := args["uuid"].(string)
 	networkIP, networkIPOk := args["network_ip"].(string)
@@ -413,7 +414,7 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	return nil, errors.New("need uuid argument")
 }
 
-// DeleteSubnet - cgs
+// DeleteSubnet : Delete a subnet by UUID
 func DeleteSubnet(args map[string]interface{}) (interface{}, error) {
 	var err error
 
