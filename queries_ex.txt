@@ -110,7 +110,7 @@ mutation _ {
 // Update
 
 mutation _ {
-  update_subnet(uuid: "0ac56231-a0ee-4323-55ad-37c08c2d4a78", network_ip: "cgs"){
+  update_subnet(uuid: "0ac56231-a0ee-4323-55ad-37c08c2d4a78", network_ip: "192.168.110.0"){
     uuid
 	network_ip
     netmask
