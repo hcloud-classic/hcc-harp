@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// AdaptiveIPServer - ish
+// AdaptiveIPServer : Struct of AdaptiveIPServer
 type AdaptiveIPServer struct {
 	ServerUUID     string    `json:"server_uuid"`
 	PublicIP       string    `json:"public_ip"`
@@ -12,12 +12,12 @@ type AdaptiveIPServer struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
-// AdaptiveIPServers - ish
+// AdaptiveIPServers : Struct of AdaptiveIPServers
 type AdaptiveIPServers struct {
 	AdaptiveIP []Subnet `json:"adaptiveip"`
 }
 
-// AdaptiveIPServerNum - ish
+// AdaptiveIPServerNum : Struct of AdaptiveIPServerNum
 type AdaptiveIPServerNum struct {
 	Number int `json:"number"`
 }
