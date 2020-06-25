@@ -61,6 +61,12 @@ query {
   }
 }
 
+query {
+  adaptiveip_available_ip_list {
+    available_ip_list
+  }
+}
+
 // Create
 
 mutation _ {
@@ -86,6 +92,17 @@ mutation _ {
     leader_node_uuid
     os
     subnet_name
+    created_at
+  }
+}
+
+mutation _ {
+  create_adaptiveip_server(server_uuid:"c949ecff-18fd-4f63-6911-c9f238c150fc",public_ip:"192.168.110.50") {
+    server_uuid
+    public_ip
+    private_ip
+    private_gateway
+    status
     created_at
   }
 }
