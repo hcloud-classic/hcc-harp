@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Subnet - cgs
+// Subnet : Structure of Subnet
 type Subnet struct {
 	UUID           string    `json:"uuid"`
 	NetworkIP      string    `json:"network_ip"`
@@ -18,12 +18,12 @@ type Subnet struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
-// Subnets - cgs
+// Subnets : Structure of Subnets
 type Subnets struct {
 	Subnets []Subnet `json:"subnet"`
 }
 
-// SubnetNum - cgs
+// SubnetNum : Structure of SubnetNum
 type SubnetNum struct {
 	Number int `json:"number"`
 }
