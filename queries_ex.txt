@@ -71,16 +71,16 @@ query {
 
 mutation _ {
   create_subnet(
-    network_ip: "cgs",
-    netmask: "cgs",
-    gateway: "cgs",
-    next_server: "cgs",
-    name_server: "cgs",
-    domain_name: "cgs",
-    server_uuid: "cgs",
-    leader_node_uuid: "cgs",
-    os: "cgs",
-    subnet_name: "cgs") {
+    network_ip: "192.168.110.0",
+    netmask: "255.255.255.0",
+    gateway: "192.168.110.10",
+    next_server: "192.168.110.240",
+    name_server: "8.8.8.8",
+    domain_name: "google.com",
+    server_uuid: "acf29017-dbad-47f7-684a-2a91654936b9",
+    leader_node_uuid: "48d08a00-b652-11e8-906e-000ffee02d5c",
+    os: "CentOS",
+    subnet_name: "jolla subnet") {
     uuid
 	network_ip
     netmask
