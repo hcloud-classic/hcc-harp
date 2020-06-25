@@ -1,6 +1,6 @@
 package model
 
-// AdaptiveIP - ish
+// AdaptiveIP : Struct of AdaptiveIP
 type AdaptiveIP struct {
 	ExtIfaceIPAddress string `json:"ext_iface_ip_address"`
 	Netmask           string `json:"netmask"`
@@ -9,6 +9,7 @@ type AdaptiveIP struct {
 	EndIPAddress      string `json:"end_ip_address"`
 }
 
+// AdaptiveIPAvailableIPList : Struct of AdaptiveIPAvailableIPList
 type AdaptiveIPAvailableIPList struct {
 	AvailableIPList []string `json:"available_ip_list"`
 }
