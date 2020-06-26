@@ -95,6 +95,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 	return ipMap
 }
 
+// GetAvailableIPList : Get available IP lists by checking config files and sending arping.
 func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 	var availableIPList model.AdaptiveIPAvailableIPList
 

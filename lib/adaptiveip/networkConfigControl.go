@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// GetAdaptiveIPNetwork : Get AdaptiveIP's configured information
 func GetAdaptiveIPNetwork() model.AdaptiveIP {
 	var adaptiveIP model.AdaptiveIP
 
@@ -83,6 +84,7 @@ func writeAdaptiveIPNetworkConfig(args map[string]interface{}) (interface{}, err
 	return adaptiveIP, nil
 }
 
+// WriteNetworkConfigAndReloadHarpNetwork : Write network config files then reload network related services.
 func WriteNetworkConfigAndReloadHarpNetwork(args map[string]interface{}) (interface{}, error) {
 	adaptiveIP, err := writeAdaptiveIPNetworkConfig(args)
 	if err != nil {
