@@ -50,7 +50,7 @@ func settingDefaultGateway() error {
 }
 
 func settingExternalNetwork() error {
-	logger.Logger.Println("Setting externel network...")
+	logger.Logger.Println("Setting external network...")
 
 	err := settingExternalInterface()
 	if err != nil {
