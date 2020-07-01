@@ -2,9 +2,13 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"github.com/graphql-go/graphql"
 	"hcc/harp/dao"
-	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/data"
+	"hcc/harp/driver"
 	"hcc/harp/lib/fileutil"
+	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/serviceControl"
 	"net/http"
 	"time"
 
@@ -21,7 +25,6 @@ import (
 
 	// "net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -330,7 +333,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	// Allocate gateway IP address to internal interface
-	err = adaptiveip.CreateAndLoadIfconfigScriptInternal(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
+	err = ifconfig.CreateAndLoadIfconfigScriptInternal(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
@@ -405,11 +408,81 @@ func UpdateHarpDHCPDConfig() error {
 	return nil
 }
 
-// RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
-func RestartDHCPDServer() error {
-	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
-	err := cmd.Run()
+
+// CreateDHCPDConfig : Do dhcpd config file creation works
+func CreateDHCPDConfig(params graphql.ResolveParams) (interface{}, error) {
+	subnetUUID := params.Args["subnet_uuid"].(string)
+	nodeUUIDs := params.Args["node_uuids"].(string)
+
+	nodeUUIDsParts := strings.Split(nodeUUIDs, ",")
+
+	err := CreateConfig(subnetUUID, nodeUUIDsParts)
 	if err != nil {
+		return nil, err
+	}
+
+	err = UpdateHarpDHCPDConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	err = serviceControl.RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
+		return nil, err
+	}
+
+	return "CreateDHCPDConfig: succeed", nil
+}
+
+// CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
+func CheckDatabaseAndGenerateDHCPDConfigs() error {
+	allServerData, err := driver.AllServerUUID()
+	if err != nil {
+		return err
+	}
+
+	allServer := allServerData.(data.AllServerData).Data.AllServer
+	for _, server := range allServer {
+		serverUUID := server.UUID
+
+		listNodeData, err := driver.ListNode(server.UUID)
+		if err != nil {
+			logger.Logger.Println(errors.New("Failed to get listNodeData by server UUID: " + serverUUID))
+			continue
+		}
+
+		nodes := listNodeData.(data.ListNodeData).Data.ListNode
+		var nodeUUIDs []string
+
+		for _, node := range nodes {
+			nodeUUIDs = append(nodeUUIDs, node.UUID)
+		}
+
+		subnet, err := dao.ReadSubnetByServer(serverUUID)
+		if err != nil {
+			logger.Logger.Println("Failed to get subnet by server UUID: " + serverUUID)
+			continue
+		}
+
+		subnetUUID := subnet.(model.Subnet).UUID
+		err = CreateConfig(subnetUUID, nodeUUIDs)
+		if err != nil {
+			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" + subnetUUID)
+			continue
+		}
+
+		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
+	}
+
+	err = UpdateHarpDHCPDConfig()
+	if err != nil {
+		return err
+	}
+
+	err = serviceControl.RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
 		return err
 	}
 

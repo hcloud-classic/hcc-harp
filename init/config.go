@@ -4,6 +4,7 @@ import (
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
+	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
 )
 
@@ -24,7 +25,7 @@ func configInit() error {
 		return err
 	}
 
-	err = adaptiveip.PreparePFConfigFiles()
+	err = pf.PreparePFConfigFiles()
 	if err != nil {
 		return err
 	}

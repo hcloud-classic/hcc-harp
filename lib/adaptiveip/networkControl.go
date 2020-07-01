@@ -2,8 +2,12 @@ package adaptiveip
 
 import (
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/fileutil"
+	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/pf"
+	"hcc/harp/lib/serviceControl"
 	"os/exec"
 )
 
@@ -17,7 +21,7 @@ func settingExternalInterface() error {
 		return err
 	}
 
-	adaptiveip := GetAdaptiveIPNetwork()
+	adaptiveip := config.GetAdaptiveIPNetwork()
 
 	externalInterfaceString := "ifconfig_" + config.AdaptiveIP.ExternalIfaceName +
 		"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
@@ -38,7 +42,7 @@ func settingDefaultGateway() error {
 		return err
 	}
 
-	adaptiveip := GetAdaptiveIPNetwork()
+	adaptiveip := config.GetAdaptiveIPNetwork()
 
 	defaultrouteString := "defaultrouter=\"" + adaptiveip.GatewayAddress + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", defaultrouteString)
@@ -65,11 +69,45 @@ func settingExternalNetwork() error {
 	return nil
 }
 
-func restartNetif() error {
-	logger.Logger.Println("Restarting netif service...")
 
-	cmd := exec.Command("service", "netif", "restart")
-	err := cmd.Run()
+// LoadHarpPFRules : Load pf rules for harp module
+func LoadHarpPFRules() error {
+	err := settingExternalNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
+	if err != nil {
+		return err
+	}
+
+	err = serviceControl.RestartNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = ifconfig.LoadExistingIfconfigScriptsInternal()
+	if err != nil {
+		return err
+	}
+
+	err = pf.FlushPFRules()
+	if err != nil {
+		return err
+	}
+
+	err = pf.LoadPFRules(config.AdaptiveIP.PFRulesFileLocation)
+	if err != nil {
+		return err
+	}
+
+	err = pf.LoadExstingBinatAndNATRules()
+	if err != nil {
+		return err
+	}
+
+	err = ifconfig.LoadExistingIfconfigScriptsExternal()
 	if err != nil {
 		return err
 	}
@@ -77,30 +115,3 @@ func restartNetif() error {
 	return nil
 }
 
-func restartRouting() error {
-	logger.Logger.Println("Restarting routing service...")
-
-	cmd := exec.Command("service", "routing", "restart")
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func restartNetwork() error {
-	logger.Logger.Println("Restarting network services...")
-
-	err := restartNetif()
-	if err != nil {
-		logger.Logger.Println(err)
-	}
-
-	err = restartRouting()
-	if err != nil {
-		logger.Logger.Println(err)
-	}
-
-	return nil
-}

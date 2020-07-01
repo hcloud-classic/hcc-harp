@@ -4,8 +4,8 @@ import (
 	"github.com/graphql-go/graphql"
 	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
-	"hcc/harp/driver"
 	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 )
 
@@ -123,7 +123,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				logger.Logger.Println("Resolving: create_dhcpd_conf")
-				return driver.CreateDHCPDConfig(params)
+				return dhcpd.CreateDHCPDConfig(params)
 			},
 		},
 		// adaptive IP

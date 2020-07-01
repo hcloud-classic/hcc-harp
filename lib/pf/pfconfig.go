@@ -1,18 +1,19 @@
-package adaptiveip
+package pf
 
 import (
 	"bufio"
 	"errors"
+	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
+	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/model"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
-
-	"github.com/apparentlymart/go-cidr/cidr"
 )
 
 func checkPFBaseConfig() error {
@@ -75,21 +76,8 @@ func checkPFBaseConfig() error {
 	return nil
 }
 
-func writePFRulesFile(pfRulesData string) error {
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFRulesFileLocation)
-	if err != nil {
-		return err
-	}
-
-	err = fileutil.WriteFile(config.AdaptiveIP.PFRulesFileLocation, pfRulesData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func replaceBaseConfigAnchorStrings() error {
+// ReplaceBaseConfigAnchorStrings : Create binat anchor config file
+func ReplaceBaseConfigAnchorStrings() error {
 	err := checkPFBaseConfig()
 	if err != nil {
 		return err
@@ -100,7 +88,7 @@ func replaceBaseConfigAnchorStrings() error {
 		return errors.New("failed reading data from base pf config file location")
 	}
 
-	adaptiveIP := GetAdaptiveIPNetwork()
+	adaptiveIP := config.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -139,25 +127,25 @@ func replaceBaseConfigAnchorStrings() error {
 	return nil
 }
 
-// PreparePFConfigFiles : Prepare pf.rules config file for use in adaptive IP
-func PreparePFConfigFiles() error {
-	adaptiveIP := GetAdaptiveIPNetwork()
+// GetBinatAnchorConfigFiles : Get locations of binat anchor config files
+func GetBinatAnchorConfigFiles() ([]string, error) {
+	var files []string
 
-	err := CheckAdaptiveIPConfig(adaptiveIP)
+	folder := config.AdaptiveIP.PFBinatConfigFileLocation
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = replaceBaseConfigAnchorStrings()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return files, nil
 }
 
-func checkBinatAnchorFileExist(publicIP string) error {
-	configFiles, err := getBinatAnchorConfigFiles()
+// CheckBinatAnchorFileExist : Check if binat anchor config file is exists
+func CheckBinatAnchorFileExist(publicIP string) error {
+	configFiles, err := GetBinatAnchorConfigFiles()
 	if err != nil {
 		return err
 	}
@@ -174,6 +162,126 @@ func checkBinatAnchorFileExist(publicIP string) error {
 		if binatanchorFileName == binatanchorFilenamePrefix+publicIP+".conf" {
 			return errors.New(publicIP + " is already used in binat anchor rules")
 		}
+	}
+
+	return nil
+}
+
+func getnatAnchorConfigFiles() ([]string, error) {
+	var files []string
+
+	folder := config.AdaptiveIP.PFnatConfigFileLocation
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func loadExstingBinatRules() error {
+	logger.Logger.Println("Loading existing binat rules...")
+
+	configFiles, err := GetBinatAnchorConfigFiles()
+	if err != nil {
+		return err
+	}
+	if len(configFiles) == 1 {
+		return nil
+	}
+
+	var binatanchorFileName string
+	var binatanchorName string
+
+	for i := 0; i < len(configFiles); i++ {
+		if configFiles[i] == config.AdaptiveIP.PFBinatConfigFileLocation {
+			continue
+		}
+
+		binatanchorFileName = configFiles[i][len(config.AdaptiveIP.PFBinatConfigFileLocation+"/"):]
+		if !strings.Contains(binatanchorFileName, binatanchorFilenamePrefix) ||
+			!strings.Contains(binatanchorFileName, ".conf") {
+			logger.Logger.Println("Wrong binat anchor filename: " + binatanchorFileName)
+			logger.Logger.Println("Filename must be as '" + binatanchorFilenamePrefix + "XXX.conf'")
+			continue
+		}
+
+		binatanchorName = binatanchorFileName[0 : len(binatanchorFileName)-len(".conf")]
+		err = LoadPFAnchorRule(binatanchorName, configFiles[i])
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+	}
+
+	return nil
+}
+
+func loadExstingnatRules() error {
+	logger.Logger.Println("Loading existing NAT rules...")
+
+	configFiles, err := getnatAnchorConfigFiles()
+	if err != nil {
+		return err
+	}
+	if len(configFiles) == 1 {
+		return nil
+	}
+
+	var natanchorFileName string
+	var natanchorName string
+
+	for i := 0; i < len(configFiles); i++ {
+		if configFiles[i] == config.AdaptiveIP.PFnatConfigFileLocation {
+			continue
+		}
+
+		natanchorFileName = configFiles[i][len(config.AdaptiveIP.PFnatConfigFileLocation+"/"):]
+		if !strings.Contains(natanchorFileName, natanchorFilenamePrefix) ||
+			!strings.Contains(natanchorFileName, ".conf") {
+			logger.Logger.Println("Wrong nat anchor filename: " + natanchorFileName)
+			logger.Logger.Println("Filename must be as '" + natanchorFilenamePrefix + "XXX.conf'")
+			continue
+		}
+
+		natanchorName = natanchorFileName[0 : len(natanchorFileName)-len(".conf")]
+		err = LoadPFAnchorRule(natanchorName, configFiles[i])
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+	}
+
+	return nil
+}
+
+// LoadExstingBinatAndNATRules : Load binat and nat rules configured by harp module
+func LoadExstingBinatAndNATRules() error {
+	err := loadExstingBinatRules()
+	if err != nil {
+		return err
+	}
+	err = loadExstingnatRules()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// PreparePFConfigFiles : Prepare pf.rules config file for use in adaptive IP
+func PreparePFConfigFiles() error {
+	adaptiveIP := config.GetAdaptiveIPNetwork()
+
+	err := config.CheckAdaptiveIPConfig(adaptiveIP)
+	if err != nil {
+		return err
+	}
+
+	err = ReplaceBaseConfigAnchorStrings()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -246,9 +354,9 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
 func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.Subnet) error {
-	adaptiveip := GetAdaptiveIPNetwork()
+	adaptiveip := config.GetAdaptiveIPNetwork()
 
-	err := checkBinatAnchorFileExist(publicIP)
+	err := CheckBinatAnchorFileExist(publicIP)
 	if err != nil {
 		goto Error
 	}
@@ -268,7 +376,7 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.S
 		goto Error
 	}
 
-	err = createAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
+	err = ifconfig.CreateAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
 		adaptiveip.Netmask)
 	if err != nil {
 		goto Error

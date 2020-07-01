@@ -4,8 +4,9 @@ import (
 	"github.com/graphql-go/graphql"
 	graphqlType "hcc/harp/action/graphql/type"
 	"hcc/harp/dao"
-	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/pf"
 	"hcc/harp/model"
 )
 
@@ -110,7 +111,7 @@ var queryTypes = graphql.NewObject(
 				Description: "Get adaptiveip by uuid",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: adaptiveip")
-					return adaptiveip.GetAdaptiveIPNetwork(), nil
+					return config.GetAdaptiveIPNetwork(), nil
 				},
 			},
 			"adaptiveip_available_ip_list": &graphql.Field{
@@ -118,7 +119,7 @@ var queryTypes = graphql.NewObject(
 				Description: "Get available ip list for adaptive ip",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: adaptiveip_available_ip_list")
-					return adaptiveip.GetAvailableIPList(), nil
+					return pf.GetAvailableIPList(), nil
 				},
 			},
 			"adaptiveip_server": &graphql.Field{

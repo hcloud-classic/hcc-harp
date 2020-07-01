@@ -3,10 +3,11 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
-	"hcc/harp/lib/adaptiveip"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
+	"hcc/harp/lib/pf"
 	"hcc/harp/model"
 	"time"
 )
@@ -101,7 +102,7 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP := adaptiveip.GetAdaptiveIPNetwork()
+	adaptiveIP := config.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err
@@ -163,7 +164,7 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP := adaptiveip.GetAdaptiveIPNetwork()
+	adaptiveIP := config.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err
@@ -224,7 +225,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	adaptiveipServer.PrivateIP = firstIP.String()
 	adaptiveipServer.PrivateGateway = subnet.(model.Subnet).Gateway
 
-	err = adaptiveip.CreateAndLoadAnchorConfig(adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, subnet.(model.Subnet))
+	err = pf.CreateAndLoadAnchorConfig(adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, subnet.(model.Subnet))
 	if err != nil {
 		return nil, err
 	}

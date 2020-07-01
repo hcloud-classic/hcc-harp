@@ -1,4 +1,4 @@
-package adaptiveip
+package pf
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 	"sync"
 )
 
+// checkDuplicatedIPAddress : Check duplicated ip address by sending arping.
 func checkDuplicatedIPAddress(IP string) error {
 	cmd := exec.Command("arping", "-i", config.AdaptiveIP.ExternalIfaceName, "-c",
 		strconv.Itoa(int(config.AdaptiveIP.ArpingRetryCount)), IP)
@@ -46,7 +47,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 	logger.Logger.Println("Getting available IPs status... (This may take a while.)")
 	ipMap := make(map[string]bool)
 
-	adaptiveip := GetAdaptiveIPNetwork()
+	adaptiveip := config.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -99,7 +100,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 	var availableIPList model.AdaptiveIPAvailableIPList
 
-	adaptiveip := GetAdaptiveIPNetwork()
+	adaptiveip := config.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -116,7 +117,7 @@ func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 	for i := 0; i < ipRangeCount; i++ {
 		ip := netStartIP.String()
 		var ipUsed  = false
-		if checkBinatAnchorFileExist(ip) == nil && ipMap[ip] {
+		if CheckBinatAnchorFileExist(ip) == nil && ipMap[ip] {
 			for _, addr := range extIPaddrs {
 				var extIP net.IP
 				switch v := addr.(type) {
