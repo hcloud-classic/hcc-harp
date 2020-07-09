@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
@@ -62,4 +63,127 @@ func checkReadSubnetListPageRow(args map[string]interface{}) bool {
 	_, pageOk := args["page"].(int)
 
 	return !rowOk || !pageOk
+}
+
+func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
+	var subnets []model.Subnet
+	var uuid string
+	var createdAt time.Time
+
+	networkIP, networkIPOk := args["network_ip"].(string)
+	netmask, netmaskOk := args["netmask"].(string)
+	gateway, gatewayOk := args["gateway"].(string)
+	nextServer, nextServerOk := args["next_server"].(string)
+	nameServer, nameServerOk := args["name_server"].(string)
+	domainName, domainNameOk := args["domain_name"].(string)
+	serverUUID, serverUUIDOk := args["sever_uuid"].(string)
+	leaderNodeUUID, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
+	os, osOk := args["os"].(string)
+	subnetName, subnetNameOk := args["subnet_name"].(string)
+
+	row, _ := args["row"].(int)
+	page, _ := args["page"].(int)
+	if checkReadSubnetListPageRow(args) {
+		return nil, errors.New("need row and page arguments")
+	}
+
+	sql := "select * from subnet where 1=1"
+
+	if networkIPOk {
+		sql += " and network_ip = '" + networkIP + "'"
+	}
+	if netmaskOk {
+		sql += " and netmask = '" + netmask + "'"
+	}
+	if gatewayOk {
+		sql += " and gateway = '" + gateway + "'"
+	}
+	if nextServerOk {
+		sql += " and next_server = '" + nextServer + "'"
+	}
+	if nameServerOk {
+		sql += " and name_server = '" + nameServer + "'"
+	}
+	if domainNameOk {
+		sql += " and domain_name = '" + domainName + "'"
+	}
+	if serverUUIDOk {
+		sql += " and server_uuid = '" + serverUUID + "'"
+	}
+	if leaderNodeUUIDOk {
+		sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
+	}
+	if osOk {
+		sql += " and os = '" + os + "'"
+	}
+	if subnetNameOk {
+		sql += " and subnet_name = '" + subnetName + "'"
+	}
+
+	sql += " order by created_at desc limit ? offset ?"
+
+	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return nil, err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+
+	for stmt.Next() {
+		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
+		if err != nil {
+			logger.Logger.Println(err.Error())
+			return nil, err
+		}
+		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask, Gateway: gateway, NextServer: nextServer, NameServer: nameServer, DomainName: domainName, ServerUUID: serverUUID, LeaderNodeUUID: leaderNodeUUID, OS: os, SubnetName: subnetName, CreatedAt: createdAt}
+		subnets = append(subnets, subnet)
+	}
+	return subnets, nil
+}
+
+func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
+	var err error
+	var subnets []model.Subnet
+	var uuid string
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var serverUUID string
+	var leaderNodeUUID string
+	var os string
+	var subnetName string
+	var createdAt time.Time
+	row, rowOk := args["row"].(int)
+	page, pageOk := args["page"].(int)
+	if !rowOk || !pageOk {
+		return nil, err
+	}
+
+	sql := "select * from subnet order by created_at desc limit ? offset ?"
+
+	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return nil, err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+
+	for stmt.Next() {
+		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
+		if err != nil {
+			logger.Logger.Println(err)
+			return nil, err
+		}
+		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask, Gateway: gateway, NextServer: nextServer, NameServer: nameServer, DomainName: domainName, ServerUUID: serverUUID, LeaderNodeUUID: leaderNodeUUID, OS: os, SubnetName: subnetName, CreatedAt: createdAt}
+		subnets = append(subnets, subnet)
+	}
+
+	return subnets, nil
 }
