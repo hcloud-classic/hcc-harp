@@ -5,6 +5,7 @@ import (
 	"hcc/harp/http"
 )
 
+// ListNode : Get the list of nodes by server UUID.
 func ListNode(serverUUID string) (interface{}, error) {
 	arguments := "server_uuid:\"" + serverUUID + "\", active:1"
 

@@ -5,6 +5,7 @@ import (
 	"hcc/harp/http"
 )
 
+// AllServerUUID : Get all of server UUIDs.
 func AllServerUUID() (interface{}, error) {
 	var query = "query { all_server { uuid } }"
 

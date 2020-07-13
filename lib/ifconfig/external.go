@@ -24,7 +24,7 @@ func getIfconfigScriptFilesExternal() ([]string, error) {
 	return files, nil
 }
 
-// LoadExistingIfconfigScriptsInternal : Load existing ifconfig scripts for external network.
+// LoadExistingIfconfigScriptsExternal : Load existing ifconfig scripts for external network.
 func LoadExistingIfconfigScriptsExternal() error {
 	logger.Logger.Println("Loading existing ifconfig scripts for external...")
 
