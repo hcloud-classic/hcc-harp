@@ -57,10 +57,5 @@ func RestartNetwork() error {
 		logger.Logger.Println(err)
 	}
 
-	err = RestartDHCPDServer()
-	if err != nil {
-		logger.Logger.Println(err)
-	}
-
 	return nil
 }
