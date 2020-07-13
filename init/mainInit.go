@@ -17,10 +17,5 @@ func MainInit() error {
 		return err
 	}
 
-	err = mysqlInit()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

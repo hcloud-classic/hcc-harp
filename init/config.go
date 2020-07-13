@@ -10,7 +10,13 @@ import (
 
 func configInit() error {
 	config.Parser()
-	_, err := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
+
+	err := mysqlInit()
+	if err != nil {
+		return err
+	}
+
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
 		return err
 	}
