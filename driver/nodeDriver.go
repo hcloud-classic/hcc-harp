@@ -12,7 +12,7 @@ func ListNode(serverUUID string) (interface{}, error) {
 	var listNodeData data.ListNodeData
 	query := "query { list_node(" + arguments + ") { uuid } }"
 
-	result, err :=  http.DoHTTPRequest("flute", true, listNodeData, query)
+	result, err := http.DoHTTPRequest("flute", true, listNodeData, query)
 	if err != nil {
 		return listNodeData, err
 	}

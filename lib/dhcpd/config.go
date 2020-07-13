@@ -410,7 +410,6 @@ func UpdateHarpDHCPDConfig() error {
 	return nil
 }
 
-
 // CreateDHCPDConfig : Do dhcpd config file creation works
 func CreateDHCPDConfig(params graphql.ResolveParams) (interface{}, error) {
 	subnetUUID := params.Args["subnet_uuid"].(string)

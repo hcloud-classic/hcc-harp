@@ -116,7 +116,7 @@ func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 
 	for i := 0; i < ipRangeCount; i++ {
 		ip := netStartIP.String()
-		var ipUsed  = false
+		var ipUsed = false
 		if CheckBinatAnchorFileExist(ip) == nil && ipMap[ip] {
 			for _, addr := range extIPaddrs {
 				var extIP net.IP
