@@ -189,7 +189,7 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 
 func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
 	useSamePXEFileForCompute bool) error {
-	confContent := confBase
+	confContent := subnetConfBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
@@ -383,6 +383,7 @@ func UpdateHarpDHCPDConfig() error {
 		return err
 	}
 
+	harpDHCPDConf := harpDHCPDConfBase
 	var allIncludeLines = ""
 	for _, filename := range configFiles {
 		if strings.Contains(filename, "harp_dhcpd.conf") ||
@@ -390,17 +391,18 @@ func UpdateHarpDHCPDConfig() error {
 			continue
 		}
 
-		include := includeStr
+		include := "    " + includeStr
 		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
 		allIncludeLines += include + "\n"
 	}
+	harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
 
 	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
 		return err
 	}
 
-	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", allIncludeLines)
+	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
 	if err != nil {
 		return err
 	}
