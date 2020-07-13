@@ -7,7 +7,7 @@ import (
 	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/pf"
-	"hcc/harp/lib/serviceControl"
+	"hcc/harp/lib/servicecontrol"
 	"os/exec"
 )
 
@@ -77,7 +77,7 @@ func LoadHarpPFRules() error {
 		return err
 	}
 
-	err = serviceControl.RestartNetwork()
+	err = servicecontrol.RestartNetwork()
 	if err != nil {
 		return err
 	}

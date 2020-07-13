@@ -8,7 +8,7 @@ import (
 	"hcc/harp/driver"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
-	"hcc/harp/lib/serviceControl"
+	"hcc/harp/lib/servicecontrol"
 	"net/http"
 	"time"
 
@@ -428,7 +428,7 @@ func CreateDHCPDConfig(params graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	err = serviceControl.RestartDHCPDServer()
+	err = servicecontrol.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
 		return nil, err
@@ -482,7 +482,7 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 		return err
 	}
 
-	err = serviceControl.RestartDHCPDServer()
+	err = servicecontrol.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
 		return err

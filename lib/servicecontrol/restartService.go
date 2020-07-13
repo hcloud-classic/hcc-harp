@@ -1,4 +1,4 @@
-package serviceControl
+package servicecontrol
 
 import (
 	"hcc/harp/lib/config"
