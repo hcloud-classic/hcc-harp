@@ -77,12 +77,12 @@ func LoadHarpPFRules() error {
 		return err
 	}
 
-	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
+	err = serviceControl.RestartNetwork()
 	if err != nil {
 		return err
 	}
 
-	err = serviceControl.RestartNetwork()
+	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
 	if err != nil {
 		return err
 	}
