@@ -5,6 +5,7 @@ import (
 	"errors"
 	harpData "hcc/harp/data"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/logger"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -44,55 +45,60 @@ func DoHTTPRequest(moduleName string, needData bool, data interface{}, query str
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Do(req)
 
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		// Check response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			result := string(respBody)
-
-			if strings.Contains(result, "errors") {
-				return nil, errors.New(result)
+	for i := 0; i < int(config.HTTP.RequestRetryCount); i++ {
+		resp, err := client.Do(req)
+		if err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
+			if err != nil {
+				logger.Logger.Println(err)
+			} else {
+				_ = resp.Body.Close()
+				logger.Logger.Println("DoHTTPRequest(): http response returned error code " + strconv.Itoa(resp.StatusCode) + " for " + moduleName + " module")
+				logger.Logger.Println("DoHTTPRequest(): Failed info - ModuleName=" + moduleName + ", Query=" + query)
 			}
-			if needData {
-				if data == nil {
-					return nil, errors.New("needData marked as true but data is nil")
-				}
+			logger.Logger.Println("DoHTTPRequest(): Retrying for " + moduleName + " module " + strconv.Itoa(i+1) + "/" + strconv.Itoa(int(config.HTTP.RequestRetryCount)))
+			continue
+		} else {
+			// Check response
+			respBody, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				result := string(respBody)
 
-				switch moduleName {
-				case "flute":
-					listNodeData := data.(harpData.ListNodeData)
-					err = json.Unmarshal([]byte(result), &listNodeData)
-					if err != nil {
-						return nil, err
-					}
-					return listNodeData, nil
-				case "violin":
-					allServerData := data.(harpData.AllServerData)
-					err = json.Unmarshal([]byte(result), &allServerData)
-					if err != nil {
-						return nil, err
+				if strings.Contains(result, "errors") {
+					return nil, errors.New(result)
+				}
+				if needData {
+					if data == nil {
+						return nil, errors.New("needData marked as true but data is nil")
 					}
 
-					return allServerData, nil
-				default:
-					return nil, errors.New("data is not supported for " + moduleName + " module")
+					switch moduleName {
+					case "flute":
+						listNodeData := data.(harpData.ListNodeData)
+						err = json.Unmarshal([]byte(result), &listNodeData)
+						if err != nil {
+							return nil, err
+						}
+						return listNodeData, nil
+					case "violin":
+						allServerData := data.(harpData.AllServerData)
+						err = json.Unmarshal([]byte(result), &allServerData)
+						if err != nil {
+							return nil, err
+						}
+
+						return allServerData, nil
+					default:
+						return nil, errors.New("DoHTTPRequest(): data is not supported for " + moduleName + " module")
+					}
 				}
+
+				return result, nil
 			}
 
-			return result, nil
+			return nil, err
 		}
-
-		return nil, err
 	}
 
-	return nil, errors.New("http response returned error code")
+	return nil, errors.New("DoHTTPRequest(): retry count exceeded for " + moduleName + " module")
 }

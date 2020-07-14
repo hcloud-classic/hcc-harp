@@ -53,6 +53,11 @@ func parseHTTP() {
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
+
+	HTTP.RequestRetryCount, err = config.HTTPConfig.Int("request_retry_count")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 }
 
 func parseFlute() {
