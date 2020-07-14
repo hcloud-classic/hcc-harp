@@ -112,13 +112,6 @@ func ReadSubnetByServer(serverUUID string) (interface{}, error) {
 	return subnet, nil
 }
 
-func checkReadSubnetListPageRow(args map[string]interface{}) bool {
-	_, rowOk := args["row"].(int)
-	_, pageOk := args["page"].(int)
-
-	return !rowOk || !pageOk
-}
-
 // ReadSubnetList : Get list of subnet with selected infos
 func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	var subnets []model.Subnet
@@ -136,10 +129,15 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
 
-	row, _ := args["row"].(int)
-	page, _ := args["page"].(int)
-	if checkReadSubnetListPageRow(args) {
-		return nil, errors.New("need row and page arguments")
+	var isLimit bool
+	row, rowOk := args["row"].(int)
+	page, pageOk := args["page"].(int)
+	if !rowOk && !pageOk {
+		isLimit = false
+	} else if rowOk && pageOk {
+		isLimit = true
+	} else {
+		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
 	}
 
 	sql := "select * from subnet where 1=1"
@@ -175,9 +173,16 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		sql += " and subnet_name = '" + subnetName + "'"
 	}
 
-	sql += " order by created_at desc limit ? offset ?"
+	var stmt *dbsql.Rows
+	var err error
+	if isLimit {
+		sql += " order by created_at desc limit ? offset ?"
+		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+	} else {
+		sql += " order by created_at desc"
+		stmt, err = mysql.Db.Query(sql)
+	}
 
-	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
 	if err != nil {
 		logger.Logger.Println(err.Error())
 		return nil, err
@@ -195,59 +200,6 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask, Gateway: gateway, NextServer: nextServer, NameServer: nameServer, DomainName: domainName, ServerUUID: serverUUID, LeaderNodeUUID: leaderNodeUUID, OS: os, SubnetName: subnetName, CreatedAt: createdAt}
 		subnets = append(subnets, subnet)
 	}
-	return subnets, nil
-}
-
-// ReadSubnetAll : Get list of subnet with all of infos
-func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
-	var subnets []model.Subnet
-	var uuid string
-	var networkIP string
-	var netmask string
-	var gateway string
-	var nextServer string
-	var nameServer string
-	var domainName string
-	var serverUUID string
-	var leaderNodeUUID string
-	var os string
-	var subnetName string
-	var createdAt time.Time
-
-	row, rowOk := args["row"].(int)
-	page, pageOk := args["page"].(int)
-	var sql string
-	var stmt *dbsql.Rows
-	var err error
-
-	if !rowOk && !pageOk {
-		sql = "select * from subnet order by created_at desc"
-		stmt, err = mysql.Db.Query(sql)
-	} else if rowOk && pageOk {
-		sql = "select * from subnet order by created_at desc limit ? offset ?"
-		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
-	} else {
-		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
-	}
-
-	if err != nil {
-		logger.Logger.Println(err.Error())
-		return nil, err
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
-	for stmt.Next() {
-		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
-		if err != nil {
-			logger.Logger.Println(err)
-			return nil, err
-		}
-		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask, Gateway: gateway, NextServer: nextServer, NameServer: nameServer, DomainName: domainName, ServerUUID: serverUUID, LeaderNodeUUID: leaderNodeUUID, OS: os, SubnetName: subnetName, CreatedAt: createdAt}
-		subnets = append(subnets, subnet)
-	}
-
 	return subnets, nil
 }
 

@@ -77,22 +77,6 @@ var queryTypes = graphql.NewObject(
 					return dao.ReadSubnetList(params.Args)
 				},
 			},
-			"all_subnet": &graphql.Field{
-				Type:        graphql.NewList(graphqlType.SubnetType),
-				Description: "Get all subnet list",
-				Args: graphql.FieldConfigArgument{
-					"row": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-					"page": &graphql.ArgumentConfig{
-						Type: graphql.Int,
-					},
-				},
-				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					logger.Logger.Println("Resolving: all_subnet")
-					return dao.ReadSubnetAll(params.Args)
-				},
-			},
 			"num_subnet": &graphql.Field{
 				Type:        graphqlType.SubnetNumType,
 				Description: "Get the number of subnet",
