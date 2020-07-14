@@ -169,7 +169,7 @@ var mutationTypes = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 		"delete_adaptiveip_server": &graphql.Field{
-			Type:        graphqlType.AdaptiveIPServerType,
+			Type:        graphql.String,
 			Description: "Delete adaptiveip_server by server_uuid",
 			Args: graphql.FieldConfigArgument{
 				"server_uuid": &graphql.ArgumentConfig{
