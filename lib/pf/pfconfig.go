@@ -9,7 +9,6 @@ import (
 	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
-	"hcc/harp/model"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -353,7 +352,7 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
-func CreateAndLoadAnchorConfig(publicIP string, privateIP string, subnet model.Subnet) error {
+func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
 	adaptiveip := config.GetAdaptiveIPNetwork()
 
 	err := CheckBinatAnchorFileExist(publicIP)

@@ -225,7 +225,7 @@ func CreateAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 	adaptiveipServer.PrivateIP = firstIP.String()
 	adaptiveipServer.PrivateGateway = subnet.(model.Subnet).Gateway
 
-	err = pf.CreateAndLoadAnchorConfig(adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP, subnet.(model.Subnet))
+	err = pf.CreateAndLoadAnchorConfig(adaptiveipServer.PublicIP, adaptiveipServer.PrivateIP)
 	if err != nil {
 		return nil, err
 	}
