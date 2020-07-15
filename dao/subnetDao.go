@@ -187,3 +187,59 @@ func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
 
 	return subnets, nil
 }
+func ReadSubnetNum() (model.SubnetNum, error) {
+	var subnetNum model.SubnetNum
+	var subnetNr int
+	var err error
+
+	sql := "select count(*) from subnet"
+	err = mysql.Db.QueryRow(sql).Scan(&subnetNr)
+	if err != nil {
+		logger.Logger.Println(err)
+		return subnetNum, err
+	}
+	subnetNum.Number = subnetNr
+
+	return subnetNum, nil
+}
+
+func CreateSubnet(args map[string]interface{}) (interface{}, error) {
+	out, err := gouuid.NewV4()
+	if err != nil {
+		logger.Logger.Println(err)
+		return nil, err
+	}
+	uuid := out.String()
+
+	subnet := model.Subnet{
+		UUID:           uuid,
+		NetworkIP:      args["network_ip"].(string),
+		Netmask:        args["netmask"].(string),
+		Gateway:        args["gateway"].(string),
+		NextServer:     args["next_server"].(string),
+		NameServer:     args["name_server"].(string),
+		DomainName:     args["domain_name"].(string),
+		ServerUUID:     args["server_uuid"].(string),
+		LeaderNodeUUID: args["leader_node_uuid"].(string),
+		OS:             args["os"].(string),
+		SubnetName:     args["subnet_name"].(string),
+	}
+
+	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
+	stmt, err := mysql.Db.Prepare(sql)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return nil, err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+	result, err := stmt.Exec(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.ServerUUID, subnet.LeaderNodeUUID, subnet.OS, subnet.SubnetName)
+	if err != nil {
+		logger.Logger.Println(err)
+		return nil, err
+	}
+	logger.Logger.Println(result.LastInsertId())
+
+	return subnet, nil
+}
