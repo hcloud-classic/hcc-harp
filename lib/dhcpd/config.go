@@ -44,55 +44,6 @@ func getPXEFilename(serverUUID string) (string, error) {
 	return model.DefaultPXEdir + "/" + serverUUID + "/pxelinux.0", nil
 }
 
-//type nodePXEMACAddr struct {
-//	Data struct {
-//		Node struct {
-//			PxeMacAddr string `json:"pxe_mac_addr"`
-//		} `json:"node"`
-//	} `json:"data"`
-//}
-
-/*
-func getPXEMACAddress(nodeUUID string) (string, error) {
-	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
-	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+"/graphql?query={node(uuid:%22"+
-		nodeUUID+"%22){pxe_mac_addr}}", nil)
-	if err != nil {
-		return "", err
-	}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		// Check response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			str := string(respBody)
-
-			var MACAddr nodePXEMACAddr
-			err = json.Unmarshal([]byte(str), &MACAddr)
-			if err != nil {
-				return "", err
-			}
-
-			return MACAddr.Data.Node.PxeMacAddr, nil
-		}
-
-		return "", err
-	}
-
-	return "", errors.New("http response returned error code")
-}
-*/
-
-// Flute
-
 // NodeData : Data structure of list_node
 type NodeData struct {
 	Data struct {
