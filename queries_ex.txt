@@ -7,7 +7,7 @@
 query {
   subnet(uuid:"d0ba0bbd-32e7-4480-5019-ee672e8ddf1c"){
     uuid
-	network_ip
+    network_ip
     netmask
     gateway
     next_server
@@ -24,7 +24,7 @@ query {
 query {
   all_subnet(row:10, page:1){
     uuid
-	network_ip
+    network_ip
     netmask
     gateway
     next_server
@@ -41,7 +41,7 @@ query {
 query {
   list_subnet(network_ip:"192.168.110.1", row: 10, page: 1){
     uuid
-	network_ip
+    network_ip
     netmask
     gateway
     next_server
@@ -82,7 +82,7 @@ mutation _ {
     os: "CentOS",
     subnet_name: "jolla subnet") {
     uuid
-	network_ip
+    network_ip
     netmask
     gateway
     next_server
@@ -112,7 +112,7 @@ mutation _ {
 mutation _ {
   update_subnet(uuid: "0ac56231-a0ee-4323-55ad-37c08c2d4a78", network_ip: "192.168.110.0"){
     uuid
-	network_ip
+    network_ip
     netmask
     gateway
     next_server
