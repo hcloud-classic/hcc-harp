@@ -109,7 +109,7 @@ func DeleteAndUnloadIfconfigScriptExternal(externelIfacename string, publicIP st
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Creating ifconfig temporary script file: " + ifconfigScriptFileName)
-	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + ifconfigScriptFileName
+	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
 	ifconfigScriptTemporaryFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/" + ifconfigScriptFileName
 
 	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
