@@ -394,7 +394,7 @@ func deleteAndUnloadBinatAnchorConfig(publicIP string) error {
 
 	err := fileutil.DeleteFile(binatanchorConfigFileLocation)
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	logger.Logger.Println("deleteAndUnloadBinatAnchorConfig: Remove binat anchor rules of " + binatanchorName)
@@ -414,7 +414,7 @@ func deleteAndUnloadNatAnchorConfig(publicIP string) error {
 
 	err := fileutil.DeleteFile(natanchorConfigFileLocation)
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	logger.Logger.Println("deleteAndUnloadNatAnchorConfig: Remove nat anchor rules of " + natanchorName)
