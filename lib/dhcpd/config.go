@@ -149,7 +149,7 @@ func getPXEMACAddress(nodeUUID string) (string, error) {
 }
 
 func writeConfigFile(input string, name string) error {
-	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -397,7 +397,7 @@ func UpdateHarpDHCPDConfig() error {
 	}
 	harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
 
-	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
 		return err
 	}

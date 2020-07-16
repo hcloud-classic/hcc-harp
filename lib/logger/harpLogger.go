@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"hcc/harp/lib/fileutil"
 	"io"
 	"log"
 	"os"
@@ -19,18 +20,6 @@ var once sync.Once
 // FpLog : File pointer of logger
 var FpLog *os.File
 
-// CreateDirIfNotExist : Make directory if not exist
-func CreateDirIfNotExist(dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // Prepare : Prepare logger
 func Prepare() bool {
 	var err error
@@ -39,7 +28,7 @@ func Prepare() bool {
 	once.Do(func() {
 		// Create directory if not exist
 		if _, err = os.Stat("/var/log/" + LogName); os.IsNotExist(err) {
-			err = CreateDirIfNotExist("/var/log/" + LogName)
+			err = fileutil.CreateDirIfNotExist("/var/log/" + LogName)
 			if err != nil {
 				panic(err)
 			}
