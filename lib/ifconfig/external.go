@@ -109,31 +109,38 @@ func DeleteAndUnloadIfconfigScriptExternal(externelIfacename string, publicIP st
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Creating ifconfig temporary script file: " + ifconfigScriptFileName)
-	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/" + ifconfigScriptFileName
+	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + ifconfigScriptFileName
+	ifconfigScriptTemporaryFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/" + ifconfigScriptFileName
 
 	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
 	if err != nil {
 		return err
 	}
 
-	err = fileutil.WriteFile(ifconfigScriptFileLocation, ifconfigScriptData)
+	err = fileutil.WriteFile(ifconfigScriptTemporaryFileLocation, ifconfigScriptData)
 	if err != nil {
 		return err
 	}
 
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Running ifconfig temporary script file: " + ifconfigScriptFileName)
-	err = loadIfconfigScript(ifconfigScriptFileLocation)
+	err = loadIfconfigScript(ifconfigScriptTemporaryFileLocation)
 	if err != nil {
 		return err
 	}
 
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig temporary script file: " + ifconfigScriptFileName)
-	err = fileutil.DeleteFile(ifconfigScriptFileLocation)
+	err = fileutil.DeleteFile(ifconfigScriptTemporaryFileLocation)
 	if err != nil {
 		return err
 	}
 
 	err = fileutil.DeleteDir(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig script file: " + ifconfigScriptFileName)
+	err = fileutil.DeleteFile(ifconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}
