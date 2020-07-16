@@ -36,7 +36,9 @@ func checkDuplicatedIPAddress(IP string) error {
 	}
 
 	if strings.Contains(cmdOutputStr, "from") {
-		return errors.New("Found duplicated IP address for " + IP)
+		err := errors.New("checkDuplicatedIPAddress(): Found duplicated IP address for " + IP)
+		logger.Logger.Println(err.Error())
+		return err
 	}
 
 	return nil
