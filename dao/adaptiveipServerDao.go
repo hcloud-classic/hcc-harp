@@ -259,6 +259,16 @@ func DeleteAdaptiveIPServer(args map[string]interface{}) (interface{}, error) {
 		return nil, errors.New("need a server_uuid argument")
 	}
 
+	serverUUIDArg := make(map[string]interface{})
+	serverUUIDArg["server_uuid"] = serverUUID
+	adaptiveipServer, err := ReadAdaptiveIPServer(serverUUIDArg)
+
+	err = pf.DeleteAndUnloadAnchorConfig(adaptiveipServer.(model.AdaptiveIPServer).PublicIP)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return nil, err
+	}
+
 	sql := "delete from adaptiveip_server where server_uuid = ?"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {

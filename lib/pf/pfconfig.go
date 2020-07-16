@@ -299,7 +299,7 @@ func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
 
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFBinatConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.PFBinatConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
 
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFnatConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.PFnatConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -376,6 +376,72 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
 	}
 
 	err = ifconfig.CreateAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
+		adaptiveip.Netmask)
+	if err != nil {
+		goto Error
+	}
+
+	return nil
+Error:
+	return err
+}
+
+func deleteAndUnloadBinatAnchorConfig(publicIP string) error {
+	binatanchorName := binatanchorFilenamePrefix + publicIP
+	logger.Logger.Println("deleteAndUnloadBinatAnchorConfig: Deleting config file of " + binatanchorName +
+		" (publicIP: " + publicIP + ")")
+	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
+
+	err := fileutil.DeleteFile(binatanchorConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("deleteAndUnloadBinatAnchorConfig: Remove binat anchor rules of " + binatanchorName)
+	err = removePFAnchorRule(binatanchorName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteAndUnloadnatAnchorConfig(publicIP string) error {
+	natanchorName := natanchorFilenamePrefix + publicIP
+	logger.Logger.Println("deleteAndUnloadnatAnchorConfig: Deleting config file of " + natanchorName +
+		" (publicIP: " + publicIP + ")")
+	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
+
+	err := fileutil.DeleteFile(natanchorConfigFileLocation)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("deleteAndUnloadnatAnchorConfig: Remove nat anchor rules of " + natanchorName)
+	err = removePFAnchorRule(natanchorName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteAndUnloadAnchorConfig : Delete anchor config files to match public IP address.
+// Then unload them from pf firewall.
+func DeleteAndUnloadAnchorConfig(publicIP string) error {
+	adaptiveip := config.GetAdaptiveIPNetwork()
+
+	err := deleteAndUnloadBinatAnchorConfig(publicIP)
+	if err != nil {
+		goto Error
+	}
+
+	err = deleteAndUnloadnatAnchorConfig(publicIP)
+	if err != nil {
+		goto Error
+	}
+
+	err = ifconfig.DeleteAndUnloadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
 		adaptiveip.Netmask)
 	if err != nil {
 		goto Error

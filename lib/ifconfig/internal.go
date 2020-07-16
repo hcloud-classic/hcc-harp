@@ -76,7 +76,7 @@ func CreateAndLoadIfconfigScriptInternal(internelIfacename string, privateGatewa
 	logger.Logger.Println("CreateAndLoadIfconfigScriptInternal: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.DHCPD.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
 
-	err := logger.CreateDirIfNotExist(config.DHCPD.IfconfigScriptFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.DHCPD.IfconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}
