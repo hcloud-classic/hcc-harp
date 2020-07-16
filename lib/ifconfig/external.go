@@ -125,24 +125,24 @@ func DeleteAndUnloadIfconfigScriptExternal(externelIfacename string, publicIP st
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Running ifconfig temporary script file: " + ifconfigScriptFileName)
 	err = loadIfconfigScript(ifconfigScriptTemporaryFileLocation)
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig temporary script file: " + ifconfigScriptFileName)
 	err = fileutil.DeleteFile(ifconfigScriptTemporaryFileLocation)
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	err = fileutil.DeleteDir(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig script file: " + ifconfigScriptFileName)
 	err = fileutil.DeleteFile(ifconfigScriptFileLocation)
 	if err != nil {
-		return err
+		logger.Logger.Println(err.Error())
 	}
 
 	return nil
