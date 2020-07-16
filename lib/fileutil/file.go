@@ -37,3 +37,13 @@ func WriteFileAppend(fileLocation string, input string) error {
 
 	return nil
 }
+
+// DeleteFile : Delete a file from given fileLocation
+func DeleteFile(fileLocation string) error {
+	err := os.Remove(fileLocation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
