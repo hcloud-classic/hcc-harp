@@ -318,7 +318,7 @@ func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
 	return nil
 }
 
-func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
+func createAndLoadNatAnchorConfig(privateIP string, publicIP string) error {
 	var natanchorConfData string
 
 	natanchorConfData = natStr
@@ -327,7 +327,7 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 	natanchorConfData = strings.Replace(natanchorConfData, "HARP_PF_PUBLIC_IP", publicIP, -1)
 
 	natanchorName := natanchorFilenamePrefix + publicIP
-	logger.Logger.Println("createAndLoadnatAnchorConfig: Creating config file for " + natanchorName +
+	logger.Logger.Println("createAndLoadNatAnchorConfig: Creating config file for " + natanchorName +
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
 
@@ -341,7 +341,7 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 		return err
 	}
 
-	logger.Logger.Println("createAndLoadnatAnchorConfig: Load nat anchor config file for " + natanchorName)
+	logger.Logger.Println("createAndLoadNatAnchorConfig: Load nat anchor config file for " + natanchorName)
 	err = LoadPFAnchorRule(natanchorName, natanchorConfigFileLocation)
 	if err != nil {
 		return err
@@ -370,7 +370,7 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
 		goto Error
 	}
 
-	err = createAndLoadnatAnchorConfig(privateIP, publicIP)
+	err = createAndLoadNatAnchorConfig(privateIP, publicIP)
 	if err != nil {
 		goto Error
 	}
@@ -406,9 +406,9 @@ func deleteAndUnloadBinatAnchorConfig(publicIP string) error {
 	return nil
 }
 
-func deleteAndUnloadnatAnchorConfig(publicIP string) error {
+func deleteAndUnloadNatAnchorConfig(publicIP string) error {
 	natanchorName := natanchorFilenamePrefix + publicIP
-	logger.Logger.Println("deleteAndUnloadnatAnchorConfig: Deleting config file of " + natanchorName +
+	logger.Logger.Println("deleteAndUnloadNatAnchorConfig: Deleting config file of " + natanchorName +
 		" (publicIP: " + publicIP + ")")
 	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
 
@@ -417,7 +417,7 @@ func deleteAndUnloadnatAnchorConfig(publicIP string) error {
 		return err
 	}
 
-	logger.Logger.Println("deleteAndUnloadnatAnchorConfig: Remove nat anchor rules of " + natanchorName)
+	logger.Logger.Println("deleteAndUnloadNatAnchorConfig: Remove nat anchor rules of " + natanchorName)
 	err = removePFAnchorRule(natanchorName)
 	if err != nil {
 		return err
@@ -436,7 +436,7 @@ func DeleteAndUnloadAnchorConfig(publicIP string) error {
 		goto Error
 	}
 
-	err = deleteAndUnloadnatAnchorConfig(publicIP)
+	err = deleteAndUnloadNatAnchorConfig(publicIP)
 	if err != nil {
 		goto Error
 	}
