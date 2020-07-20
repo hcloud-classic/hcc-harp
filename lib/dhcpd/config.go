@@ -292,12 +292,12 @@ func CheckLocalDHCPDConfig() error {
 	include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION",
 		config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", -1)
 
-	data, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
+	confData, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
 	if err != nil {
-		return errors.New("failed reading data from local dhcpd config file location")
+		return errors.New("failed to reading data from local dhcpd config file location")
 	}
 
-	isHarpDHCPDIncluded := strings.Contains(string(data), include)
+	isHarpDHCPDIncluded := strings.Contains(string(confData), include)
 	if !isHarpDHCPDIncluded {
 		logger.Logger.Println("Please add this line to dhcpd config file!\n" + include)
 		return errors.New("cannot find harp dhcp config include line from local dhcpd config file")
