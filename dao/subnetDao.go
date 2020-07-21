@@ -251,6 +251,21 @@ func checkSubnet(networkIP string, netmask string, gateway string) error {
 	return nil
 }
 
+func checkCreateSubnetArgs(args map[string]interface{}) bool {
+	_, networkIPOk := args["network_ip"].(string)
+	_, netmaskOk := args["netmask"].(string)
+	_, gatewayOk := args["gateway"].(string)
+	_, nextServerOk := args["next_server"].(string)
+	_, nameServerOk := args["name_server"].(string)
+	_, domainNameOk := args["domain_name"].(string)
+	_, serverUUIDOk := args["server_uuid"].(string)
+	_, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
+	_, osOk := args["os"].(string)
+	_, subnetNameOk := args["subnet_name"].(string)
+
+	return !(networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && serverUUIDOk && leaderNodeUUIDOk && osOk && subnetNameOk)
+}
+
 // CreateSubnet : Create a subnet
 func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	out, err := gouuid.NewV4()
@@ -259,6 +274,10 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 	uuid := out.String()
+
+	if checkCreateSubnetArgs(args) {
+		return nil, errors.New("some of arguments are missing")
+	}
 
 	subnet := model.Subnet{
 		UUID:           uuid,
