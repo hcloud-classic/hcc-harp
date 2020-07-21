@@ -249,6 +249,11 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		return nil, errors.New("given network IP address is not in private network")
 	}
 
+	isConflict, err := iputil.CheckSubnetConflict(subnet.NetworkIP, subnet.Netmask)
+	if isConflict {
+		return nil, errors.New("given subnet is conflicted with one of subnet that stored in the database")
+	}
+
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
