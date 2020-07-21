@@ -388,7 +388,25 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 			return nil, errors.New("need some arguments")
 		}
 
-		err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+		queryArgs := make(map[string]interface{})
+		queryArgs["uuid"] = subnet.UUID
+		oldSubnet, err := ReadSubnet(queryArgs)
+		if err != nil {
+			return nil, err
+		}
+		oldSubnetData := oldSubnet.(model.Subnet)
+
+		if !networkIPOk {
+			subnet.NetworkIP = oldSubnetData.NetworkIP
+		}
+		if !netmaskOk {
+			subnet.Netmask = oldSubnetData.Netmask
+		}
+		if !gatewayOk {
+			subnet.Gateway = oldSubnetData.Gateway
+		}
+
+		err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
 		if err != nil {
 			return nil, err
 		}
