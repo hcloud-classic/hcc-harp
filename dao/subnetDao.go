@@ -3,6 +3,7 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
+	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
@@ -241,6 +242,11 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		LeaderNodeUUID: args["leader_node_uuid"].(string),
 		OS:             args["os"].(string),
 		SubnetName:     args["subnet_name"].(string),
+	}
+
+	isPrivate, err := iputil.CheckPrivateSubnet(subnet.NetworkIP, subnet.Netmask)
+	if !isPrivate {
+		return nil, errors.New("given network IP address is not in private network")
 	}
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
