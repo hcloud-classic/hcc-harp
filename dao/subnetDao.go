@@ -221,6 +221,36 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 	return subnetNum, nil
 }
 
+func checkSubnet(networkIP string, netmask string, gateway string) error {
+	isPrivate, err := iputil.CheckPrivateSubnet(networkIP, netmask)
+	if !isPrivate {
+		return errors.New("given network IP address is not in private network")
+	}
+	if err != nil {
+		return err
+	}
+
+	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask)
+	if isConflict {
+		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
+	}
+	if err != nil {
+		return err
+	}
+
+	netNetwork, err := iputil.CheckNetwork(networkIP, netmask)
+	if err != nil {
+		return err
+	}
+
+	err = iputil.CheckGateway(*netNetwork, gateway)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateSubnet : Create a subnet
 func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	out, err := gouuid.NewV4()
@@ -244,14 +274,9 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		SubnetName:     args["subnet_name"].(string),
 	}
 
-	isPrivate, err := iputil.CheckPrivateSubnet(subnet.NetworkIP, subnet.Netmask)
-	if !isPrivate {
-		return nil, errors.New("given network IP address is not in private network")
-	}
-
-	isConflict, err := iputil.CheckSubnetConflict(subnet.NetworkIP, subnet.Netmask)
-	if isConflict {
-		return nil, errors.New("given subnet is conflicted with one of subnet that stored in the database")
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+	if err != nil {
+		return nil, err
 	}
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
