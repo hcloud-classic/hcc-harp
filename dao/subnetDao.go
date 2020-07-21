@@ -364,6 +364,11 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 			return nil, errors.New("need some arguments")
 		}
 
+		err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+		if err != nil {
+			return nil, err
+		}
+
 		sql := "update subnet set"
 		var updateSet = ""
 		if networkIPOk {
