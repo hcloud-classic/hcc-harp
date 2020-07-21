@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
@@ -49,7 +50,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 	logger.Logger.Println("Getting available IPs status... (This may take a while.)")
 	ipMap := make(map[string]bool)
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -102,7 +103,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 	var availableIPList model.AdaptiveIPAvailableIPList
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)

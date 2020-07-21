@@ -2,6 +2,7 @@ package adaptiveip
 
 import (
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
@@ -21,7 +22,7 @@ func settingExternalInterface() error {
 		return err
 	}
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	externalInterfaceString := "ifconfig_" + config.AdaptiveIP.ExternalIfaceName +
 		"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
@@ -42,7 +43,7 @@ func settingDefaultGateway() error {
 		return err
 	}
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	defaultrouteString := "defaultrouter=\"" + adaptiveip.GatewayAddress + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", defaultrouteString)

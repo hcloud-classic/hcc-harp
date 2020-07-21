@@ -3,6 +3,7 @@ package adaptiveip
 import (
 	"errors"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/pf"
 	"hcc/harp/model"
@@ -38,7 +39,7 @@ func writeAdaptiveIPNetworkConfig(args map[string]interface{}) (interface{}, err
 	adaptiveIP.StartIPAddress = startIP
 	adaptiveIP.EndIPAddress = endIP
 
-	err := config.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return nil, err
 	}

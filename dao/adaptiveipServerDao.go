@@ -3,7 +3,7 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
-	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -102,7 +102,7 @@ func ReadAdaptiveIPServerList(args map[string]interface{}) (interface{}, error) 
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func ReadAdaptiveIPServerAll(args map[string]interface{}) (interface{}, error) {
 		adaptiveipServers = append(adaptiveipServers, adaptiveipServer)
 	}
 
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iputil"
@@ -87,7 +88,7 @@ func ReplaceBaseConfigAnchorStrings() error {
 		return errors.New("failed reading data from base pf config file location")
 	}
 
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -271,9 +272,9 @@ func LoadExstingBinatAndNATRules() error {
 
 // PreparePFConfigFiles : Prepare pf.rules config file for use in adaptive IP
 func PreparePFConfigFiles() error {
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 
-	err := config.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return err
 	}
@@ -353,7 +354,7 @@ func createAndLoadNatAnchorConfig(privateIP string, publicIP string) error {
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
 func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	err := CheckBinatAnchorFileExist(publicIP)
 	if err != nil {
@@ -429,7 +430,7 @@ func deleteAndUnloadNatAnchorConfig(publicIP string) error {
 // DeleteAndUnloadAnchorConfig : Delete anchor config files to match public IP address.
 // Then unload them from pf firewall.
 func DeleteAndUnloadAnchorConfig(publicIP string) error {
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	err := deleteAndUnloadBinatAnchorConfig(publicIP)
 	if err != nil {
