@@ -393,6 +393,11 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 			return nil, err
 		}
 
+		err = checkServerUUID(subnet.ServerUUID)
+		if err != nil {
+			return nil, err
+		}
+
 		sql := "update subnet set"
 		var updateSet = ""
 		if networkIPOk {
