@@ -3,6 +3,8 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
+	"hcc/harp/data"
+	"hcc/harp/driver"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -251,6 +253,23 @@ func checkSubnet(networkIP string, netmask string, gateway string) error {
 	return nil
 }
 
+func checkServerUUID(serverUUID string) error {
+	allServerData, err := driver.AllServerUUID()
+	if err != nil {
+		return err
+	}
+
+	allServer := allServerData.(data.AllServerData).Data.AllServer
+	for _, server := range allServer {
+		_serverUUID := server.UUID
+		if _serverUUID == serverUUID {
+			return nil
+		}
+	}
+
+	return errors.New("given server UUID is not in the database")
+}
+
 func checkCreateSubnetArgs(args map[string]interface{}) bool {
 	_, networkIPOk := args["network_ip"].(string)
 	_, netmaskOk := args["netmask"].(string)
@@ -294,6 +313,11 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	}
 
 	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkServerUUID(subnet.ServerUUID)
 	if err != nil {
 		return nil, err
 	}
