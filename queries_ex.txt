@@ -22,6 +22,23 @@ query {
 }
 
 query {
+  list_subnet{
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+query {
   list_subnet(network_ip:"192.168.110.1", row: 10, page: 1){
     uuid
     network_ip
