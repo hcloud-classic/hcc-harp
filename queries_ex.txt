@@ -33,7 +33,7 @@ query {
     server_uuid
     leader_node_uuid
     os
-    name
+    subnet_name
     created_at
   }
 }
