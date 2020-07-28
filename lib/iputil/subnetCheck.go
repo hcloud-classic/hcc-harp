@@ -82,7 +82,7 @@ func getSubnetList() ([]model.Subnet, error) {
 	return subnets, nil
 }
 
-// CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in database.
+// CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in the database.
 // Return true if conflicted, return false otherwise.
 func CheckSubnetConflict(IP string, Netmask string) (bool, error) {
 	netNetwork, err := CheckNetwork(IP, Netmask)
