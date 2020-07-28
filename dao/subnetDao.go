@@ -5,6 +5,8 @@ import (
 	"errors"
 	"hcc/harp/data"
 	"hcc/harp/driver"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -475,13 +477,37 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 	return nil, errors.New("need uuid argument")
 }
 
+func deleteDHCPConfigFile(serverUUID string) error {
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + serverUUID + ".conf"
+	err := fileutil.DeleteFile(dhcpdConfLocation)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // DeleteSubnet : Delete a subnet by UUID
 func DeleteSubnet(args map[string]interface{}) (interface{}, error) {
 	var err error
 
 	requestedUUID, ok := args["uuid"].(string)
 	if ok {
-		sql := "delete from subnet where uuid = ?"
+		queryArgs := make(map[string]interface{})
+		queryArgs["uuid"] = requestedUUID
+		subnet, err := ReadSubnet(queryArgs)
+		if err != nil {
+			return nil, err
+		}
+		subnetData := subnet.(model.Subnet)
+
+		if len(subnetData.ServerUUID) == 0 {
+			msg := "subnet is used by the server (uuid: " + subnetData.ServerUUID + ")"
+			logger.Logger.Println(msg)
+			return nil, errors.New(msg)
+		}
+
+			sql := "delete from subnet where uuid = ?"
 		stmt, err := mysql.Db.Prepare(sql)
 		if err != nil {
 			logger.Logger.Println(err.Error())
