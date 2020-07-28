@@ -28,7 +28,7 @@ func CheckNetmask(netmask string) (net.IPMask, error) {
 	for i := range maskPartsStr {
 		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
 		if err != nil {
-			return nil, errors.New("netmask contained none integer value")
+			return nil, errors.New("netmask contained non-integer value")
 		}
 	}
 
