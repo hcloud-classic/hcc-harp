@@ -56,7 +56,10 @@ func DoHTTPRequest(moduleName string, needData bool, data interface{}, query str
 				logger.Logger.Println("DoHTTPRequest(): http response returned error code " + strconv.Itoa(resp.StatusCode) + " for " + moduleName + " module")
 				logger.Logger.Println("DoHTTPRequest(): Failed info - ModuleName=" + moduleName + ", Query=" + query)
 			}
-			logger.Logger.Println("DoHTTPRequest(): Retrying for " + moduleName + " module " + strconv.Itoa(i+1) + "/" + strconv.Itoa(int(config.HTTP.RequestRetryCount)))
+			logger.Logger.Println("DoHTTPRequest(): Will retry for " + moduleName + " module after " +
+				strconv.Itoa(int(config.HTTP.RequestRetryDelaySec)) + " seconds " +
+				"(" + strconv.Itoa(i+1) + "/" + strconv.Itoa(int(config.HTTP.RequestRetryCount)) + ")")
+			time.Sleep(time.Duration(config.HTTP.RequestRetryDelaySec) * time.Second)
 			continue
 		} else {
 			// Check response

@@ -58,6 +58,11 @@ func parseHTTP() {
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
+
+	HTTP.RequestRetryDelaySec, err = config.HTTPConfig.Int("request_retry_delay_sec")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
 }
 
 func parseFlute() {
