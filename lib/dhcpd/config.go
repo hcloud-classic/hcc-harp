@@ -322,10 +322,10 @@ func getSubnetConfFiles() ([]string, error) {
 }
 
 // UpdateHarpDHCPDConfig : Update harp dhcpd main config file. Write subnet config files include lines to 'harp_dhcpd.conf'
-func UpdateHarpDHCPDConfig() error {
+func UpdateHarpDHCPDConfig() (int, error) {
 	configFiles, err := getSubnetConfFiles()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	harpDHCPDConf := harpDHCPDConfBase
@@ -353,15 +353,15 @@ func UpdateHarpDHCPDConfig() error {
 
 	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return files, nil
 }
 
 // CreateDHCPDConfig : Do dhcpd config file creation works
@@ -376,7 +376,7 @@ func CreateDHCPDConfig(params graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	err = UpdateHarpDHCPDConfig()
+	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -433,15 +433,17 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 	}
 
-	err = UpdateHarpDHCPDConfig()
+	files, err := UpdateHarpDHCPDConfig()
 	if err != nil {
 		return err
 	}
 
-	err = servicecontrol.RestartDHCPDServer()
-	if err != nil {
-		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
-		return err
+	if files != 0 {
+		err = servicecontrol.RestartDHCPDServer()
+		if err != nil {
+			logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
+			return err
+		}
 	}
 
 	return nil
