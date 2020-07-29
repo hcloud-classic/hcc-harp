@@ -330,6 +330,8 @@ func UpdateHarpDHCPDConfig() error {
 
 	harpDHCPDConf := harpDHCPDConfBase
 	var allIncludeLines = ""
+	var files = 0
+
 	for _, filename := range configFiles {
 		if strings.Contains(filename, "harp_dhcpd.conf") ||
 			filename == config.DHCPD.ConfigFileLocation {
@@ -339,8 +341,15 @@ func UpdateHarpDHCPDConfig() error {
 		include := "    " + includeStr
 		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
 		allIncludeLines += include + "\n"
+
+		files++
 	}
-	harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
+
+	if files == 0 {
+		harpDHCPDConf = ""
+	} else {
+		harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
+	}
 
 	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
