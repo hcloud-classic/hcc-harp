@@ -394,7 +394,8 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 
 		listNodeData, err := driver.ListNode(server.UUID)
 		if err != nil {
-			logger.Logger.Println(errors.New("Failed to get listNodeData by server UUID: " + serverUUID))
+			logger.Logger.Println(errors.New("Failed to get listNodeData by server UUID: " +
+				serverUUID + " (" + err.Error() + ")"))
 			continue
 		}
 
@@ -407,14 +408,16 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 
 		subnet, err := dao.ReadSubnetByServer(serverUUID)
 		if err != nil {
-			logger.Logger.Println("Failed to get subnet by server UUID: " + serverUUID)
+			logger.Logger.Println("Failed to get subnet by server UUID: " +
+				serverUUID + " (" + err.Error() + ")")
 			continue
 		}
 
 		subnetUUID := subnet.(model.Subnet).UUID
 		err = CreateConfig(subnetUUID, nodeUUIDs)
 		if err != nil {
-			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" + subnetUUID)
+			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" +
+				subnetUUID + " (" + err.Error() + ")")
 			continue
 		}
 
