@@ -279,12 +279,10 @@ func checkCreateSubnetArgs(args map[string]interface{}) bool {
 	_, nextServerOk := args["next_server"].(string)
 	_, nameServerOk := args["name_server"].(string)
 	_, domainNameOk := args["domain_name"].(string)
-	_, serverUUIDOk := args["server_uuid"].(string)
-	_, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
 	_, osOk := args["os"].(string)
 	_, subnetNameOk := args["subnet_name"].(string)
 
-	return !(networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && serverUUIDOk && leaderNodeUUIDOk && osOk && subnetNameOk)
+	return !(networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && osOk && subnetNameOk)
 }
 
 // CreateSubnet : Create a subnet
@@ -308,8 +306,6 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		NextServer:     args["next_server"].(string),
 		NameServer:     args["name_server"].(string),
 		DomainName:     args["domain_name"].(string),
-		ServerUUID:     args["server_uuid"].(string),
-		LeaderNodeUUID: args["leader_node_uuid"].(string),
 		OS:             args["os"].(string),
 		SubnetName:     args["subnet_name"].(string),
 	}
@@ -324,7 +320,7 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
+	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
 		logger.Logger.Println(err.Error())
