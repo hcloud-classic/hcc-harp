@@ -225,7 +225,7 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 	return subnetNum, nil
 }
 
-func checkSubnet(networkIP string, netmask string, gateway string) error {
+func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet interface{}) error {
 	isPrivate, err := iputil.CheckPrivateSubnet(networkIP, netmask)
 	if !isPrivate {
 		return errors.New("given network IP address is not in private network")
@@ -234,7 +234,7 @@ func checkSubnet(networkIP string, netmask string, gateway string) error {
 		return err
 	}
 
-	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask)
+	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet)
 	if isConflict {
 		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
 	}
@@ -310,7 +310,7 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 		SubnetName:     args["subnet_name"].(string),
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +404,7 @@ func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
 			subnet.Gateway = oldSubnetData.Gateway
 		}
 
-		err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway)
+		err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
 		if err != nil {
 			return nil, err
 		}

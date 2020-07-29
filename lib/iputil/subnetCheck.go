@@ -57,10 +57,11 @@ func CheckPrivateSubnet(IP string, Netmask string) (bool, error) {
 
 func getSubnetList() ([]model.Subnet, error) {
 	var subnets []model.Subnet
+	var uuid string
 	var networkIP string
 	var netmask string
 
-	sql := "select network_ip, netmask from subnet"
+	sql := "select uuid, network_ip, netmask from subnet"
 	stmt, err := mysql.Db.Query(sql)
 	if err != nil {
 		logger.Logger.Println(err.Error())
@@ -71,12 +72,12 @@ func getSubnetList() ([]model.Subnet, error) {
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&networkIP, &netmask)
+		err := stmt.Scan(&uuid, &networkIP, &netmask)
 		if err != nil {
 			logger.Logger.Println(err.Error())
 			return nil, err
 		}
-		subnet := model.Subnet{NetworkIP: networkIP, Netmask: netmask}
+		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask}
 		subnets = append(subnets, subnet)
 	}
 	return subnets, nil
@@ -84,7 +85,7 @@ func getSubnetList() ([]model.Subnet, error) {
 
 // CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in the database.
 // Return true if conflicted, return false otherwise.
-func CheckSubnetConflict(IP string, Netmask string) (bool, error) {
+func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet interface{}) (bool, error) {
 	netNetwork, err := CheckNetwork(IP, Netmask)
 	if err != nil {
 		return false, err
@@ -102,6 +103,10 @@ func CheckSubnetConflict(IP string, Netmask string) (bool, error) {
 	}
 
 	for _, subnet := range subnetList {
+		if skipMine && subnet.UUID == oldSubnet.(model.Subnet).UUID {
+			continue
+		}
+
 		var givenSubnetUpperNet *net.IPNet
 		var subnetUpperNet *net.IPNet
 
