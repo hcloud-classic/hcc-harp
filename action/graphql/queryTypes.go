@@ -62,7 +62,7 @@ var queryTypes = graphql.NewObject(
 					"os": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
-					"name": &graphql.ArgumentConfig{
+					"subnet_name": &graphql.ArgumentConfig{
 						Type: graphql.String,
 					},
 					"row": &graphql.ArgumentConfig{
