@@ -92,7 +92,7 @@ var queryTypes = graphql.NewObject(
 			// adaptive IP
 			"adaptiveip": &graphql.Field{
 				Type:        graphqlType.AdaptiveIPType,
-				Description: "Get adaptiveip by uuid",
+				Description: "Get information of adaptiveip setting",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					logger.Logger.Println("Resolving: adaptiveip")
 					return configext.GetAdaptiveIPNetwork(), nil
