@@ -9,7 +9,7 @@ import (
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
-	"hcc/harp/model"
+	"hcc/harp/pb"
 	"net"
 	"os/exec"
 	"strconv"
@@ -51,8 +51,8 @@ func getAvailableIPsStatusMap() map[string]bool {
 	ipMap := make(map[string]bool)
 
 	adaptiveip := configext.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveip.StartIpAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveip.EndIpAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
@@ -100,19 +100,20 @@ func getAvailableIPsStatusMap() map[string]bool {
 }
 
 // GetAvailableIPList : Get available IP lists by checking config files and sending arping.
-func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
-	var availableIPList model.AdaptiveIPAvailableIPList
+func GetAvailableIPList() *pb.AdaptiveIPAvailableIPList {
+	var availableIPList pb.AdaptiveIPAvailableIPList
+	var availableIPs []string
 
 	adaptiveip := configext.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveip.StartIpAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveip.EndIpAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	extIface, _ := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	extIPaddrs, err := extIface.Addrs()
 	if err != nil {
 		logger.Logger.Println(err)
-		return availableIPList
+		return &availableIPList
 	}
 
 	ipMap := getAvailableIPsStatusMap()
@@ -138,12 +139,14 @@ func GetAvailableIPList() model.AdaptiveIPAvailableIPList {
 			}
 
 			if !ipUsed {
-				availableIPList.AvailableIPList = append(availableIPList.AvailableIPList, ip)
+				availableIPs = append(availableIPs, ip)
 			}
 		}
 
 		netStartIP = cidr.Inc(netStartIP)
 	}
 
-	return availableIPList
+	availableIPList.AvailableIp = availableIPs
+
+	return &availableIPList
 }

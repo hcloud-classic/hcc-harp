@@ -6,7 +6,7 @@ import (
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/pf"
-	"hcc/harp/model"
+	"hcc/harp/pb"
 	"strings"
 )
 
@@ -32,14 +32,14 @@ func writeAdaptiveIPNetworkConfig(args map[string]interface{}) (interface{}, err
 	startIP, _ := args["start_ip_address"].(string)
 	endIP, _ := args["end_ip_address"].(string)
 
-	var adaptiveIP model.AdaptiveIP
-	adaptiveIP.ExtIfaceIPAddress = extIPAddress
+	var adaptiveIP pb.AdaptiveIPSetting
+	adaptiveIP.ExtIfaceIpAddress = extIPAddress
 	adaptiveIP.Netmask = netmask
-	adaptiveIP.GatewayAddress = gateway
-	adaptiveIP.StartIPAddress = startIP
-	adaptiveIP.EndIPAddress = endIP
+	adaptiveIP.Gateway = gateway
+	adaptiveIP.StartIpAddress = startIP
+	adaptiveIP.EndIpAddress = endIP
 
-	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configext.CheckAdaptiveIPConfig(&adaptiveIP)
 	if err != nil {
 		return nil, err
 	}

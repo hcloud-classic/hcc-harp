@@ -3,29 +3,29 @@ package configext
 import (
 	"errors"
 	"hcc/harp/lib/iputil"
-	"hcc/harp/model"
+	"hcc/harp/pb"
 	"net"
 )
 
 // CheckAdaptiveIPConfig : Check configuration of Adaptive IP
-func CheckAdaptiveIPConfig(adaptiveIP model.AdaptiveIP) error {
-	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress,
+func CheckAdaptiveIPConfig(adaptiveIP *pb.AdaptiveIPSetting) error {
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIpAddress,
 		adaptiveIP.Netmask)
 	if err != nil {
 		return err
 	}
 
-	err = iputil.CheckGateway(*netNetwork, adaptiveIP.GatewayAddress)
+	err = iputil.CheckGateway(*netNetwork, adaptiveIP.Gateway)
 	if err != nil {
 		return err
 	}
 
-	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIpAddress)
 	if netStartIP == nil {
 		return errors.New("wrong public start IP address")
 	}
 
-	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIpAddress)
 	if netEndIP == nil {
 		return errors.New("wrong public end IP address")
 	}

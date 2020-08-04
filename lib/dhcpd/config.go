@@ -15,6 +15,7 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
 	"hcc/harp/model"
+	"hcc/harp/pb"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -132,10 +133,10 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
-func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
+func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
 	useSamePXEFileForCompute bool) error {
 	confContent := subnetConfBase
-	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIp, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
@@ -168,7 +169,7 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 		var node = new(nodeEntries)
 		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
 		node.PXEMACAddress = pxeMacAddr
-		if uuid == subnet.LeaderNodeUUID {
+		if uuid == subnet.LeaderNodeUuid {
 			node.IP = firstIP.String()
 		} else {
 			node.IP = nextIP.String()
@@ -183,10 +184,10 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 			nodeConfPart = strings.Replace(nodeConfPart, "        filename \"HARP_DHCPD_PXE_FILENAME\";", "", -1)
 		} else {
 			var otherPXEFileName string
-			if uuid == subnet.LeaderNodeUUID {
-				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID+"/Leader", -1)
+			if uuid == subnet.LeaderNodeUuid {
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUuid, subnet.ServerUuid+"/Leader", -1)
 			} else {
-				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUUID, subnet.ServerUUID+"/Compute", -1)
+				otherPXEFileName = strings.Replace(pxeFileName, subnet.ServerUuid, subnet.ServerUuid+"/Compute", -1)
 			}
 			nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_PXE_FILENAME", otherPXEFileName, -1)
 		}
@@ -196,7 +197,7 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NODES_ENTRIES", nodeEntryConfPart, -1)
 
-	err := writeConfigFile(confContent, subnet.ServerUUID)
+	err := writeConfigFile(confContent, subnet.ServerUuid)
 	if err != nil {
 		return err
 	}
@@ -210,21 +211,16 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return errors.New("subnetUUID is needed for make dhcpd config file")
 	}
 
-	args := make(map[string]interface{})
-	args["uuid"] = subnetUUID
-
-	subnetInterface, err := dao.ReadSubnet(args)
+	subnet, err := dao.ReadSubnet(subnetUUID)
 	if err != nil {
 		return err
 	}
-
-	var subnet = subnetInterface.(model.Subnet)
 
 	if len(subnet.SubnetName) == 0 {
 		return errors.New("name is needed for make dhcpd config file")
 	}
 
-	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIP)
+	netIPnetworkIP := iputil.CheckValidIP(subnet.NetworkIp)
 	if netIPnetworkIP == nil {
 		return errors.New("wrong network IP address")
 	}
@@ -254,12 +250,12 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return errors.New("wrong name server IP")
 	}
 
-	err = CheckNodeUUIDs(ipNet, nodeUUIDs, subnet.LeaderNodeUUID)
+	err = CheckNodeUUIDs(ipNet, nodeUUIDs, subnet.LeaderNodeUuid)
 	if err != nil {
 		return err
 	}
 
-	pxeFileName, err := getPXEFilename(subnet.ServerUUID)
+	pxeFileName, err := getPXEFilename(subnet.ServerUuid)
 	if err != nil {
 		return err
 	}
@@ -422,7 +418,7 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 			continue
 		}
 
-		subnetUUID := subnet.(model.Subnet).UUID
+		subnetUUID := subnet.Uuid.Uuid
 		err = CreateConfig(subnetUUID, nodeUUIDs)
 		if err != nil {
 			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" +

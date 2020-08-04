@@ -3,29 +3,29 @@ package configext
 import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
-	"hcc/harp/model"
+	"hcc/harp/pb"
 )
 
 // GetAdaptiveIPNetwork : Get AdaptiveIP's configured information
-func GetAdaptiveIPNetwork() model.AdaptiveIP {
-	var adaptiveIP model.AdaptiveIP
+func GetAdaptiveIPNetwork() *pb.AdaptiveIPSetting {
+	var adaptiveIP pb.AdaptiveIPSetting
 
 	err := config.AdaptiveIPNetworkConfigParser()
 	if err != nil {
 		logger.Logger.Println("AdaptiveIP network networkConfig not found! Using default network information.")
 
-		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIP.DefaultExtIfaceIPAddr
+		adaptiveIP.ExtIfaceIpAddress = config.AdaptiveIP.DefaultExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIP.DefaultNetmask
-		adaptiveIP.GatewayAddress = config.AdaptiveIP.DefaultGatewayAddr
-		adaptiveIP.StartIPAddress = config.AdaptiveIP.DefaultStartIPAddr
-		adaptiveIP.EndIPAddress = config.AdaptiveIP.DefaultEndIPAddr
+		adaptiveIP.Gateway = config.AdaptiveIP.DefaultGatewayAddr
+		adaptiveIP.StartIpAddress = config.AdaptiveIP.DefaultStartIPAddr
+		adaptiveIP.EndIpAddress = config.AdaptiveIP.DefaultEndIPAddr
 	} else {
-		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIPNetwork.ExtIfaceIPAddr
+		adaptiveIP.ExtIfaceIpAddress = config.AdaptiveIPNetwork.ExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIPNetwork.Netmask
-		adaptiveIP.GatewayAddress = config.AdaptiveIPNetwork.GatewayAddr
-		adaptiveIP.StartIPAddress = config.AdaptiveIPNetwork.StartIPAddr
-		adaptiveIP.EndIPAddress = config.AdaptiveIPNetwork.EndIPAddr
+		adaptiveIP.Gateway = config.AdaptiveIPNetwork.GatewayAddr
+		adaptiveIP.StartIpAddress = config.AdaptiveIPNetwork.StartIPAddr
+		adaptiveIP.EndIpAddress = config.AdaptiveIPNetwork.EndIPAddr
 	}
 
-	return adaptiveIP
+	return &adaptiveIP
 }

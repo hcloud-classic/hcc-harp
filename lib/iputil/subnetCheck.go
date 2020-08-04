@@ -4,7 +4,7 @@ import (
 	"errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/model"
+	"hcc/harp/pb"
 	"net"
 )
 
@@ -55,8 +55,8 @@ func CheckPrivateSubnet(IP string, Netmask string) (bool, error) {
 	return false, nil
 }
 
-func getSubnetList() ([]model.Subnet, error) {
-	var subnets []model.Subnet
+func getSubnetList() ([]pb.Subnet, error) {
+	var subnets []pb.Subnet
 	var uuid string
 	var networkIP string
 	var netmask string
@@ -77,8 +77,11 @@ func getSubnetList() ([]model.Subnet, error) {
 			logger.Logger.Println(err.Error())
 			return nil, err
 		}
-		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask}
-		subnets = append(subnets, subnet)
+
+		subnets = append(subnets, pb.Subnet{
+			Uuid: &pb.UUID{Uuid: uuid},
+			NetworkIp: networkIP,
+			Netmask: netmask})
 	}
 	return subnets, nil
 }
@@ -102,23 +105,23 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet int
 		return false, nil
 	}
 
-	for _, subnet := range subnetList {
-		if skipMine && subnet.UUID == oldSubnet.(model.Subnet).UUID {
+	for i := range subnetList {
+		if skipMine && subnetList[i].Uuid.Uuid == oldSubnet.(pb.Subnet).Uuid.Uuid {
 			continue
 		}
 
 		var givenSubnetUpperNet *net.IPNet
 		var subnetUpperNet *net.IPNet
 
-		mask, _ := CheckNetmask(subnet.Netmask)
+		mask, _ := CheckNetmask(subnetList[i].Netmask)
 		maskSize, _ := mask.Size()
 
 		if netmaskSize >= maskSize {
-			givenSubnetUpperNet, _ = CheckNetwork(IP, subnet.Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnet.NetworkIP, subnet.Netmask)
+			givenSubnetUpperNet, _ = CheckNetwork(IP, subnetList[i].Netmask)
+			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIp, subnetList[i].Netmask)
 		} else {
 			givenSubnetUpperNet, _ = CheckNetwork(IP, Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnet.NetworkIP, Netmask)
+			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIp, Netmask)
 		}
 
 		if subnetUpperNet.IP.Equal(givenSubnetUpperNet.IP) {
