@@ -2,6 +2,11 @@ ROOT_PROJECT_NAME := "hcc"
 PROJECT_NAME := "harp"
 PKG_LIST := $(shell go list ${ROOT_PROJECT_NAME}/${PROJECT_NAME}/...)
 
+PROTO_PROJECT_NAME := "melody"
+PROTO_PROJECT_GIT_REPO := "ssh://git@210.207.104.150:8102/iitp-sds/melody.git"
+PROTO_PROJECT_GIT_BRANCH := "feature/harp_test"
+PROTO_PACKAGING_SCRIPT_FILE := "packaging.sh"
+
 .PHONY: all build docker clean gofmt goreport goreport_deb test coverage coverhtml lint
 
 all: build
@@ -47,6 +52,10 @@ goreport: goreport_dep ## Make goreport
 	@./hcloud-badge/hcloud_badge.sh ${PROJECT_NAME}
 
 build: ## Build the binary file
+	@rm -rf ${PROTO_PROJECT_NAME}
+	@git clone ${PROTO_PROJECT_GIT_REPO} -b ${PROTO_PROJECT_GIT_BRANCH}
+	@$(PWD)/${PROTO_PROJECT_NAME}/${PROTO_PACKAGING_SCRIPT_FILE} $(PROJECT_NAME)
+	@protoc -I ${PROTO_PROJECT_NAME} --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src ${PROTO_PROJECT_NAME}/*.proto
 	@$(GOROOT)/bin/go build -o ${PROJECT_NAME} main.go
 
 docker: ## Build docker image and push it to private docker registry
@@ -59,4 +68,3 @@ clean: ## Remove previous build
 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-

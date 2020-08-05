@@ -1,4 +1,6 @@
 harp
+melody
+*.proto
 coverage.out
 goreport_grade
 .idea/
