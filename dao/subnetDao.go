@@ -9,16 +9,13 @@ import (
 	"hcc/harp/lib/iputil"
 	"time"
 
+	pb "hcc/harp/action/grpc/rpcharp"
 	//"hcc/harp/data"
 	//"hcc/harp/driver"
 	//"hcc/harp/lib/config"
 	//"hcc/harp/lib/fileutil"
-	//"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	//"hcc/harp/model"
-	"hcc/harp/pb"
-	//"time"
 
 	gouuid "github.com/nu7hatch/gouuid"
 )
@@ -57,7 +54,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, error) {
 		return nil, err
 	}
 
-	subnet.Uuid = &pb.UUID{Uuid: uuid}
+	subnet.Uuid = uuid
 	subnet.NetworkIp = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
@@ -112,7 +109,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, error) {
 		return nil, err
 	}
 
-	subnet.Uuid = &pb.UUID{Uuid: uuid}
+	subnet.Uuid = uuid
 	subnet.NetworkIp = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
@@ -134,8 +131,8 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, error) {
 }
 
 // ReadSubnetList : Get list of subnet with selected infos
-func ReadSubnetList(in *pb.GetSubnetListRequest) (*pb.SubnetList, error) {
-	var subnetList pb.SubnetList
+func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
+	var subnetList pb.ResGetSubnetList
 	var subnets []pb.Subnet
 	var psubnets []*pb.Subnet
 
@@ -253,7 +250,7 @@ func ReadSubnetList(in *pb.GetSubnetListRequest) (*pb.SubnetList, error) {
 		}
 
 		subnets = append(subnets, pb.Subnet{
-			Uuid:           &pb.UUID{Uuid: uuid},
+			Uuid:           uuid,
 			NetworkIp:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
@@ -354,7 +351,7 @@ func checkCreateSubnetArgs(in *pb.Subnet) bool {
 }
 
 // CreateSubnet : Create a subnet
-func CreateSubnet(in *pb.Subnet) (*pb.Subnet, error) {
+func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 	out, err := gouuid.NewV4()
 	if err != nil {
 		logger.Logger.Println(err)
@@ -362,20 +359,25 @@ func CreateSubnet(in *pb.Subnet) (*pb.Subnet, error) {
 	}
 	uuid := out.String()
 
-	if checkCreateSubnetArgs(in) {
+	if in.Subnet == nil {
+		return nil, errors.New("subnet is nil")
+	}
+	reqSubnet := in.Subnet
+
+	if checkCreateSubnetArgs(reqSubnet) {
 		return nil, errors.New("some of arguments are missing")
 	}
 
 	subnet := pb.Subnet{
-		Uuid: &pb.UUID{Uuid: uuid},
-		NetworkIp:      in.GetNetworkIp(),
-		Netmask:        in.GetNetmask(),
-		Gateway:        in.GetGateway(),
-		NextServer:     in.GetNextServer(),
-		NameServer:     in.GetNameServer(),
-		DomainName:     in.GetDomainName(),
-		Os:             in.GetOs(),
-		SubnetName:     in.GetSubnetName(),
+		Uuid: uuid,
+		NetworkIp:      reqSubnet.GetNetworkIp(),
+		Netmask:        reqSubnet.GetNetmask(),
+		Gateway:        reqSubnet.GetGateway(),
+		NextServer:     reqSubnet.GetNextServer(),
+		NameServer:     reqSubnet.GetNameServer(),
+		DomainName:     reqSubnet.GetDomainName(),
+		Os:             reqSubnet.GetOs(),
+		SubnetName:     reqSubnet.GetSubnetName(),
 	}
 
 	err = checkSubnet(subnet.NetworkIp, subnet.Netmask, subnet.Gateway, false, nil)

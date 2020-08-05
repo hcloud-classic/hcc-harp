@@ -2,9 +2,9 @@ package iputil
 
 import (
 	"errors"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/pb"
 	"net"
 )
 
@@ -79,7 +79,7 @@ func getSubnetList() ([]pb.Subnet, error) {
 		}
 
 		subnets = append(subnets, pb.Subnet{
-			Uuid: &pb.UUID{Uuid: uuid},
+			Uuid: uuid,
 			NetworkIp: networkIP,
 			Netmask: netmask})
 	}
@@ -106,7 +106,7 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet int
 	}
 
 	for i := range subnetList {
-		if skipMine && subnetList[i].Uuid.Uuid == oldSubnet.(pb.Subnet).Uuid.Uuid {
+		if skipMine && subnetList[i].Uuid == oldSubnet.(pb.Subnet).Uuid {
 			continue
 		}
 

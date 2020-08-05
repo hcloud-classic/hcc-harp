@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/graphql-go/graphql"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/data"
 	"hcc/harp/driver"
@@ -15,7 +16,6 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
 	"hcc/harp/model"
-	"hcc/harp/pb"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -418,7 +418,7 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 			continue
 		}
 
-		subnetUUID := subnet.Uuid.Uuid
+		subnetUUID := subnet.Uuid
 		err = CreateConfig(subnetUUID, nodeUUIDs)
 		if err != nil {
 			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" +

@@ -2,11 +2,11 @@ package adaptiveip
 
 import (
 	"errors"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/pf"
-	"hcc/harp/pb"
 	"strings"
 )
 

@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	harpGrpc "hcc/harp/action/grpc"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
@@ -11,7 +12,6 @@ import (
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
-	"hcc/harp/pb"
 	"net"
 	"strconv"
 )
@@ -70,14 +70,6 @@ func main() {
 		mysql.End()
 		logger.End()
 	}()
-
-	//http.Handle("/graphql", graphql.GraphqlHandler)
-	//logger.Logger.Println("Opening server on port " + strconv.Itoa(int(config.HTTP.Port)) + "...")
-	//err := http.ListenAndServe(":"+strconv.Itoa(int(config.HTTP.Port)), nil)
-	//if err != nil {
-	//	logger.Logger.Println(err)
-	//	logger.Logger.Println("Failed to prepare http server!")
-	//}
 
 	lis, err := net.Listen("tcp", ":" + strconv.Itoa(int(config.HTTP.Port)))
 	if err != nil {

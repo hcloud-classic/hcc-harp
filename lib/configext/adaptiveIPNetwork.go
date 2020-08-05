@@ -1,9 +1,9 @@
 package configext
 
 import (
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
-	"hcc/harp/pb"
 )
 
 // GetAdaptiveIPNetwork : Get AdaptiveIP's configured information

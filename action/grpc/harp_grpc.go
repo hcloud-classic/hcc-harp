@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/dao"
-	"hcc/harp/pb"
 )
 
 // Server : Server type of Harp's Grpc
@@ -28,25 +28,25 @@ func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 	}
 }
 
-func (s *Server) CreateSubnet(_ context.Context, in *pb.Subnet) (*pb.Subnet, error) {
+func (s *Server) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
 	subnet, err := dao.CreateSubnet(in)
 	if err != nil {
 		return nil, err
 	}
 
-	return returnSubnet(subnet), nil
+	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
-func (s *Server) GetSubnet(_ context.Context, in *pb.UUID) (*pb.Subnet, error) {
+func (s *Server) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
 	subnet, err := dao.ReadSubnet(in.GetUuid())
 	if err != nil {
 		return nil, err
 	}
 
-	return returnSubnet(subnet), nil
+	return &pb.ResGetSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
-func (s *Server) GetSubnetList(_ context.Context, in *pb.GetSubnetListRequest) (*pb.SubnetList, error) {
+func (s *Server) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 	subnetList, err := dao.ReadSubnetList(in)
 	if err != nil {
 		return nil, err
