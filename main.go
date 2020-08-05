@@ -4,27 +4,71 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	harpGrpc "hcc/harp/action/grpc"
-	harpEnd "hcc/harp/end"
-	harpInit "hcc/harp/init"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/mysql"
+	"hcc/harp/lib/pf"
+	"hcc/harp/lib/syscheck"
 	"hcc/harp/pb"
 	"net"
 	"strconv"
 )
 
 func init() {
-	err := harpInit.MainInit()
+	err := syscheck.CheckRoot()
+	if err != nil {
+		panic(err)
+	}
+
+	err = syscheck.CheckArpingCommand()
+	if err != nil {
+		panic(err)
+	}
+
+	err = logger.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	config.Parser()
+
+	err = mysql.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
+	if err != nil {
+		panic(err)
+	}
+
+	err = dhcpd.CheckLocalDHCPDConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	err = pf.PreparePFConfigFiles()
+	if err != nil {
+		panic(err)
+	}
+
+	err = adaptiveip.LoadHarpPFRules()
 	if err != nil {
 		panic(err)
 	}
 }
 
-
-
 func main() {
 	defer func() {
-		harpEnd.MainEnd()
+		mysql.End()
+		logger.End()
 	}()
 
 	//http.Handle("/graphql", graphql.GraphqlHandler)

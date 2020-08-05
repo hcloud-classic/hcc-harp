@@ -20,8 +20,7 @@ var once sync.Once
 // FpLog : File pointer of logger
 var FpLog *os.File
 
-// Prepare : Prepare logger
-func Prepare() bool {
+func prepare() bool {
 	var err error
 	returnValue := false
 
