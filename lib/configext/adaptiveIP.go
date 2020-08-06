@@ -15,7 +15,7 @@ func CheckAdaptiveIPConfig(adaptiveIP *pb.AdaptiveIPSetting) error {
 		return err
 	}
 
-	err = iputil.CheckGateway(*netNetwork, adaptiveIP.GatewayAddress)
+	err = iputil.CheckIPisInSubnet(*netNetwork, adaptiveIP.GatewayAddress)
 	if err != nil {
 		return err
 	}

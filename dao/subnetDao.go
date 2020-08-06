@@ -317,7 +317,7 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return err
 	}
 
-	err = iputil.CheckGateway(*netNetwork, gateway)
+	err = iputil.CheckIPisInSubnet(*netNetwork, gateway)
 	if err != nil {
 		return err
 	}

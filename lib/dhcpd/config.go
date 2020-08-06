@@ -234,7 +234,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		Mask: mask,
 	}
 
-	err = iputil.CheckGateway(ipNet, subnet.Gateway)
+	err = iputil.CheckIPisInSubnet(ipNet, subnet.Gateway)
 	if err != nil {
 		return err
 	}

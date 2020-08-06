@@ -21,7 +21,7 @@ func Test_CheckIP(t *testing.T) {
 		Mask: mask,
 	}
 
-	err = CheckGateway(ipNet, "192.168.100.1")
+	err = CheckIPisInSubnet(ipNet, "192.168.100.1")
 	if err != nil {
 		t.Fatal(err)
 	}
