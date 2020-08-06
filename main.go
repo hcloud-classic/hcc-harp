@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hcc/harp/driver/grpcsrv"
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
@@ -65,4 +66,5 @@ func main() {
 		logger.End()
 	}()
 
+	grpcsrv.Init()
 }
