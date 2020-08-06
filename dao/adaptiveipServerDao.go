@@ -10,6 +10,7 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
+	"net"
 	"time"
 )
 
@@ -187,14 +188,27 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, errors.New("need ServerUUID and PublicIP arguments")
 	}
 
+	subnet, err := ReadSubnetByServer(serverUUID)
+	if err != nil {
+		return nil, errors.New("provided ServerUUID is not allocated to one of private subnet")
+	}
+
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	netNetwork, _ := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
+	mask, _ := iputil.CheckNetmask(adaptiveIP.Netmask)
+	netIP := net.IPNet {
+		IP: netNetwork.IP,
+		Mask: mask,
+	}
+
+	err = iputil.CheckIPisInSubnet(netIP, publicIP)
+	if err != nil {
+		return nil, err
+	}
+
 	adaptiveIPServer := pb.AdaptiveIPServer{
 		ServerUUID: serverUUID,
 		PublicIP:   publicIP,
-	}
-
-	subnet, err := ReadSubnetByServer(adaptiveIPServer.ServerUUID)
-	if err != nil {
-		return nil, errors.New("provided server_uuid is not allocated to one of private subnet")
 	}
 
 	firstIP, _, err := iputil.GetFirstAndLastIPs(subnet.NetworkIP, subnet.Netmask)
