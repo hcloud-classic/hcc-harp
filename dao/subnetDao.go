@@ -380,6 +380,8 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 		NextServer: reqSubnet.GetNextServer(),
 		NameServer: reqSubnet.GetNameServer(),
 		DomainName: reqSubnet.GetDomainName(),
+		ServerUUID: "",
+		LeaderNodeUUID: "",
 		OS:         reqSubnet.GetOS(),
 		SubnetName: reqSubnet.GetSubnetName(),
 	}
@@ -389,7 +391,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 		return nil, err
 	}
 
-	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
+	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
 		logger.Logger.Println(err.Error())
@@ -398,7 +400,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err := stmt.Exec(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.OS, subnet.SubnetName)
+	result, err := stmt.Exec(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.ServerUUID, subnet.LeaderNodeUUID, subnet.OS, subnet.SubnetName)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
