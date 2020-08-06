@@ -134,11 +134,6 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, error) {
 
 // ReadSubnetList : Get list of subnet with selected infos
 func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
-	if in.Subnet == nil {
-		return nil, errors.New("subnet is nil")
-	}
-	reqSubnet := in.Subnet
-
 	var subnetList pb.ResGetSubnetList
 	var subnets []pb.Subnet
 	var psubnets []*pb.Subnet
@@ -171,56 +166,60 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 
 	sql := "select * from subnet where 1=1"
 
-	networkIP = reqSubnet.NetworkIP
-	networkIPOk := len(networkIP) != 0
-	netmask = reqSubnet.Netmask
-	netmaskOk := len(netmask) != 0
-	gateway = reqSubnet.Gateway
-	gatewayOk := len(gateway) != 0
-	nextServer = reqSubnet.NextServer
-	nextServerOk := len(nextServer) != 0
-	nameServer = reqSubnet.NameServer
-	nameServerOk := len(nameServer) != 0
-	domainName = reqSubnet.DomainName
-	domainNameOk := len(domainName) != 0
-	serverUUID = reqSubnet.ServerUUID
-	serverUUIDOk := len(serverUUID) != 0
-	leaderNodeUUID = reqSubnet.LeaderNodeUUID
-	leaderNodeUUIDOk := len(leaderNodeUUID) != 0
-	os = reqSubnet.OS
-	osOk := len(os) != 0
-	subnetName = reqSubnet.SubnetName
-	subnetNameOk := len(subnetName) != 0
+	if in.Subnet != nil {
+		reqSubnet := in.Subnet
 
-	if networkIPOk {
-		sql += " and network_ip = '" + networkIP + "'"
-	}
-	if netmaskOk {
-		sql += " and netmask = '" + netmask + "'"
-	}
-	if gatewayOk {
-		sql += " and gateway = '" + gateway + "'"
-	}
-	if nextServerOk {
-		sql += " and next_server = '" + nextServer + "'"
-	}
-	if nameServerOk {
-		sql += " and name_server = '" + nameServer + "'"
-	}
-	if domainNameOk {
-		sql += " and domain_name = '" + domainName + "'"
-	}
-	if serverUUIDOk {
-		sql += " and server_uuid = '" + serverUUID + "'"
-	}
-	if leaderNodeUUIDOk {
-		sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
-	}
-	if osOk {
-		sql += " and os = '" + os + "'"
-	}
-	if subnetNameOk {
-		sql += " and subnet_name = '" + subnetName + "'"
+		networkIP = reqSubnet.NetworkIP
+		networkIPOk := len(networkIP) != 0
+		netmask = reqSubnet.Netmask
+		netmaskOk := len(netmask) != 0
+		gateway = reqSubnet.Gateway
+		gatewayOk := len(gateway) != 0
+		nextServer = reqSubnet.NextServer
+		nextServerOk := len(nextServer) != 0
+		nameServer = reqSubnet.NameServer
+		nameServerOk := len(nameServer) != 0
+		domainName = reqSubnet.DomainName
+		domainNameOk := len(domainName) != 0
+		serverUUID = reqSubnet.ServerUUID
+		serverUUIDOk := len(serverUUID) != 0
+		leaderNodeUUID = reqSubnet.LeaderNodeUUID
+		leaderNodeUUIDOk := len(leaderNodeUUID) != 0
+		os = reqSubnet.OS
+		osOk := len(os) != 0
+		subnetName = reqSubnet.SubnetName
+		subnetNameOk := len(subnetName) != 0
+
+		if networkIPOk {
+			sql += " and network_ip = '" + networkIP + "'"
+		}
+		if netmaskOk {
+			sql += " and netmask = '" + netmask + "'"
+		}
+		if gatewayOk {
+			sql += " and gateway = '" + gateway + "'"
+		}
+		if nextServerOk {
+			sql += " and next_server = '" + nextServer + "'"
+		}
+		if nameServerOk {
+			sql += " and name_server = '" + nameServer + "'"
+		}
+		if domainNameOk {
+			sql += " and domain_name = '" + domainName + "'"
+		}
+		if serverUUIDOk {
+			sql += " and server_uuid = '" + serverUUID + "'"
+		}
+		if leaderNodeUUIDOk {
+			sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
+		}
+		if osOk {
+			sql += " and os = '" + os + "'"
+		}
+		if subnetNameOk {
+			sql += " and subnet_name = '" + subnetName + "'"
+		}
 	}
 
 	var stmt *dbsql.Rows

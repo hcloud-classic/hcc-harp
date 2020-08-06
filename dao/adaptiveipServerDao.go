@@ -51,11 +51,6 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, error) {
 
 // ReadAdaptiveIPServerList : Get the list of AdaptiveIP server settings
 func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, error) {
-	if in.AdaptiveIPServer == nil {
-		return nil, errors.New("AdaptiveIPServer is nil")
-	}
-	reqAdaptiveIPServer := in.AdaptiveIPServer
-
 	var adaptiveIPList pb.ResGetAdaptiveIPServerList
 	var adaptiveIPServers []pb.AdaptiveIPServer
 	var padaptiveIPServers []*pb.AdaptiveIPServer
@@ -81,21 +76,25 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 
 	sql := "select * from adaptiveip_server where 1=1"
 
-	publicIP = reqAdaptiveIPServer.PublicIP
-	publicIPOk := len(publicIP) != 0
-	privateIP = reqAdaptiveIPServer.PrivateIP
-	privateIPOk := len(privateIP) != 0
-	privateGateway = reqAdaptiveIPServer.PrivateGateway
-	privateGatewayOk := len(privateGateway) != 0
+	if in.AdaptiveIPServer != nil {
+		reqAdaptiveIPServer := in.AdaptiveIPServer
 
-	if publicIPOk {
-		sql += " and public_ip = '" + publicIP + "'"
-	}
-	if privateIPOk {
-		sql += " and private_ip = '" + privateIP + "'"
-	}
-	if privateGatewayOk {
-		sql += " and private_gateway = '" + privateGateway + "'"
+		publicIP = reqAdaptiveIPServer.PublicIP
+		publicIPOk := len(publicIP) != 0
+		privateIP = reqAdaptiveIPServer.PrivateIP
+		privateIPOk := len(privateIP) != 0
+		privateGateway = reqAdaptiveIPServer.PrivateGateway
+		privateGatewayOk := len(privateGateway) != 0
+
+		if publicIPOk {
+			sql += " and public_ip = '" + publicIP + "'"
+		}
+		if privateIPOk {
+			sql += " and private_ip = '" + privateIP + "'"
+		}
+		if privateGatewayOk {
+			sql += " and private_gateway = '" + privateGateway + "'"
+		}
 	}
 
 	var stmt *dbsql.Rows
@@ -196,8 +195,8 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netNetwork, _ := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	mask, _ := iputil.CheckNetmask(adaptiveIP.Netmask)
-	netIP := net.IPNet {
-		IP: netNetwork.IP,
+	netIP := net.IPNet{
+		IP:   netNetwork.IP,
 		Mask: mask,
 	}
 
