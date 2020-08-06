@@ -71,7 +71,7 @@ func settingExternalInterface() error {
 	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	externalInterfaceString := "ifconfig_" + config.AdaptiveIP.ExternalIfaceName +
-		"=\"inet " + adaptiveip.ExtIfaceIpAddress + " netmask " + adaptiveip.Netmask + "\"\n"
+		"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", externalInterfaceString)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func settingDefaultGateway() error {
 
 	adaptiveip := configext.GetAdaptiveIPNetwork()
 
-	defaultrouteString := "defaultrouter=\"" + adaptiveip.Gateway + "\"\n"
+	defaultrouteString := "defaultrouter=\"" + adaptiveip.GatewayAddress + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", defaultrouteString)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func settingExternalNetwork() error {
 	ifaceName := config.AdaptiveIP.ExternalIfaceName
 	adaptiveip := configext.GetAdaptiveIPNetwork()
 
-	isIPConfigured, err := checkIPConfigured(ifaceName, adaptiveip.ExtIfaceIpAddress)
+	isIPConfigured, err := checkIPConfigured(ifaceName, adaptiveip.ExtIfaceIPAddress)
 	if err != nil {
 		logger.Logger.Println(err)
 	}
@@ -121,7 +121,7 @@ func settingExternalNetwork() error {
 		needNetworkRestart = true
 	}
 
-	isGatewayConfigured, err := checkGatewayConfigured(adaptiveip.Gateway)
+	isGatewayConfigured, err := checkGatewayConfigured(adaptiveip.GatewayAddress)
 	if err != nil {
 		logger.Logger.Println(err)
 	}

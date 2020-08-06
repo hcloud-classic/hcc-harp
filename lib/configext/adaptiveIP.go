@@ -9,23 +9,23 @@ import (
 
 // CheckAdaptiveIPConfig : Check configuration of Adaptive IP
 func CheckAdaptiveIPConfig(adaptiveIP *pb.AdaptiveIPSetting) error {
-	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIpAddress,
+	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress,
 		adaptiveIP.Netmask)
 	if err != nil {
 		return err
 	}
 
-	err = iputil.CheckGateway(*netNetwork, adaptiveIP.Gateway)
+	err = iputil.CheckGateway(*netNetwork, adaptiveIP.GatewayAddress)
 	if err != nil {
 		return err
 	}
 
-	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIpAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
 	if netStartIP == nil {
 		return errors.New("wrong public start IP address")
 	}
 
-	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIpAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	if netEndIP == nil {
 		return errors.New("wrong public end IP address")
 	}

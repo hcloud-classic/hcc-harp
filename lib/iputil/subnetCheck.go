@@ -79,9 +79,9 @@ func getSubnetList() ([]pb.Subnet, error) {
 		}
 
 		subnets = append(subnets, pb.Subnet{
-			Uuid: uuid,
-			NetworkIp: networkIP,
-			Netmask: netmask})
+			UUID:      uuid,
+			NetworkIP: networkIP,
+			Netmask:   netmask})
 	}
 	return subnets, nil
 }
@@ -106,7 +106,7 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet int
 	}
 
 	for i := range subnetList {
-		if skipMine && subnetList[i].Uuid == oldSubnet.(pb.Subnet).Uuid {
+		if skipMine && subnetList[i].UUID == oldSubnet.(pb.Subnet).UUID {
 			continue
 		}
 
@@ -118,10 +118,10 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet int
 
 		if netmaskSize >= maskSize {
 			givenSubnetUpperNet, _ = CheckNetwork(IP, subnetList[i].Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIp, subnetList[i].Netmask)
+			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, subnetList[i].Netmask)
 		} else {
 			givenSubnetUpperNet, _ = CheckNetwork(IP, Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIp, Netmask)
+			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, Netmask)
 		}
 
 		if subnetUpperNet.IP.Equal(givenSubnetUpperNet.IP) {

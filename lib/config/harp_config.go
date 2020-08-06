@@ -6,6 +6,7 @@ var configLocation = "/etc/hcc/harp/harp.conf"
 
 type harpConfig struct {
 	MysqlConfig             *goconf.Section
+	GrpcConfig              *goconf.Section
 	HTTPConfig              *goconf.Section
 	FluteConfig             *goconf.Section
 	ViolinConfig            *goconf.Section

@@ -42,6 +42,18 @@ func parseMysql() {
 	}
 }
 
+func parseGrpc() {
+	config.GrpcConfig = conf.Get("grpc")
+	if config.GrpcConfig == nil {
+		logger.Logger.Panicln("no grpc section")
+	}
+
+	Grpc.Port, err = config.GrpcConfig.Int("port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 func parseHTTP() {
 	config.HTTPConfig = conf.Get("http")
 	if config.HTTPConfig == nil {
@@ -49,11 +61,6 @@ func parseHTTP() {
 	}
 
 	HTTP = http{}
-	HTTP.Port, err = config.HTTPConfig.Int("port")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
 	HTTP.RequestRetryCount, err = config.HTTPConfig.Int("request_retry_count")
 	if err != nil {
 		logger.Logger.Panicln(err)
@@ -246,6 +253,7 @@ func Parser() {
 	}
 
 	parseMysql()
+	parseGrpc()
 	parseHTTP()
 	parseFlute()
 	parseViolin()

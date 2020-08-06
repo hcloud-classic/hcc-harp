@@ -89,8 +89,8 @@ func ReplaceBaseConfigAnchorStrings() error {
 	}
 
 	adaptiveIP := configext.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIpAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIpAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	// binat

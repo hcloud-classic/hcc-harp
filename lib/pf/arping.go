@@ -51,8 +51,8 @@ func getAvailableIPsStatusMap() map[string]bool {
 	ipMap := make(map[string]bool)
 
 	adaptiveip := configext.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveip.StartIpAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveip.EndIpAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
@@ -105,8 +105,8 @@ func GetAvailableIPList() *pb.AdaptiveIPAvailableIPList {
 	var availableIPs []string
 
 	adaptiveip := configext.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveip.StartIpAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveip.EndIpAddress)
+	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
+	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
 
 	extIface, _ := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)

@@ -14,17 +14,17 @@ func GetAdaptiveIPNetwork() *pb.AdaptiveIPSetting {
 	if err != nil {
 		logger.Logger.Println("AdaptiveIP network networkConfig not found! Using default network information.")
 
-		adaptiveIP.ExtIfaceIpAddress = config.AdaptiveIP.DefaultExtIfaceIPAddr
+		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIP.DefaultExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIP.DefaultNetmask
-		adaptiveIP.Gateway = config.AdaptiveIP.DefaultGatewayAddr
-		adaptiveIP.StartIpAddress = config.AdaptiveIP.DefaultStartIPAddr
-		adaptiveIP.EndIpAddress = config.AdaptiveIP.DefaultEndIPAddr
+		adaptiveIP.GatewayAddress = config.AdaptiveIP.DefaultGatewayAddr
+		adaptiveIP.StartIPAddress = config.AdaptiveIP.DefaultStartIPAddr
+		adaptiveIP.EndIPAddress = config.AdaptiveIP.DefaultEndIPAddr
 	} else {
-		adaptiveIP.ExtIfaceIpAddress = config.AdaptiveIPNetwork.ExtIfaceIPAddr
+		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIPNetwork.ExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIPNetwork.Netmask
-		adaptiveIP.Gateway = config.AdaptiveIPNetwork.GatewayAddr
-		adaptiveIP.StartIpAddress = config.AdaptiveIPNetwork.StartIPAddr
-		adaptiveIP.EndIpAddress = config.AdaptiveIPNetwork.EndIPAddr
+		adaptiveIP.GatewayAddress = config.AdaptiveIPNetwork.GatewayAddr
+		adaptiveIP.StartIPAddress = config.AdaptiveIPNetwork.StartIPAddr
+		adaptiveIP.EndIPAddress = config.AdaptiveIPNetwork.EndIPAddr
 	}
 
 	return &adaptiveIP
