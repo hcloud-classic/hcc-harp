@@ -1,5 +1,5 @@
 harp
-melody
+tmp_melody
 *.proto
 *.pb.go
 coverage.out
