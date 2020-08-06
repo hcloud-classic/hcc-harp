@@ -129,11 +129,11 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		}
 
 		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
-			ServerUUID: serverUUID,
-			PublicIP: publicIP,
-			PrivateIP: privateIP,
+			ServerUUID:     serverUUID,
+			PublicIP:       publicIP,
+			PrivateIP:      privateIP,
 			PrivateGateway: privateGateway,
-			CreatedAt: _createdAt,
+			CreatedAt:      _createdAt,
 		})
 	}
 

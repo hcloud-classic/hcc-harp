@@ -255,15 +255,15 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 		}
 
 		subnets = append(subnets, pb.Subnet{
-			UUID:          uuid,
+			UUID:           uuid,
 			NetworkIP:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
 			NextServer:     nextServer,
 			NameServer:     nameServer,
 			DomainName:     domainName,
-			ServerUUID:    serverUUID,
-			LeaderNodeUUID:leaderNodeUUID,
+			ServerUUID:     serverUUID,
+			LeaderNodeUUID: leaderNodeUUID,
 			OS:             os,
 			SubnetName:     subnetName,
 			CreatedAt:      _createdAt})
@@ -374,7 +374,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 	}
 
 	subnet := pb.Subnet{
-		UUID:      uuid,
+		UUID:       uuid,
 		NetworkIP:  reqSubnet.GetNetworkIP(),
 		Netmask:    reqSubnet.GetNetmask(),
 		Gateway:    reqSubnet.GetGateway(),
