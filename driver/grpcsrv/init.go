@@ -17,8 +17,11 @@ func Init() {
 	}
 	s := grpc.NewServer()
 	pb.RegisterHarpServer(s, &HarpServer{})
+
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
+
+	logger.Logger.Println("Opening gRPC server on port " + strconv.Itoa(int(config.Grpc.Port)) + "...")
 	if err := s.Serve(lis); err != nil {
 		logger.Logger.Fatalf("failed to serve: %v", err)
 	}
