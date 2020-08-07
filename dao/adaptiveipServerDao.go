@@ -163,10 +163,9 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, error) {
 	var adaptiveIPServerNum pb.ResGetAdaptiveIPServerNum
 	var adaptiveIPServerNr int64
-	var err error
 
 	sql := "select count(*) from adaptiveip_server"
-	err = mysql.Db.QueryRow(sql).Scan(&adaptiveIPServerNr)
+	err := mysql.Db.QueryRow(sql).Scan(&adaptiveIPServerNr)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
