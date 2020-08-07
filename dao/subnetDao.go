@@ -349,10 +349,10 @@ func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
 
 // CreateSubnet : Create a subnet
 func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
-	if in.Subnet == nil {
+	reqSubnet := in.GetSubnet()
+	if reqSubnet == nil {
 		return nil, errors.New("subnet is nil")
 	}
-	reqSubnet := in.Subnet
 
 	out, err := gouuid.NewV4()
 	if err != nil {
