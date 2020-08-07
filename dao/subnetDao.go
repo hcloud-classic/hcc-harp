@@ -366,17 +366,17 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, error) {
 	}
 
 	subnet := pb.Subnet{
-		UUID:       uuid,
-		NetworkIP:  reqSubnet.GetNetworkIP(),
-		Netmask:    reqSubnet.GetNetmask(),
-		Gateway:    reqSubnet.GetGateway(),
-		NextServer: reqSubnet.GetNextServer(),
-		NameServer: reqSubnet.GetNameServer(),
-		DomainName: reqSubnet.GetDomainName(),
-		ServerUUID: "",
+		UUID:           uuid,
+		NetworkIP:      reqSubnet.GetNetworkIP(),
+		Netmask:        reqSubnet.GetNetmask(),
+		Gateway:        reqSubnet.GetGateway(),
+		NextServer:     reqSubnet.GetNextServer(),
+		NameServer:     reqSubnet.GetNameServer(),
+		DomainName:     reqSubnet.GetDomainName(),
+		ServerUUID:     "",
 		LeaderNodeUUID: "",
-		OS:         reqSubnet.GetOS(),
-		SubnetName: reqSubnet.GetSubnetName(),
+		OS:             reqSubnet.GetOS(),
+		SubnetName:     reqSubnet.GetSubnetName(),
 	}
 
 	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil)
