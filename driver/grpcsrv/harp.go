@@ -10,8 +10,7 @@ import (
 	"hcc/harp/lib/pf"
 )
 
-// HarpServer : Server type of Harp's Grpc
-type HarpServer struct {
+type harpServer struct {
 	pb.UnimplementedHarpServer
 }
 
@@ -32,7 +31,7 @@ func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 	}
 }
 
-func (s *HarpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
+func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
 	subnet, err := dao.CreateSubnet(in)
 	if err != nil {
 		return nil, err
@@ -41,7 +40,7 @@ func (s *HarpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*p
 	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
-func (s *HarpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
+func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
 	subnet, err := dao.ReadSubnet(in.GetUUID())
 	if err != nil {
 		return nil, err
@@ -50,7 +49,7 @@ func (s *HarpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResG
 	return &pb.ResGetSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
-func (s *HarpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
+func (s *harpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 	subnetList, err := dao.ReadSubnetList(in)
 	if err != nil {
 		return nil, err
@@ -59,7 +58,7 @@ func (s *HarpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (
 	return subnetList, nil
 }
 
-func (s *HarpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSubnetNum, error) {
+func (s *harpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSubnetNum, error) {
 	subnetNum, err := dao.ReadSubnetNum()
 	if err != nil {
 		return nil, err
@@ -68,7 +67,7 @@ func (s *HarpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSub
 	return subnetNum, nil
 }
 
-func (s *HarpServer) UpdateSubnet(_ context.Context, in *pb.ReqUpdateSubnet) (*pb.ResUpdateSubnet, error) {
+func (s *harpServer) UpdateSubnet(_ context.Context, in *pb.ReqUpdateSubnet) (*pb.ResUpdateSubnet, error) {
 	updateSubnet, err := dao.UpdateSubnet(in)
 	if err != nil {
 		return nil, err
@@ -77,7 +76,7 @@ func (s *HarpServer) UpdateSubnet(_ context.Context, in *pb.ReqUpdateSubnet) (*p
 	return &pb.ResUpdateSubnet{Subnet: updateSubnet}, nil
 }
 
-func (s *HarpServer) DeleteSubnet(_ context.Context, in *pb.ReqDeleteSubnet) (*pb.ResDeleteSubnet, error) {
+func (s *harpServer) DeleteSubnet(_ context.Context, in *pb.ReqDeleteSubnet) (*pb.ResDeleteSubnet, error) {
 	uuid, err := dao.DeleteSubnet(in)
 	if err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (s *HarpServer) DeleteSubnet(_ context.Context, in *pb.ReqDeleteSubnet) (*p
 	return &pb.ResDeleteSubnet{UUID: uuid}, nil
 }
 
-func (s *HarpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreateAdaptiveIPSetting) (*pb.ResCreateAdaptiveIPSetting, error) {
+func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreateAdaptiveIPSetting) (*pb.ResCreateAdaptiveIPSetting, error) {
 	adaptiveIPSetting, err := adaptiveip.WriteNetworkConfigAndReloadHarpNetwork(in)
 	if err != nil {
 		return nil, err
@@ -95,19 +94,19 @@ func (s *HarpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreate
 	return &pb.ResCreateAdaptiveIPSetting{AdaptiveIPSetting: adaptiveIPSetting}, nil
 }
 
-func (s *HarpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPSetting, error) {
+func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPSetting, error) {
 	adaptiveIPNetwork := configext.GetAdaptiveIPNetwork()
 
 	return &pb.ResGetAdaptiveIPSetting{AdaptiveIPSetting: adaptiveIPNetwork}, nil
 }
 
-func (s *HarpServer) GetAdaptiveIPAvailableIPList(_ context.Context, in *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
+func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, in *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
 	adaptiveIPAvailableIPList := pf.GetAvailableIPList()
 
 	return &pb.ResGetAdaptiveIPAvailableIPList{AdaptiveIPAvailable_IPList: adaptiveIPAvailableIPList}, nil
 }
 
-func (s *HarpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateAdaptiveIPServer) (*pb.ResCreateAdaptiveIPServer, error) {
+func (s *harpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateAdaptiveIPServer) (*pb.ResCreateAdaptiveIPServer, error) {
 	adaptiveIPServer, err := dao.CreateAdaptiveIPServer(in)
 	if err != nil {
 		return nil, err
@@ -116,7 +115,7 @@ func (s *HarpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateA
 	return &pb.ResCreateAdaptiveIPServer{AdaptiveIPServer: adaptiveIPServer}, nil
 }
 
-func (s *HarpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiveIPServer) (*pb.ResGetAdaptiveIPServer, error) {
+func (s *harpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiveIPServer) (*pb.ResGetAdaptiveIPServer, error) {
 	adaptiveIPServer, err := dao.ReadAdaptiveIPServer(in.GetServerUUID())
 	if err != nil {
 		return nil, err
@@ -125,7 +124,7 @@ func (s *HarpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiv
 	return &pb.ResGetAdaptiveIPServer{AdaptiveIPServer: adaptiveIPServer}, nil
 }
 
-func (s *HarpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, error) {
+func (s *harpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, error) {
 	adaptiveIPServerList, err := dao.ReadAdaptiveIPServerList(in)
 	if err != nil {
 		return nil, err
@@ -134,7 +133,7 @@ func (s *HarpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAda
 	return adaptiveIPServerList, nil
 }
 
-func (s *HarpServer) GetAdaptiveIPServerNum(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPServerNum, error) {
+func (s *harpServer) GetAdaptiveIPServerNum(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPServerNum, error) {
 	adaptiveIPServerNum, err := dao.ReadAdaptiveIPServerNum()
 	if err != nil {
 		return nil, err
@@ -143,7 +142,7 @@ func (s *HarpServer) GetAdaptiveIPServerNum(_ context.Context, _ *pb.Empty) (*pb
 	return adaptiveIPServerNum, nil
 }
 
-func (s *HarpServer) DeleteAdaptiveIPServer(_ context.Context, in *pb.ReqDeleteAdaptiveIPServer) (*pb.ResDeleteAdaptiveIPServer, error) {
+func (s *harpServer) DeleteAdaptiveIPServer(_ context.Context, in *pb.ReqDeleteAdaptiveIPServer) (*pb.ResDeleteAdaptiveIPServer, error) {
 	serverUUID, err := dao.DeleteAdaptiveIPServer(in)
 	if err != nil {
 		return nil, err
@@ -152,7 +151,7 @@ func (s *HarpServer) DeleteAdaptiveIPServer(_ context.Context, in *pb.ReqDeleteA
 	return &pb.ResDeleteAdaptiveIPServer{ServerUUID: serverUUID}, nil
 }
 
-func (s *HarpServer) CreateDHPCDConf(_ context.Context, in *pb.ReqCreateDHPCDConf) (*pb.ResCreateDHPCDConf, error) {
+func (s *harpServer) CreateDHPCDConf(_ context.Context, in *pb.ReqCreateDHPCDConf) (*pb.ResCreateDHPCDConf, error) {
 	result, err := dhcpd.CreateDHCPDConfig(in)
 	if err != nil {
 		return nil, err

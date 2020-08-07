@@ -16,7 +16,7 @@ func Init() {
 		logger.Logger.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterHarpServer(s, &HarpServer{})
+	pb.RegisterHarpServer(s, &harpServer{})
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
