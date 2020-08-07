@@ -175,7 +175,7 @@ func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, error) {
 	return &adaptiveIPServerNum, nil
 }
 
-// CreateAdaptiveIPServer - ish
+// CreateAdaptiveIPServer : Create AdaptiveIP of server
 func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPServer, error) {
 	serverUUID := in.ServerUUID
 	serverUUIDOk := len(serverUUID) != 0
@@ -242,7 +242,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	return &adaptiveIPServer, nil
 }
 
-// DeleteAdaptiveIPServer - ish
+// DeleteAdaptiveIPServer : Delete AdaptiveIP of the server
 func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, error) {
 	var err error
 
