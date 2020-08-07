@@ -428,7 +428,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 	requestedUUID := reqSubnet.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return nil, errors.New("need uuid argument")
+		return nil, errors.New("need a uuid argument")
 	}
 
 	if checkUpdateSubnetArgs(reqSubnet) {
@@ -578,7 +578,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, error) {
 	requestedUUID := in.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return "", errors.New("need uuid argument")
+		return "", errors.New("need a uuid argument")
 	}
 
 	subnet, err := ReadSubnet(requestedUUID)
