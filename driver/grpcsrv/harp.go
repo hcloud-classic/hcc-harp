@@ -49,6 +49,15 @@ func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResG
 	return &pb.ResGetSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
+func (s *harpServer) GetSubnetByServer(_ context.Context, in *pb.ReqGetSubnetByServer) (*pb.ResGetSubnetByServer, error) {
+	subnet, err := dao.ReadSubnetByServer(in.GetServerUUID())
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ResGetSubnetByServer{Subnet: returnSubnet(subnet)}, nil
+}
+
 func (s *harpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 	subnetList, err := dao.ReadSubnetList(in)
 	if err != nil {
