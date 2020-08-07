@@ -4,22 +4,16 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"github.com/golang/protobuf/ptypes"
+	gouuid "github.com/nu7hatch/gouuid"
+	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/data"
 	"hcc/harp/driver"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/iputil"
-	"time"
-
-	pb "hcc/harp/action/grpc/rpcharp"
-	//"hcc/harp/data"
-	//"hcc/harp/driver"
-	//"hcc/harp/lib/config"
-	//"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-
-	gouuid "github.com/nu7hatch/gouuid"
+	"time"
 )
 
 // ReadSubnet : Get infos of a subnet
