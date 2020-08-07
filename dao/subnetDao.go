@@ -275,10 +275,9 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 func ReadSubnetNum() (*pb.ResGetSubnetNum, error) {
 	var resSubnetNum pb.ResGetSubnetNum
 	var subnetNr int64
-	var err error
 
 	sql := "select count(*) from subnet"
-	err = mysql.Db.QueryRow(sql).Scan(&subnetNr)
+	err := mysql.Db.QueryRow(sql).Scan(&subnetNr)
 	if err != nil {
 		logger.Logger.Println(err)
 		return nil, err
