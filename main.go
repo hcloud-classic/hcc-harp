@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hcc/harp/driver/grpccli"
 	"hcc/harp/driver/grpcsrv"
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
@@ -58,12 +59,18 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = grpccli.InitGRPCClient()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
 	defer func() {
 		mysql.End()
 		logger.End()
+		grpccli.CleanGRPCClient()
 	}()
 
 	grpcsrv.Init()
