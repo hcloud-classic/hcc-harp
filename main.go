@@ -35,6 +35,11 @@ func init() {
 		panic(err)
 	}
 
+	err = grpccli.InitGRPCClient()
+	if err != nil {
+		panic(err)
+	}
+
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
 		panic(err)
@@ -59,18 +64,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	err = grpccli.InitGRPCClient()
-	if err != nil {
-		panic(err)
-	}
 }
 
 func main() {
 	defer func() {
+		grpccli.CleanGRPCClient()
 		mysql.End()
 		logger.End()
-		grpccli.CleanGRPCClient()
 	}()
 
 	grpcsrv.Init()
