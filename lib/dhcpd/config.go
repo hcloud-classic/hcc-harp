@@ -322,16 +322,30 @@ func UpdateHarpDHCPDConfig() (int, error) {
 func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 	subnetUUID := in.GetSubnetUUID()
 	subnetUUIDOk := len(subnetUUID) != 0
-	nodeUUIDs := in.GetNodeUUIDs()
-	nodeUUIDsOk := len(nodeUUIDs) != 0
 
-	if !subnetUUIDOk || !nodeUUIDsOk {
-		return "", errors.New("need SubnetUUID and NodeUUIDs arguments")
+	if !subnetUUIDOk {
+		return "", errors.New("need a SubnetUUID argument")
 	}
 
-	nodeUUIDsParts := strings.Split(nodeUUIDs, ",")
+	subnet, err := dao.ReadSubnet(subnetUUID)
+	if err != nil {
+		return "", err
+	}
 
-	err := CreateConfig(subnetUUID, nodeUUIDsParts)
+	nodes, err := grpccli.RC.GetNodeList(subnet.ServerUUID)
+	if err != nil {
+		logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
+			subnet.ServerUUID + " (" + err.Error() + ")"))
+		return "", err
+	}
+
+	var nodeUUIDs []string
+
+	for i := range nodes {
+		nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
+	}
+
+	err = CreateConfig(subnetUUID, nodeUUIDs)
 	if err != nil {
 		return "", err
 	}
@@ -348,6 +362,34 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 	}
 
 	return "CreateDHCPDConfig: succeed", nil
+}
+
+func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
+	subnetUUID := in.GetSubnetUUID()
+	subnetUUIDOk := len(subnetUUID) != 0
+
+	if !subnetUUIDOk {
+		return "", errors.New("need a SubnetUUID argument")
+	}
+
+	subnet, err := dao.ReadSubnet(subnetUUID)
+	if err != nil {
+		return "", err
+	}
+
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
+	err = fileutil.DeleteFile(dhcpdConfLocation)
+	if err != nil {
+		return "", err
+	}
+
+	err = servicecontrol.RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
+		return "", err
+	}
+
+	return "DeleteDHCPDConfigFile: succeed", nil
 }
 
 // CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs

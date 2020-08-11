@@ -8,8 +8,6 @@ import (
 	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/data"
 	"hcc/harp/driver"
-	"hcc/harp/lib/config"
-	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -559,16 +557,6 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 	}
 	logger.Logger.Println(result.LastInsertId())
 	return subnet, nil
-}
-
-func deleteDHCPConfigFile(serverUUID string) error {
-	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + serverUUID + ".conf"
-	err := fileutil.DeleteFile(dhcpdConfLocation)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // DeleteSubnet : Delete a subnet by UUID

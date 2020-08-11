@@ -201,3 +201,14 @@ func (s *harpServer) CreateDHPCDConf(_ context.Context, in *pb.ReqCreateDHPCDCon
 
 	return &pb.ResCreateDHPCDConf{Result: result}, nil
 }
+
+func (s *harpServer) DeleteDHPCDConf(_ context.Context, in *pb.ReqDeleteDHPCDConf) (*pb.ResDeleteDHPCDConf, error) {
+	logger.Logger.Println("Request received: DeleteDHPCDConf()")
+
+	result, err := dhcpd.DeleteDHCPDConfigFile(in)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ResDeleteDHPCDConf{Result: result}, nil
+}
