@@ -1,6 +1,7 @@
 package adaptiveip
 
 import (
+	"hcc/harp/driver/grpccli"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/dhcpd"
@@ -135,9 +136,16 @@ func settingExternalNetwork() error {
 	}
 
 	if needNetworkRestart {
+		grpccli.CleanGRPCClient()
+
 		err = servicecontrol.RestartNetwork()
 		if err != nil {
 			return err
+		}
+
+		err = grpccli.InitGRPCClient()
+		if err != nil {
+			panic(err)
 		}
 	}
 
