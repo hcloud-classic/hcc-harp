@@ -128,7 +128,7 @@ func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.R
 	return &pb.ResGetAdaptiveIPSetting{AdaptiveIPSetting: adaptiveIPNetwork}, nil
 }
 
-func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, in *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
+func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
 	logger.Logger.Println("Request received: GetAdaptiveIPAvailableIPList()")
 
 	adaptiveIPAvailableIPList := pf.GetAvailableIPList()
