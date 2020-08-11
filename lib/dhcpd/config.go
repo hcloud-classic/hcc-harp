@@ -1,13 +1,13 @@
 package dhcpd
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/data"
 	"hcc/harp/driver"
+	"hcc/harp/driver/grpccli"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
@@ -17,12 +17,10 @@ import (
 	"hcc/harp/model"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type nodeEntries struct {
@@ -45,52 +43,13 @@ type NodeData struct {
 	} `json:"data"`
 }
 
-func getNodePXEMACAddress(nodeUUID string) (NodeData, error) {
-	var nodePXEMACAddressData NodeData
-
-	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
-	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+
-		"/graphql?query=query%20%7B%0A%20%20node(uuid%3A%20%22"+nodeUUID+"%22)%20%7B%0A%20%20%20%20pxe_mac_addr%0A%20%20%7D%0A%7D", nil)
-
-	if err != nil {
-		return nodePXEMACAddressData, err
-	}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return nodePXEMACAddressData, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		// Check response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			str := string(respBody)
-
-			err = json.Unmarshal([]byte(str), &nodePXEMACAddressData)
-			if err != nil {
-				return nodePXEMACAddressData, err
-			}
-
-			return nodePXEMACAddressData, nil
-		}
-
-		return nodePXEMACAddressData, err
-	}
-
-	return nodePXEMACAddressData, errors.New("http response returned error code")
-}
-
-func getPXEMACAddress(nodeUUID string) (string, error) {
-	nodePXEMACAddress, err := getNodePXEMACAddress(nodeUUID)
+func getNodePXEMACAddress(nodeUUID string) (string, error) {
+	node, err := grpccli.RC.GetNode(nodeUUID)
 	if err != nil {
 		return "", err
 	}
 
-	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
+	return node.PXEMacAddr, nil
 }
 
 func writeConfigFile(input string, name string) error {
@@ -159,7 +118,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 
 	var nodeEntryConfPart = ""
 	for i, uuid := range nodeUUIDs {
-		pxeMacAddr, err := getPXEMACAddress(uuid)
+		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
 			return err
 		}
@@ -402,18 +361,17 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 	for _, server := range allServer {
 		serverUUID := server.UUID
 
-		listNodeData, err := driver.ListNode(server.UUID)
+		nodes, err := grpccli.RC.GetNodeList(serverUUID)
 		if err != nil {
-			logger.Logger.Println(errors.New("Failed to get listNodeData by server UUID: " +
+			logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
 				serverUUID + " (" + err.Error() + ")"))
 			continue
 		}
 
-		nodes := listNodeData.(data.ListNodeData).Data.ListNode
 		var nodeUUIDs []string
 
-		for _, node := range nodes {
-			nodeUUIDs = append(nodeUUIDs, node.UUID)
+		for i := range nodes {
+			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
 		subnet, err := dao.ReadSubnetByServer(serverUUID)
