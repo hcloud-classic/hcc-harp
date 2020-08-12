@@ -416,7 +416,7 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
 
-// UpdateSubnet : Update infos of a subnet
+// UpdateSubnet : Update infos of the subnet
 func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 	if in.Subnet == nil {
 		return nil, errors.New("subnet is nil")
