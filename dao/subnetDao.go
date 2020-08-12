@@ -124,7 +124,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, error) {
 	return &subnet, nil
 }
 
-// ReadSubnetList : Get list of subnet with selected infos
+// ReadSubnetList : Get list of subnets with selected infos
 func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 	var subnetList pb.ResGetSubnetList
 	var subnets []pb.Subnet
