@@ -11,9 +11,10 @@ import (
 )
 
 var fluteConn *grpc.ClientConn
-var err error
 
 func initFlute() error {
+	var err error
+
 	addr := config.Flute.ServerAddress + ":" + strconv.FormatInt(config.Flute.ServerPort, 10)
 	logger.Logger.Println("Trying to connect to flute module (" + addr + ")")
 	fluteConn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock())
