@@ -33,7 +33,7 @@ func cleanFlute() {
 }
 
 // GetNode : Get infos of the node
-func (rc *RpcClient) GetNode(uuid string) (*rpcflute.Node, error) {
+func (rc *RPCClient) GetNode(uuid string) (*rpcflute.Node, error) {
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
 	defer cancel()
@@ -46,7 +46,7 @@ func (rc *RpcClient) GetNode(uuid string) (*rpcflute.Node, error) {
 }
 
 // GetNodeList : Get the list of nodes by server UUID.
-func (rc *RpcClient) GetNodeList(serverUUID string) ([]rpcflute.Node, error) {
+func (rc *RPCClient) GetNodeList(serverUUID string) ([]rpcflute.Node, error) {
 	var nodeList []rpcflute.Node
 
 	ctx, cancel := context.WithTimeout(context.Background(),

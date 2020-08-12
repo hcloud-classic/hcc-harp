@@ -364,6 +364,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 	return "CreateDHCPDConfig: succeed", nil
 }
 
+// DeleteDHCPDConfigFile : Do dhcpd config file deletion works
 func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 	subnetUUID := in.GetSubnetUUID()
 	subnetUUIDOk := len(subnetUUID) != 0
