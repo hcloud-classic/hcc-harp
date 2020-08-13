@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"hcc/harp/driver/grpccli"
 	"hcc/harp/driver/grpcsrv"
 	"hcc/harp/lib/adaptiveip"
@@ -10,6 +11,9 @@ import (
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func init() {
@@ -35,6 +39,7 @@ func init() {
 		panic(err)
 	}
 
+	go grpcsrv.Init()
 	err = grpccli.InitGRPCClient()
 	if err != nil {
 		panic(err)
@@ -66,12 +71,24 @@ func init() {
 	}
 }
 
+func end(){
+	grpccli.CleanGRPCClient()
+	mysql.End()
+	logger.End()
+}
+
 func main() {
-	defer func() {
-		grpccli.CleanGRPCClient()
-		mysql.End()
-		logger.End()
+	// Catch the exit signal
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func(){
+		<- sigChan
+		end()
+		fmt.Println("Exiting harp module...")
+		os.Exit(0)
 	}()
 
-	grpcsrv.Init()
+	// Prevent to exit main thread
+	mainChan := make(chan bool)
+	<-mainChan
 }
