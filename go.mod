@@ -8,8 +8,6 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gojp/goreportcard v0.0.0-20200415071653-59167b516f3f // indirect
 	github.com/golang/protobuf v1.4.1
-	github.com/graphql-go/graphql v0.7.8
-	github.com/graphql-go/handler v0.2.3 // indirect
 	github.com/mactsouk/go v0.0.0-20180603081621-6a282087f7bd // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
