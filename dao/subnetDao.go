@@ -260,3 +260,145 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 
 	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
+
+func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
+	if in.Subnet == nil {
+		return nil, errors.New("subnet is nil")
+	}
+	reqSubnet := in.Subnet
+
+	requestedUUID := reqSubnet.GetUUID()
+	requestedUUIDOk := len(requestedUUID) != 0
+	if !requestedUUIDOk {
+		return nil, errors.New("need a uuid argument")
+	}
+
+	if checkUpdateSubnetArgs(reqSubnet) {
+		return nil, errors.New("need some arguments")
+	}
+
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var serverUUID string
+	var leaderNodeUUID string
+	var os string
+	var subnetName string
+
+	networkIP = in.GetSubnet().NetworkIP
+	networkIPOk := len(networkIP) != 0
+	netmask = in.GetSubnet().Netmask
+	netmaskOk := len(netmask) != 0
+	gateway = in.GetSubnet().Gateway
+	gatewayOk := len(gateway) != 0
+	nextServer = in.GetSubnet().NextServer
+	nextServerOk := len(nextServer) != 0
+	nameServer = in.GetSubnet().NameServer
+	nameServerOk := len(nameServer) != 0
+	domainName = in.GetSubnet().DomainName
+	domainNameOk := len(domainName) != 0
+	serverUUID = in.GetSubnet().ServerUUID
+	serverUUIDOk := len(serverUUID) != 0
+	leaderNodeUUID = in.GetSubnet().LeaderNodeUUID
+	leaderNodeUUIDOk := len(leaderNodeUUID) != 0
+	os = in.GetSubnet().OS
+	osOk := len(os) != 0
+	subnetName = in.GetSubnet().SubnetName
+	subnetNameOk := len(subnetName) != 0
+
+	subnet := new(pb.Subnet)
+	subnet.UUID = requestedUUID
+	subnet.NetworkIP = networkIP
+	subnet.Netmask = netmask
+	subnet.Gateway = gateway
+	subnet.NextServer = nextServer
+	subnet.NameServer = nameServer
+	subnet.DomainName = domainName
+	subnet.ServerUUID = serverUUID
+	subnet.LeaderNodeUUID = leaderNodeUUID
+	subnet.OS = os
+	subnet.SubnetName = subnetName
+
+	oldSubnet, err := ReadSubnet(subnet.GetUUID())
+	if err != nil {
+		return nil, err
+	}
+
+	if !networkIPOk {
+		subnet.NetworkIP = oldSubnet.NetworkIP
+	}
+	if !netmaskOk {
+		subnet.Netmask = oldSubnet.Netmask
+	}
+	if !gatewayOk {
+		subnet.Gateway = oldSubnet.Gateway
+	}
+
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
+	if err != nil {
+		return nil, err
+	}
+
+	if serverUUIDOk {
+		err = checkServerUUID(subnet.ServerUUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sql := "update subnet set"
+	var updateSet = ""
+	if networkIPOk {
+		updateSet += " network_ip = '" + subnet.NetworkIP + "', "
+	}
+	if netmaskOk {
+		updateSet += " netmask = '" + subnet.Netmask + "', "
+	}
+	if gatewayOk {
+		updateSet += " gateway = '" + subnet.Gateway + "', "
+	}
+	if nextServerOk {
+		updateSet += " next_server = '" + subnet.NextServer + "', "
+	}
+	if nameServerOk {
+		updateSet += " name_server = '" + subnet.NameServer + "', "
+	}
+	if domainNameOk {
+		updateSet += " domain_name = '" + subnet.DomainName + "', "
+	}
+	if serverUUIDOk {
+		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
+	}
+	if leaderNodeUUIDOk {
+		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
+	}
+	if osOk {
+		updateSet += " os = '" + subnet.OS + "', "
+	}
+	if subnetNameOk {
+		updateSet += " subnet_name = '" + subnet.SubnetName + "', "
+	}
+	sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
+
+	logger.Logger.Println("update_subnet sql : ", sql)
+
+	stmt, err := mysql.Db.Prepare(sql)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return nil, err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+
+	result, err2 := stmt.Exec(subnet.UUID)
+	if err2 != nil {
+		logger.Logger.Println(err2)
+		return nil, err
+	}
+	logger.Logger.Println(result.LastInsertId())
+	return subnet, nil
+}
