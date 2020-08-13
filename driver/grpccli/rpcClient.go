@@ -7,7 +7,7 @@ import (
 
 // RPCClient : Struct type of gRPC clients
 type RPCClient struct {
-	flute rpcflute.FluteClient
+	flute  rpcflute.FluteClient
 	violin rpcviolin.ViolinClient
 }
 
