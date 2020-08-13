@@ -2,6 +2,7 @@ package grpccli
 
 import (
 	"context"
+	"errors"
 	"google.golang.org/grpc"
 	"hcc/harp/action/grpc/rpcviolin"
 	"hcc/harp/lib/config"
@@ -17,16 +18,24 @@ func initViolin() error {
 
 	addr := config.Violin.ServerAddress + ":" + strconv.FormatInt(config.Violin.ServerPort, 10)
 	logger.Logger.Println("Trying to connect to violin module (" + addr + ")")
-	violinConn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		logger.Logger.Fatalf("Failed to connect violin module ("+addr+"): %v", err)
-		return err
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(config.Violin.ConnectionTimeOutMs)*time.Millisecond)
+
+	for i := 0; i < int(config.Violin.ConnectionRetryCount); i++ {
+		violinConn, err = grpc.DialContext(ctx, addr, grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil {
+			logger.Logger.Println("Failed to connect violin module ("+addr+"): %v", err)
+			logger.Logger.Println("Re-trying to connect to violin module (" +
+				strconv.Itoa(i+1) + "/" + strconv.Itoa(int(config.Violin.ConnectionRetryCount)) + ")")
+			continue
+		}
+
+		RC.violin = rpcviolin.NewViolinClient(violinConn)
+		logger.Logger.Println("gRPC client connected to violin module")
+
+		return nil
 	}
 
-	RC.violin = rpcviolin.NewViolinClient(violinConn)
-	logger.Logger.Println("gRPC client connected to violin module")
-
-	return nil
+	return errors.New("retry count exceeded to connect violin module")
 }
 
 func cleanViolin() {

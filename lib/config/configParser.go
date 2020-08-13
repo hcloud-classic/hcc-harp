@@ -104,6 +104,16 @@ func parseViolin() {
 		logger.Logger.Panicln(err)
 	}
 
+	Violin.ConnectionTimeOutMs, err = config.ViolinConfig.Int("violin_connection_timeout_ms")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Violin.ConnectionRetryCount, err = config.ViolinConfig.Int("violin_connection_retry_count")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	Violin.RequestTimeoutMs, err = config.ViolinConfig.Int("violin_request_timeout_ms")
 	if err != nil {
 		logger.Logger.Panicln(err)
