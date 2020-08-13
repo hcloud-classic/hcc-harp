@@ -54,24 +54,6 @@ func parseGrpc() {
 	}
 }
 
-func parseHTTP() {
-	config.HTTPConfig = conf.Get("http")
-	if config.HTTPConfig == nil {
-		logger.Logger.Panicln("no http section")
-	}
-
-	HTTP = http{}
-	HTTP.RequestRetryCount, err = config.HTTPConfig.Int("request_retry_count")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	HTTP.RequestRetryDelaySec, err = config.HTTPConfig.Int("request_retry_delay_sec")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-}
-
 func parseFlute() {
 	config.FluteConfig = conf.Get("flute")
 	if config.FluteConfig == nil {

@@ -5,8 +5,6 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/dao"
-	"hcc/harp/data"
-	"hcc/harp/driver"
 	"hcc/harp/driver/grpccli"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
@@ -395,19 +393,16 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 
 // CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
 func CheckDatabaseAndGenerateDHCPDConfigs() error {
-	allServerData, err := driver.AllServerUUID()
+	serverUUIDs, err := grpccli.RC.AllServerUUID()
 	if err != nil {
 		return err
 	}
 
-	allServer := allServerData.(data.AllServerData).Data.AllServer
-	for _, server := range allServer {
-		serverUUID := server.UUID
-
-		nodes, err := grpccli.RC.GetNodeList(serverUUID)
+	for i := range serverUUIDs {
+		nodes, err := grpccli.RC.GetNodeList(serverUUIDs[i])
 		if err != nil {
 			logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
-				serverUUID + " (" + err.Error() + ")"))
+				serverUUIDs[i] + " (" + err.Error() + ")"))
 			continue
 		}
 
@@ -417,10 +412,10 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
-		subnet, err := dao.ReadSubnetByServer(serverUUID)
+		subnet, err := dao.ReadSubnetByServer(serverUUIDs[i])
 		if err != nil {
 			logger.Logger.Println("Failed to get subnet by server UUID: " +
-				serverUUID + " (" + err.Error() + ")")
+				serverUUIDs[i] + " (" + err.Error() + ")")
 			continue
 		}
 
