@@ -236,7 +236,6 @@ func Parser() {
 
 	parseMysql()
 	parseGrpc()
-	parseHTTP()
 	parseFlute()
 	parseViolin()
 	parseDHCPD()
