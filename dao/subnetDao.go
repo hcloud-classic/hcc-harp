@@ -203,7 +203,7 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 	return subnetNum, nil
 }
 
-func CreateSubnet(args map[string]interface{}) (interface{}, error) {
+func (args map[string]interface{}) (interface{}, error) {
 	out, err := gouuid.NewV4()
 	if err != nil {
 		logger.Logger.Println(err)
@@ -242,4 +242,21 @@ func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	logger.Logger.Println(result.LastInsertId())
 
 	return subnet, nil
+}
+
+
+
+func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
+	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
+	netmaskOk := len(reqSubnet.GetNetmask()) != 0
+	gatewayOk := len(reqSubnet.GetGateway()) != 0
+	nextServerOk := len(reqSubnet.GetNextServer()) != 0
+	nameServerOk := len(reqSubnet.GetNameServer()) != 0
+	domainNameOk := len(reqSubnet.GetDomainName()) != 0
+	serverUUIDOk := len(reqSubnet.GetServerUUID()) != 0
+	leaderNodeUUIDOk := len(reqSubnet.GetLeaderNodeUUID()) != 0
+	osOk := len(reqSubnet.GetOS()) != 0
+	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
+
+	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
