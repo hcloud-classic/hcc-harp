@@ -402,3 +402,42 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 	logger.Logger.Println(result.LastInsertId())
 	return subnet, nil
 }
+
+func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, error) {
+	var err error
+
+	requestedUUID := in.GetUUID()
+	requestedUUIDOk := len(requestedUUID) != 0
+	if !requestedUUIDOk {
+		return "", errors.New("need a uuid argument")
+	}
+
+	subnet, err := ReadSubnet(requestedUUID)
+	if err != nil {
+		return "", err
+	}
+
+	if len(subnet.ServerUUID) == 0 {
+		msg := "subnet is used by the server (UUID:" + subnet.ServerUUID + ")"
+		logger.Logger.Println(msg)
+		return "", errors.New(msg)
+	}
+
+	sql := "delete from subnet where uuid = ?"
+	stmt, err := mysql.Db.Prepare(sql)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+		return "", err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+	result, err2 := stmt.Exec(requestedUUID)
+	if err2 != nil {
+		logger.Logger.Println(err2)
+		return "", err
+	}
+	logger.Logger.Println(result.RowsAffected())
+
+	return requestedUUID, nil
+}
