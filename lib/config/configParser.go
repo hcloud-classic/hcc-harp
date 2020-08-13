@@ -76,6 +76,11 @@ func parseFlute() {
 		logger.Logger.Panicln(err)
 	}
 
+	Flute.ConnectionRetryCount, err = config.FluteConfig.Int("flute_connection_retry_count")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
 	Flute.RequestTimeoutMs, err = config.FluteConfig.Int("flute_request_timeout_ms")
 	if err != nil {
 		logger.Logger.Panicln(err)
