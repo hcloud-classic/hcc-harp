@@ -284,7 +284,7 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, error) {
 	return &resSubnetNum, nil
 }
 
-func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet interface{}) error {
+func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet) error {
 	isPrivate, err := iputil.CheckPrivateSubnet(networkIP, netmask)
 	if !isPrivate {
 		return errors.New("given network IP address is not in private network")

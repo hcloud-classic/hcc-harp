@@ -88,7 +88,7 @@ func getSubnetList() ([]pb.Subnet, error) {
 
 // CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in the database.
 // Return true if conflicted, return false otherwise.
-func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet interface{}) (bool, error) {
+func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet) (bool, error) {
 	netNetwork, err := CheckNetwork(IP, Netmask)
 	if err != nil {
 		return false, err
@@ -106,7 +106,7 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet int
 	}
 
 	for i := range subnetList {
-		if skipMine && subnetList[i].UUID == oldSubnet.(pb.Subnet).UUID {
+		if skipMine && subnetList[i].UUID == oldSubnet.UUID {
 			continue
 		}
 
