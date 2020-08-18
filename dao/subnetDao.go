@@ -553,6 +553,12 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 		return nil, err
 	}
 	logger.Logger.Println(result.LastInsertId())
+
+	subnet, err = ReadSubnet(subnet.UUID)
+	if err != nil {
+		logger.Logger.Println(err)
+	}
+
 	return subnet, nil
 }
 
