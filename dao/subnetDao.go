@@ -577,7 +577,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, error) {
 		return "", err
 	}
 
-	if len(subnet.ServerUUID) == 0 {
+	if len(subnet.ServerUUID) != 0 {
 		msg := "subnet is used by the server (UUID:" + subnet.ServerUUID + ")"
 		logger.Logger.Println(msg)
 		return "", errors.New(msg)
