@@ -186,6 +186,11 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, errors.New("need ServerUUID and PublicIP arguments")
 	}
 
+	oldAdaptiveIPServer, _ := ReadAdaptiveIPServer(serverUUID)
+	if oldAdaptiveIPServer != nil {
+		return nil, errors.New("provided ServerUUID is already allocated to one of adaptiveIP")
+	}
+
 	subnet, err := ReadSubnetByServer(serverUUID)
 	if err != nil {
 		return nil, errors.New("provided ServerUUID is not allocated to one of private subnet")
