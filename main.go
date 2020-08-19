@@ -70,7 +70,7 @@ func init() {
 	}
 }
 
-func end(){
+func end() {
 	grpccli.CleanGRPCClient()
 	mysql.End()
 	logger.End()
@@ -80,8 +80,8 @@ func main() {
 	// Catch the exit signal
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	go func(){
-		<- sigChan
+	go func() {
+		<-sigChan
 		end()
 		fmt.Println("Exiting harp module...")
 		os.Exit(0)
