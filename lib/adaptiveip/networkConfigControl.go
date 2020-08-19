@@ -21,7 +21,7 @@ func checkWriteAdaptiveIPNetworkConfigAllArgs(adaptiveIPSetting *pb.AdaptiveIPSe
 }
 
 func writeAdaptiveIPNetworkConfig(in *pb.ReqCreateAdaptiveIPSetting) (*pb.AdaptiveIPSetting, error) {
-	adaptiveIPSetting := in.GetAdaptiveIPSetting()
+	adaptiveIPSetting := in.GetAdaptiveipSetting()
 	if adaptiveIPSetting == nil {
 		return nil, errors.New("AdaptiveIPSetting is nil")
 	}

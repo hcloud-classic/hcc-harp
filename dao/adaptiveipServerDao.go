@@ -76,8 +76,8 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 
 	sql := "select * from adaptiveip_server where 1=1"
 
-	if in.AdaptiveIPServer != nil {
-		reqAdaptiveIPServer := in.AdaptiveIPServer
+	if in.AdaptiveipServer != nil {
+		reqAdaptiveIPServer := in.AdaptiveipServer
 
 		publicIP = reqAdaptiveIPServer.PublicIP
 		publicIPOk := len(publicIP) != 0
@@ -154,7 +154,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		padaptiveIPServers = append(padaptiveIPServers, &adaptiveIPServers[i])
 	}
 
-	adaptiveIPList.AdaptiveIPServer = padaptiveIPServers
+	adaptiveIPList.AdaptiveipServer = padaptiveIPServers
 
 	return &adaptiveIPList, nil
 }

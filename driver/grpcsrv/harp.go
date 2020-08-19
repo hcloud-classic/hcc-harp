@@ -117,7 +117,7 @@ func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreate
 		return nil, err
 	}
 
-	return &pb.ResCreateAdaptiveIPSetting{AdaptiveIPSetting: adaptiveIPSetting}, nil
+	return &pb.ResCreateAdaptiveIPSetting{AdaptiveipSetting: adaptiveIPSetting}, nil
 }
 
 func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPSetting, error) {
@@ -125,7 +125,7 @@ func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.R
 
 	adaptiveIPNetwork := configext.GetAdaptiveIPNetwork()
 
-	return &pb.ResGetAdaptiveIPSetting{AdaptiveIPSetting: adaptiveIPNetwork}, nil
+	return &pb.ResGetAdaptiveIPSetting{AdaptiveipSetting: adaptiveIPNetwork}, nil
 }
 
 func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
@@ -133,7 +133,7 @@ func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, _ *pb.Empty
 
 	adaptiveIPAvailableIPList := pf.GetAvailableIPList()
 
-	return &pb.ResGetAdaptiveIPAvailableIPList{AdaptiveIPAvailable_IPList: adaptiveIPAvailableIPList}, nil
+	return &pb.ResGetAdaptiveIPAvailableIPList{AdaptiveipAvailableipList: adaptiveIPAvailableIPList}, nil
 }
 
 func (s *harpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateAdaptiveIPServer) (*pb.ResCreateAdaptiveIPServer, error) {
@@ -144,7 +144,7 @@ func (s *harpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateA
 		return nil, err
 	}
 
-	return &pb.ResCreateAdaptiveIPServer{AdaptiveIPServer: adaptiveIPServer}, nil
+	return &pb.ResCreateAdaptiveIPServer{AdaptiveipServer: adaptiveIPServer}, nil
 }
 
 func (s *harpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiveIPServer) (*pb.ResGetAdaptiveIPServer, error) {
@@ -155,7 +155,7 @@ func (s *harpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiv
 		return nil, err
 	}
 
-	return &pb.ResGetAdaptiveIPServer{AdaptiveIPServer: adaptiveIPServer}, nil
+	return &pb.ResGetAdaptiveIPServer{AdaptiveipServer: adaptiveIPServer}, nil
 }
 
 func (s *harpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, error) {
