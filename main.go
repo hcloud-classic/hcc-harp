@@ -11,6 +11,7 @@ import (
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,54 +20,54 @@ import (
 func init() {
 	err := syscheck.CheckRoot()
 	if err != nil {
-		panic(err)
+		log.Fatalf("syscheck.CheckRoot(): %v", err.Error())
 	}
 
 	err = syscheck.CheckArpingCommand()
 	if err != nil {
-		panic(err)
+		log.Fatalf("syscheck.CheckArpingCommand(): %v", err.Error())
 	}
 
 	err = logger.Init()
 	if err != nil {
-		panic(err)
+		log.Fatalf("logger.Init(): %v", err.Error())
 	}
 
 	config.Init()
 
 	err = mysql.Init()
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("mysql.Init(): %v", err.Error())
 	}
 
 	err = client.Init()
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("client.Init(): %v", err.Error())
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("syscheck.CheckIfaceExist(): %v", err.Error())
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("syscheck.CheckIfaceExist(): %v", err.Error())
 	}
 
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("dhcpd.CheckLocalDHCPDConfig(): %v", err.Error())
 	}
 
 	err = pf.PreparePFConfigFiles()
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("pf.PreparePFConfigFiles(): %v", err.Error())
 	}
 
 	err = adaptiveip.LoadHarpPFRules()
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatalf("adaptiveip.LoadHarpPFRules(): %v", err.Error())
 	}
 }
 
