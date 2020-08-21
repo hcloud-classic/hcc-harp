@@ -136,14 +136,14 @@ func settingExternalNetwork() error {
 	}
 
 	if needNetworkRestart {
-		client.CleanGRPCClient()
+		client.End()
 
 		err = servicecontrol.RestartNetwork()
 		if err != nil {
 			return err
 		}
 
-		err = client.InitGRPCClient()
+		err = client.Init()
 		if err != nil {
 			panic(err)
 		}

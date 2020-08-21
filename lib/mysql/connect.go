@@ -11,7 +11,8 @@ import (
 // Db : Pointer of mysql connection
 var Db *sql.DB
 
-func prepare() error {
+// Init : Initialize mysql connection
+func Init() error {
 	var err error
 	Db, err = sql.Open("mysql",
 		config.Mysql.ID+":"+config.Mysql.Password+"@tcp("+
@@ -32,3 +33,11 @@ func prepare() error {
 
 	return nil
 }
+
+// End : Close mysql connection
+func End() {
+	if Db != nil {
+		_ = Db.Close()
+	}
+}
+

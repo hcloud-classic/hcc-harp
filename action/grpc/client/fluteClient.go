@@ -38,7 +38,7 @@ func initFlute() error {
 	return errors.New("retry count exceeded to connect flute module")
 }
 
-func cleanFlute() {
+func closeFlute() {
 	_ = fluteConn.Close()
 }
 

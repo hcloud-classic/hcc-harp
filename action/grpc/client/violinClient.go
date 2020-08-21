@@ -38,7 +38,7 @@ func initViolin() error {
 	return errors.New("retry count exceeded to connect violin module")
 }
 
-func cleanViolin() {
+func closeViolin() {
 	_ = violinConn.Close()
 }
 

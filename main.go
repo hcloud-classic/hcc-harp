@@ -32,14 +32,14 @@ func init() {
 		panic(err)
 	}
 
-	config.Parser()
+	config.Init()
 
 	err = mysql.Init()
 	if err != nil {
 		panic(err)
 	}
 
-	err = client.InitGRPCClient()
+	err = client.Init()
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +71,7 @@ func init() {
 }
 
 func end() {
-	client.CleanGRPCClient()
+	client.End()
 	mysql.End()
 	logger.End()
 }
