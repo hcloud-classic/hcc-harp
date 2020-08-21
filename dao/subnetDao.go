@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/golang/protobuf/ptypes"
 	gouuid "github.com/nu7hatch/gouuid"
+	"hcc/harp/action/grpc/client"
 	pb "hcc/harp/action/grpc/rpcharp"
-	"hcc/harp/driver/grpccli"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -315,7 +315,7 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 }
 
 func checkServerUUID(serverUUID string) error {
-	serverUUIDs, err := grpccli.RC.AllServerUUID()
+	serverUUIDs, err := client.RC.AllServerUUID()
 	if err != nil {
 		return err
 	}

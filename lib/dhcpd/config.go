@@ -3,9 +3,9 @@ package dhcpd
 import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
+	"hcc/harp/action/grpc/client"
 	pb "hcc/harp/action/grpc/rpcharp"
 	"hcc/harp/dao"
-	"hcc/harp/driver/grpccli"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
@@ -42,7 +42,7 @@ type NodeData struct {
 }
 
 func getNodePXEMACAddress(nodeUUID string) (string, error) {
-	node, err := grpccli.RC.GetNode(nodeUUID)
+	node, err := client.RC.GetNode(nodeUUID)
 	if err != nil {
 		return "", err
 	}
@@ -330,7 +330,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 		return "", err
 	}
 
-	nodes, err := grpccli.RC.GetNodeList(subnet.ServerUUID)
+	nodes, err := client.RC.GetNodeList(subnet.ServerUUID)
 	if err != nil {
 		logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
 			subnet.ServerUUID + " (" + err.Error() + ")"))
@@ -393,13 +393,13 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 
 // CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
 func CheckDatabaseAndGenerateDHCPDConfigs() error {
-	serverUUIDs, err := grpccli.RC.AllServerUUID()
+	serverUUIDs, err := client.RC.AllServerUUID()
 	if err != nil {
 		return err
 	}
 
 	for i := range serverUUIDs {
-		nodes, err := grpccli.RC.GetNodeList(serverUUIDs[i])
+		nodes, err := client.RC.GetNodeList(serverUUIDs[i])
 		if err != nil {
 			logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
 				serverUUIDs[i] + " (" + err.Error() + ")"))
