@@ -1,0 +1,139 @@
+//// localhost:7400
+
+//// subnet
+
+// Read
+
+query {
+  subnet(uuid:"d0ba0bbd-32e7-4480-5019-ee672e8ddf1c"){
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+query {
+  list_subnet{
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+query {
+  list_subnet(network_ip:"192.168.110.1", row: 10, page: 1){
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+query {
+  num_subnet{
+    number
+  }
+}
+
+query {
+  adaptiveip_available_ip_list {
+    available_ip_list
+  }
+}
+
+// Create
+
+mutation _ {
+  create_subnet(
+    network_ip: "192.168.110.0",
+    netmask: "255.255.255.0",
+    gateway: "192.168.110.10",
+    next_server: "192.168.110.240",
+    name_server: "8.8.8.8",
+    domain_name: "google.com",
+    server_uuid: "acf29017-dbad-47f7-684a-2a91654936b9",
+    leader_node_uuid: "48d08a00-b652-11e8-906e-000ffee02d5c",
+    os: "CentOS",
+    subnet_name: "jolla subnet") {
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+mutation _ {
+  create_adaptiveip_server(server_uuid:"c949ecff-18fd-4f63-6911-c9f238c150fc",public_ip:"192.168.110.50") {
+    server_uuid
+    public_ip
+    private_ip
+    private_gateway
+    status
+    created_at
+  }
+}
+
+// Update
+
+mutation _ {
+  update_subnet(uuid: "0ac56231-a0ee-4323-55ad-37c08c2d4a78", network_ip: "192.168.110.0"){
+    uuid
+    network_ip
+    netmask
+    gateway
+    next_server
+    name_server
+    domain_name
+    server_uuid
+    leader_node_uuid
+    os
+    subnet_name
+    created_at
+  }
+}
+
+// Delete
+
+mutation _ {
+  delete_subnet(uuid: "1c1b21b5-f6ff-4b1e-63c7-da272ea80de5"){
+    uuid
+  }
+}
+
+mutation _ {
+  delete_adaptiveip_server(server_uuid:"acf29017-dbad-47f7-684a-2a91654936b9")
+}
