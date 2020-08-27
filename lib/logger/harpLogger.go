@@ -2,11 +2,9 @@ package logger
 
 import (
 	"fmt"
-	"hcc/harp/lib/fileutil"
 	"io"
 	"log"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -15,43 +13,52 @@ var LogName = "harp"
 
 // Logger : Pointer of logger
 var Logger *log.Logger
-var once sync.Once
 
 // FpLog : File pointer of logger
 var FpLog *os.File
 
-// Prepare : Prepare logger
-func Prepare() bool {
-	var err error
-	returnValue := false
-
-	once.Do(func() {
-		// Create directory if not exist
-		if _, err = os.Stat("/var/log/" + LogName); os.IsNotExist(err) {
-			err = fileutil.CreateDirIfNotExist("/var/log/" + LogName)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		now := time.Now()
-
-		year := fmt.Sprintf("%d", now.Year())
-		month := fmt.Sprintf("%02d", now.Month())
-		day := fmt.Sprintf("%02d", now.Day())
-
-		date := year + month + day
-
-		FpLog, err := os.OpenFile("/var/log/"+LogName+"/"+
-			LogName+"_"+date+".log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+// CreateDirIfNotExist : Make directory if not exist
+func CreateDirIfNotExist(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
 		if err != nil {
-			panic(err)
+			return err
 		}
+	}
 
-		Logger = log.New(io.MultiWriter(FpLog, os.Stdout), LogName+"_logger: ", log.Ldate|log.Ltime)
+	return nil
+}
 
-		returnValue = true
-	})
+// Init : Initialize logger
+func Init() error {
+	// Create directory if not exist
+	if _, err := os.Stat("/var/log/" + LogName); os.IsNotExist(err) {
+		err = CreateDirIfNotExist("/var/log/" + LogName)
+		if err != nil {
+			return err
+		}
+	}
 
-	return returnValue
+	now := time.Now()
+
+	year := fmt.Sprintf("%d", now.Year())
+	month := fmt.Sprintf("%02d", now.Month())
+	day := fmt.Sprintf("%02d", now.Day())
+
+	date := year + month + day
+
+	FpLog, err := os.OpenFile("/var/log/"+LogName+"/"+
+		LogName+"_"+date+".log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+
+	Logger = log.New(io.MultiWriter(FpLog, os.Stdout), LogName+"_logger: ", log.Ldate|log.Ltime)
+
+	return nil
+}
+
+// End : Close logger
+func End() {
+	_ = FpLog.Close()
 }
