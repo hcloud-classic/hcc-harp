@@ -6,7 +6,8 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/action/grpc/client"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
+	hccerr "hcc/harp/lib/errors"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -44,7 +45,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, error) {
 		&createdAt)
 	if err != nil {
 		logger.Logger.Println(err)
-		return nil, err
+		return nil, hccerr.NewHccError(hccerr.HarpSQLOperationFail, "ReadSubnet "+err.Error())
 	}
 
 	subnet.UUID = uuid
@@ -62,7 +63,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, error) {
 	subnet.CreatedAt, err = ptypes.TimestampProto(createdAt)
 	if err != nil {
 		logger.Logger.Println(err)
-		return nil, err
+		return nil, hccerr.NewHccError(hccerr.HarpInternalOperationFail, "TimestampProto "+err.Error())
 	}
 
 	return &subnet, nil
@@ -315,7 +316,7 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 }
 
 func checkServerUUID(serverUUID string) error {
-	serverUUIDs, err := client.RC.AllServerUUID()
+	serverUUIDs, err := client.RC.AllServerUUID() // passing HccErrorStack to err
 	if err != nil {
 		return err
 	}

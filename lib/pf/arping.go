@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"

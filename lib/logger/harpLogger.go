@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"hcc/harp/lib/errors"
 	"io"
 	"log"
 	"os"
@@ -54,6 +55,8 @@ func Init() error {
 	}
 
 	Logger = log.New(io.MultiWriter(FpLog, os.Stdout), LogName+"_logger: ", log.Ldate|log.Ltime)
+
+	errors.SetErrLogger(Logger)
 
 	return nil
 }

@@ -3,7 +3,7 @@ package server
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"net"

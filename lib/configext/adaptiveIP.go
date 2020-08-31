@@ -2,7 +2,7 @@ package configext
 
 import (
 	"errors"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/iputil"
 	"net"
 )
