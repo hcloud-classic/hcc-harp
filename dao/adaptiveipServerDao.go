@@ -4,7 +4,7 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"github.com/golang/protobuf/ptypes"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"

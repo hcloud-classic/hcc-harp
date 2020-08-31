@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"google.golang.org/grpc"
-	"hcc/harp/action/grpc/rpcviolin"
+	"hcc/harp/action/grpc/pb/rpcviolin"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"strconv"

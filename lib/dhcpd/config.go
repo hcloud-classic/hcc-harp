@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/action/grpc/client"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"

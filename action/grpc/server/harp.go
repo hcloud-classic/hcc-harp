@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/configext"

@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/action/grpc/client"
-	pb "hcc/harp/action/grpc/rpcharp"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
