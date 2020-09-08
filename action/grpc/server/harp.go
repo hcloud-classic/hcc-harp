@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"hcc/harp/action/grpc/errconv"
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/dhcpd"
+	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/pf"
 )
@@ -35,78 +37,85 @@ func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
 	logger.Logger.Println("Request received: CreateSubnet()")
 
+	var errStack *errors.HccErrorStack = nil
 	subnet, err := dao.CreateSubnet(in)
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "CreateSubnet "+err.Error()))
 	}
 
-	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet)}, nil
+	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet), HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
 	logger.Logger.Println("Request received: GetSubnet()")
 
+	var errStack *errors.HccErrorStack = nil
 	subnet, err := dao.ReadSubnet(in.GetUUID())
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "ReadSubnet "+err.Error()))
 	}
 
-	return &pb.ResGetSubnet{Subnet: returnSubnet(subnet)}, nil
+	return &pb.ResGetSubnet{Subnet: returnSubnet(subnet), HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) GetSubnetByServer(_ context.Context, in *pb.ReqGetSubnetByServer) (*pb.ResGetSubnetByServer, error) {
 	logger.Logger.Println("Request received: GetSubnetByServer()")
 
+	var errStack *errors.HccErrorStack = nil
 	subnet, err := dao.ReadSubnetByServer(in.GetServerUUID())
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "GetSubnetByServer "+err.Error()))
 	}
 
-	return &pb.ResGetSubnetByServer{Subnet: returnSubnet(subnet)}, nil
+	return &pb.ResGetSubnetByServer{Subnet: returnSubnet(subnet), HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, error) {
 	logger.Logger.Println("Request received: GetSubnetList()")
 
+	var errStack *errors.HccErrorStack = nil
 	subnetList, err := dao.ReadSubnetList(in)
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "GetSubnetList "+err.Error()))
 	}
 
-	return subnetList, nil
+	return &pb.ResGetSubnetList{Subnet: subnetList, HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSubnetNum, error) {
 	logger.Logger.Println("Request received: GetSubnetNum()")
 
+	var errStack *errors.HccErrorStack = nil
 	subnetNum, err := dao.ReadSubnetNum()
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "GetSubnetNumr "+err.Error()))
 	}
 
-	return subnetNum, nil
+	return &pb.ResGetSubnetNum{Num: subnetNum, HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) UpdateSubnet(_ context.Context, in *pb.ReqUpdateSubnet) (*pb.ResUpdateSubnet, error) {
 	logger.Logger.Println("Request received: UpdateSubnet()")
 
+	var errStack *errors.HccErrorStack = nil
 	updateSubnet, err := dao.UpdateSubnet(in)
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "UpdateSubnet "+err.Error()))
 	}
 
-	return &pb.ResUpdateSubnet{Subnet: updateSubnet}, nil
+	return &pb.ResUpdateSubnet{Subnet: updateSubnet, HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) DeleteSubnet(_ context.Context, in *pb.ReqDeleteSubnet) (*pb.ResDeleteSubnet, error) {
 	logger.Logger.Println("Request received: DeleteSubnet()")
 
+	var errStack *errors.HccErrorStack = nil
 	uuid, err := dao.DeleteSubnet(in)
 	if err != nil {
-		return nil, err
+		errStack = errors.NewHccErrorStack(errors.NewHccError(errors.HarpSQLOperationFail, "DeleteSubnet "+err.Error()))
 	}
 
-	return &pb.ResDeleteSubnet{UUID: uuid}, nil
+	return &pb.ResDeleteSubnet{UUID: uuid, HccErrorStack: *errconv.HccStackToGrpc(errStack)}, nil
 }
 
 func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreateAdaptiveIPSetting) (*pb.ResCreateAdaptiveIPSetting, error) {

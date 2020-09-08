@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/configext"
+	hccerr "hcc/harp/lib/errors"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -15,7 +16,7 @@ import (
 )
 
 // ReadAdaptiveIPServer : Get a information of AdaptiveIP server setting
-func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, error) {
+func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, *hccerr.HccError) {
 	var adaptiveIPServer pb.AdaptiveIPServer
 
 	var publicIP string
@@ -32,7 +33,7 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, error) {
 		&createdAt)
 	if err != nil {
 		logger.Logger.Println(err)
-		return nil, err
+		return nil, hccerr.NewHccError(hccerr.HarpSQLOperationFail, "ReadAdaptiveIPServer "+err.Error())
 	}
 
 	adaptiveIPServer.PublicIP = publicIP
@@ -42,7 +43,7 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, error) {
 	_createdAt, err := ptypes.TimestampProto(createdAt)
 	if err != nil {
 		logger.Logger.Println(err)
-		return nil, err
+		return nil, hccerr.NewHccError(hccerr.HarpInternalOperationFail, "TimestampProto "+err.Error())
 	}
 	adaptiveIPServer.CreatedAt = _createdAt
 
@@ -71,7 +72,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	} else if rowOk && pageOk {
 		isLimit = true
 	} else {
-		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
+		return nil, hccerr.NewHccError(hccerr.HarpSQLArgumentError, "please insert row and page arguments or leave arguments as empty state")
 	}
 
 	sql := "select * from adaptiveip_server where 1=1"
@@ -109,7 +110,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 
 	if err != nil {
 		logger.Logger.Println(err.Error())
-		return nil, err
+		return nil, hccerr.NewHccError(hccerr.HarpSQLOperationFail, "ReadAdaptiveIPServerList "+err.Error())
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -119,13 +120,13 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		err := stmt.Scan(&serverUUID, &publicIP, &privateIP, &privateGateway, &createdAt)
 		if err != nil {
 			logger.Logger.Println(err)
-			return nil, err
+			return nil, hccerr.NewHccError(hccerr.HarpSQLNoResult, "ReadAdaptiveIPServerList "+err.Error())
 		}
 
 		_createdAt, err := ptypes.TimestampProto(createdAt)
 		if err != nil {
 			logger.Logger.Println(err)
-			return nil, err
+			return nil, hccerr.NewHccError(hccerr.HarpInternalOperationFail, "TimestampProto "+err.Error())
 		}
 
 		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
@@ -140,7 +141,8 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
-		return nil, err
+		logger.Logger.Println(err)
+		return nil, hccerr.NewHccError(hccerr.HarpInternalOperationFail, "CheckNetwork "+err.Error())
 	}
 
 	for i := range adaptiveIPServers {
