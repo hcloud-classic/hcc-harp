@@ -172,6 +172,8 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	if in.Subnet != nil {
 		reqSubnet := in.Subnet
 
+		uuid = reqSubnet.UUID
+		uuidOk := len(uuid) != 0
 		networkIP = reqSubnet.NetworkIP
 		networkIPOk := len(networkIP) != 0
 		netmask = reqSubnet.Netmask
@@ -193,6 +195,9 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 		subnetName = reqSubnet.SubnetName
 		subnetNameOk := len(subnetName) != 0
 
+		if uuidOk {
+			sql += " and uuid = '" + uuid + "'"
+		}
 		if networkIPOk {
 			sql += " and network_ip = '" + networkIP + "'"
 		}
