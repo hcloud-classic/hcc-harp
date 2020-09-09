@@ -58,6 +58,56 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
+func ReadSubnetByServer(serverUUID string) (interface{}, error) {
+	var subnet model.Subnet
+
+	var uuid string
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var leaderNodeUUID string
+	var _os string
+	var subnetName string
+	var createdAt time.Time
+
+	sql := "select uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, leader_node_uuid, os, subnet_name, created_at from subnet where server_uuid = ?"
+	err := mysql.Db.QueryRow(sql, serverUUID).Scan(
+		&uuid,
+		&networkIP,
+		&netmask,
+		&gateway,
+		&nextServer,
+		&nameServer,
+		&domainName,
+		&leaderNodeUUID,
+		&_os,
+		&subnetName,
+		&createdAt)
+	if err != nil {
+		logger.Logger.Println(err)
+		return nil, err
+	}
+
+	subnet.UUID = uuid
+	subnet.NetworkIP = networkIP
+	subnet.Netmask = netmask
+	subnet.Gateway = gateway
+	subnet.NextServer = nextServer
+	subnet.NameServer = nameServer
+	subnet.DomainName = domainName
+	subnet.ServerUUID = serverUUID
+	subnet.LeaderNodeUUID = leaderNodeUUID
+	subnet.OS = _os
+	subnet.SubnetName = subnetName
+	subnet.CreatedAt = createdAt
+
+	return subnet, nil
+}
+
+
 func checkReadSubnetListPageRow(args map[string]interface{}) bool {
 	_, rowOk := args["row"].(int)
 	_, pageOk := args["page"].(int)

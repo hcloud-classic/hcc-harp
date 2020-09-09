@@ -8,12 +8,14 @@ import (
 )
 
 // CheckValidIP : Parses string value of IPv4 address then return as net.IP.
+// If given wrong IP address, it wil return nil.
 func CheckValidIP(ip string) net.IP {
 	netIP := net.ParseIP(ip).To4()
 	return netIP
 }
 
 // CheckNetmask : Check string value of IPv4 netmask then return as net.IPMask.
+// If given wrong netmask, it will return nil and error.
 func CheckNetmask(netmask string) (net.IPMask, error) {
 	var err error
 
@@ -49,8 +51,10 @@ func CheckNetmask(netmask string) (net.IPMask, error) {
 }
 
 // CheckGateway : Check if gateway IP address is in the given network IP address.
+// Network IP address must be given as net.IPNet and gateway must be given as string value.
+// It will return error if given invalid IP address or not in the network IP address.
 func CheckGateway(subnet net.IPNet, gateway string) error {
-	netIPgateway := net.ParseIP(gateway)
+	netIPgateway := CheckValidIP(gateway)
 	if netIPgateway == nil {
 		return errors.New("wrong gateway IP")
 	}
@@ -61,3 +65,4 @@ func CheckGateway(subnet net.IPNet, gateway string) error {
 
 	return nil
 }
+
