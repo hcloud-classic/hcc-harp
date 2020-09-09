@@ -54,7 +54,7 @@ func CheckNetmask(netmask string) (net.IPMask, error) {
 // Network IP address must be given as net.IPNet and gateway must be given as string value.
 // It will return error if given invalid IP address or not in the network IP address.
 func CheckGateway(subnet net.IPNet, gateway string) error {
-	netIPgateway := net.ParseIP(gateway)
+	netIPgateway := CheckValidIP(gateway)
 	if netIPgateway == nil {
 		return errors.New("wrong gateway IP")
 	}
