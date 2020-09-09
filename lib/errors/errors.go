@@ -67,6 +67,7 @@ const (
 	// violin-scheduler specific
 
 	// flute specific
+	ipmiError
 
 	// viola specific
 
