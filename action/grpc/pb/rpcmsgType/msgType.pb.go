@@ -78,6 +78,62 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_msgType_proto_rawDescGZIP(), []int{0}
 }
 
+// HccError
+type HccError struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ErrCode uint64 `protobuf:"varint,1,opt,name=ErrCode,proto3" json:"ErrCode,omitempty"`
+	ErrText string `protobuf:"bytes,2,opt,name=ErrText,proto3" json:"ErrText,omitempty"`
+}
+
+func (x *HccError) Reset() {
+	*x = HccError{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_msgType_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *HccError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HccError) ProtoMessage() {}
+
+func (x *HccError) ProtoReflect() protoreflect.Message {
+	mi := &file_msgType_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HccError.ProtoReflect.Descriptor instead.
+func (*HccError) Descriptor() ([]byte, []int) {
+	return file_msgType_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *HccError) GetErrCode() uint64 {
+	if x != nil {
+		return x.ErrCode
+	}
+	return 0
+}
+
+func (x *HccError) GetErrText() string {
+	if x != nil {
+		return x.ErrText
+	}
+	return ""
+}
+
 // Flute
 type Node struct {
 	state         protoimpl.MessageState
@@ -101,7 +157,7 @@ type Node struct {
 func (x *Node) Reset() {
 	*x = Node{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[1]
+		mi := &file_msgType_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -114,7 +170,7 @@ func (x *Node) String() string {
 func (*Node) ProtoMessage() {}
 
 func (x *Node) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[1]
+	mi := &file_msgType_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +183,7 @@ func (x *Node) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Node.ProtoReflect.Descriptor instead.
 func (*Node) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{1}
+	return file_msgType_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Node) GetUUID() string {
@@ -228,7 +284,7 @@ type NodeDetail struct {
 func (x *NodeDetail) Reset() {
 	*x = NodeDetail{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[2]
+		mi := &file_msgType_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -241,7 +297,7 @@ func (x *NodeDetail) String() string {
 func (*NodeDetail) ProtoMessage() {}
 
 func (x *NodeDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[2]
+	mi := &file_msgType_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -254,7 +310,7 @@ func (x *NodeDetail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeDetail.ProtoReflect.Descriptor instead.
 func (*NodeDetail) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{2}
+	return file_msgType_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *NodeDetail) GetNodeUUID() string {
@@ -307,7 +363,7 @@ type Server struct {
 func (x *Server) Reset() {
 	*x = Server{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[3]
+		mi := &file_msgType_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -320,7 +376,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[3]
+	mi := &file_msgType_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -333,7 +389,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{3}
+	return file_msgType_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Server) GetUUID() string {
@@ -427,7 +483,7 @@ type ServerNode struct {
 func (x *ServerNode) Reset() {
 	*x = ServerNode{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[4]
+		mi := &file_msgType_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -440,7 +496,7 @@ func (x *ServerNode) String() string {
 func (*ServerNode) ProtoMessage() {}
 
 func (x *ServerNode) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[4]
+	mi := &file_msgType_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -453,7 +509,7 @@ func (x *ServerNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerNode.ProtoReflect.Descriptor instead.
 func (*ServerNode) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{4}
+	return file_msgType_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ServerNode) GetUUID() string {
@@ -498,7 +554,7 @@ type Quota struct {
 func (x *Quota) Reset() {
 	*x = Quota{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[5]
+		mi := &file_msgType_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -511,7 +567,7 @@ func (x *Quota) String() string {
 func (*Quota) ProtoMessage() {}
 
 func (x *Quota) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[5]
+	mi := &file_msgType_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,7 +580,7 @@ func (x *Quota) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Quota.ProtoReflect.Descriptor instead.
 func (*Quota) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{5}
+	return file_msgType_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Quota) GetServerUUID() string {
@@ -569,7 +625,7 @@ type VNC struct {
 func (x *VNC) Reset() {
 	*x = VNC{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[6]
+		mi := &file_msgType_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -582,7 +638,7 @@ func (x *VNC) String() string {
 func (*VNC) ProtoMessage() {}
 
 func (x *VNC) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[6]
+	mi := &file_msgType_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -595,7 +651,7 @@ func (x *VNC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VNC.ProtoReflect.Descriptor instead.
 func (*VNC) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{6}
+	return file_msgType_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *VNC) GetToken() string {
@@ -638,7 +694,7 @@ type Volume struct {
 func (x *Volume) Reset() {
 	*x = Volume{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[7]
+		mi := &file_msgType_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -651,7 +707,7 @@ func (x *Volume) String() string {
 func (*Volume) ProtoMessage() {}
 
 func (x *Volume) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[7]
+	mi := &file_msgType_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,7 +720,7 @@ func (x *Volume) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Volume.ProtoReflect.Descriptor instead.
 func (*Volume) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{7}
+	return file_msgType_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Volume) GetUUID() string {
@@ -738,7 +794,7 @@ type VolumeAttachment struct {
 func (x *VolumeAttachment) Reset() {
 	*x = VolumeAttachment{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[8]
+		mi := &file_msgType_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -751,7 +807,7 @@ func (x *VolumeAttachment) String() string {
 func (*VolumeAttachment) ProtoMessage() {}
 
 func (x *VolumeAttachment) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[8]
+	mi := &file_msgType_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -764,7 +820,7 @@ func (x *VolumeAttachment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeAttachment.ProtoReflect.Descriptor instead.
 func (*VolumeAttachment) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{8}
+	return file_msgType_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *VolumeAttachment) GetUUID() string {
@@ -818,7 +874,7 @@ type AdaptiveIPSetting struct {
 func (x *AdaptiveIPSetting) Reset() {
 	*x = AdaptiveIPSetting{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[9]
+		mi := &file_msgType_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -831,7 +887,7 @@ func (x *AdaptiveIPSetting) String() string {
 func (*AdaptiveIPSetting) ProtoMessage() {}
 
 func (x *AdaptiveIPSetting) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[9]
+	mi := &file_msgType_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -844,7 +900,7 @@ func (x *AdaptiveIPSetting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdaptiveIPSetting.ProtoReflect.Descriptor instead.
 func (*AdaptiveIPSetting) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{9}
+	return file_msgType_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *AdaptiveIPSetting) GetExtIfaceIPAddress() string {
@@ -893,7 +949,7 @@ type AdaptiveIPAvailableIPList struct {
 func (x *AdaptiveIPAvailableIPList) Reset() {
 	*x = AdaptiveIPAvailableIPList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[10]
+		mi := &file_msgType_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -906,7 +962,7 @@ func (x *AdaptiveIPAvailableIPList) String() string {
 func (*AdaptiveIPAvailableIPList) ProtoMessage() {}
 
 func (x *AdaptiveIPAvailableIPList) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[10]
+	mi := &file_msgType_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -919,7 +975,7 @@ func (x *AdaptiveIPAvailableIPList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdaptiveIPAvailableIPList.ProtoReflect.Descriptor instead.
 func (*AdaptiveIPAvailableIPList) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{10}
+	return file_msgType_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AdaptiveIPAvailableIPList) GetAvailableIp() []string {
@@ -945,7 +1001,7 @@ type AdaptiveIPServer struct {
 func (x *AdaptiveIPServer) Reset() {
 	*x = AdaptiveIPServer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[11]
+		mi := &file_msgType_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -958,7 +1014,7 @@ func (x *AdaptiveIPServer) String() string {
 func (*AdaptiveIPServer) ProtoMessage() {}
 
 func (x *AdaptiveIPServer) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[11]
+	mi := &file_msgType_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -971,7 +1027,7 @@ func (x *AdaptiveIPServer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdaptiveIPServer.ProtoReflect.Descriptor instead.
 func (*AdaptiveIPServer) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{11}
+	return file_msgType_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *AdaptiveIPServer) GetServerUUID() string {
@@ -1038,7 +1094,7 @@ type Subnet struct {
 func (x *Subnet) Reset() {
 	*x = Subnet{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[12]
+		mi := &file_msgType_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1051,7 +1107,7 @@ func (x *Subnet) String() string {
 func (*Subnet) ProtoMessage() {}
 
 func (x *Subnet) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[12]
+	mi := &file_msgType_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1064,7 +1120,7 @@ func (x *Subnet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Subnet.ProtoReflect.Descriptor instead.
 func (*Subnet) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{12}
+	return file_msgType_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Subnet) GetUUID() string {
@@ -1164,7 +1220,7 @@ type Series struct {
 func (x *Series) Reset() {
 	*x = Series{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[13]
+		mi := &file_msgType_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1177,7 +1233,7 @@ func (x *Series) String() string {
 func (*Series) ProtoMessage() {}
 
 func (x *Series) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[13]
+	mi := &file_msgType_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1246,7 @@ func (x *Series) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Series.ProtoReflect.Descriptor instead.
 func (*Series) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{13}
+	return file_msgType_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Series) GetTime() int64 {
@@ -1223,7 +1279,7 @@ type MetricInfo struct {
 func (x *MetricInfo) Reset() {
 	*x = MetricInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[14]
+		mi := &file_msgType_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1236,7 +1292,7 @@ func (x *MetricInfo) String() string {
 func (*MetricInfo) ProtoMessage() {}
 
 func (x *MetricInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[14]
+	mi := &file_msgType_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1305,7 @@ func (x *MetricInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricInfo.ProtoReflect.Descriptor instead.
 func (*MetricInfo) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{14}
+	return file_msgType_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MetricInfo) GetMetric() string {
@@ -1308,7 +1364,7 @@ type MonitoringData struct {
 func (x *MonitoringData) Reset() {
 	*x = MonitoringData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[15]
+		mi := &file_msgType_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1321,7 +1377,7 @@ func (x *MonitoringData) String() string {
 func (*MonitoringData) ProtoMessage() {}
 
 func (x *MonitoringData) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[15]
+	mi := &file_msgType_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1334,7 +1390,7 @@ func (x *MonitoringData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonitoringData.ProtoReflect.Descriptor instead.
 func (*MonitoringData) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{15}
+	return file_msgType_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MonitoringData) GetMetric() string {
@@ -1377,7 +1433,7 @@ type NormalAction struct {
 func (x *NormalAction) Reset() {
 	*x = NormalAction{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[16]
+		mi := &file_msgType_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1390,7 +1446,7 @@ func (x *NormalAction) String() string {
 func (*NormalAction) ProtoMessage() {}
 
 func (x *NormalAction) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[16]
+	mi := &file_msgType_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1403,7 +1459,7 @@ func (x *NormalAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalAction.ProtoReflect.Descriptor instead.
 func (*NormalAction) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{16}
+	return file_msgType_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *NormalAction) GetEmpty() int32 {
@@ -1428,7 +1484,7 @@ type HccAction struct {
 func (x *HccAction) Reset() {
 	*x = HccAction{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[17]
+		mi := &file_msgType_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1441,7 +1497,7 @@ func (x *HccAction) String() string {
 func (*HccAction) ProtoMessage() {}
 
 func (x *HccAction) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[17]
+	mi := &file_msgType_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1454,7 +1510,7 @@ func (x *HccAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HccAction.ProtoReflect.Descriptor instead.
 func (*HccAction) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{17}
+	return file_msgType_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *HccAction) GetActionArea() string {
@@ -1506,7 +1562,7 @@ type Action struct {
 func (x *Action) Reset() {
 	*x = Action{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[18]
+		mi := &file_msgType_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1519,7 +1575,7 @@ func (x *Action) String() string {
 func (*Action) ProtoMessage() {}
 
 func (x *Action) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[18]
+	mi := &file_msgType_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1532,7 +1588,7 @@ func (x *Action) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Action.ProtoReflect.Descriptor instead.
 func (*Action) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{18}
+	return file_msgType_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Action) GetActionType() string {
@@ -1576,7 +1632,7 @@ type Control struct {
 func (x *Control) Reset() {
 	*x = Control{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[19]
+		mi := &file_msgType_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1589,7 +1645,7 @@ func (x *Control) String() string {
 func (*Control) ProtoMessage() {}
 
 func (x *Control) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[19]
+	mi := &file_msgType_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1602,7 +1658,7 @@ func (x *Control) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Control.ProtoReflect.Descriptor instead.
 func (*Control) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{19}
+	return file_msgType_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Control) GetAction() *Action {
@@ -1637,7 +1693,7 @@ type Controls struct {
 func (x *Controls) Reset() {
 	*x = Controls{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_msgType_proto_msgTypes[20]
+		mi := &file_msgType_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1650,7 +1706,7 @@ func (x *Controls) String() string {
 func (*Controls) ProtoMessage() {}
 
 func (x *Controls) ProtoReflect() protoreflect.Message {
-	mi := &file_msgType_proto_msgTypes[20]
+	mi := &file_msgType_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1663,7 +1719,7 @@ func (x *Controls) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Controls.ProtoReflect.Descriptor instead.
 func (*Controls) Descriptor() ([]byte, []int) {
-	return file_msgType_proto_rawDescGZIP(), []int{20}
+	return file_msgType_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Controls) GetControl() []*Control {
@@ -1680,7 +1736,11 @@ var file_msgType_proto_rawDesc = []byte{
 	0x07, 0x4d, 0x73, 0x67, 0x54, 0x79, 0x70, 0x65, 0x1a, 0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
 	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74,
 	0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70,
-	0x74, 0x79, 0x22, 0xf3, 0x02, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x55,
+	0x74, 0x79, 0x22, 0x3e, 0x0a, 0x08, 0x48, 0x63, 0x63, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x18,
+	0x0a, 0x07, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x07, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x45, 0x72, 0x72, 0x54,
+	0x65, 0x78, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x45, 0x72, 0x72, 0x54, 0x65,
+	0x78, 0x74, 0x22, 0xf3, 0x02, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x55,
 	0x55, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x55, 0x55, 0x49, 0x44, 0x12,
 	0x1e, 0x0a, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x55, 0x55, 0x49, 0x44, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x55, 0x55, 0x49, 0x44, 0x12,
@@ -1918,45 +1978,46 @@ func file_msgType_proto_rawDescGZIP() []byte {
 	return file_msgType_proto_rawDescData
 }
 
-var file_msgType_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_msgType_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_msgType_proto_goTypes = []interface{}{
 	(*Empty)(nil),                     // 0: MsgType.Empty
-	(*Node)(nil),                      // 1: MsgType.Node
-	(*NodeDetail)(nil),                // 2: MsgType.NodeDetail
-	(*Server)(nil),                    // 3: MsgType.Server
-	(*ServerNode)(nil),                // 4: MsgType.ServerNode
-	(*Quota)(nil),                     // 5: MsgType.Quota
-	(*VNC)(nil),                       // 6: MsgType.VNC
-	(*Volume)(nil),                    // 7: MsgType.Volume
-	(*VolumeAttachment)(nil),          // 8: MsgType.VolumeAttachment
-	(*AdaptiveIPSetting)(nil),         // 9: MsgType.AdaptiveIPSetting
-	(*AdaptiveIPAvailableIPList)(nil), // 10: MsgType.AdaptiveIPAvailableIPList
-	(*AdaptiveIPServer)(nil),          // 11: MsgType.AdaptiveIPServer
-	(*Subnet)(nil),                    // 12: MsgType.Subnet
-	(*Series)(nil),                    // 13: MsgType.Series
-	(*MetricInfo)(nil),                // 14: MsgType.MetricInfo
-	(*MonitoringData)(nil),            // 15: MsgType.MonitoringData
-	(*NormalAction)(nil),              // 16: MsgType.NormalAction
-	(*HccAction)(nil),                 // 17: MsgType.HccAction
-	(*Action)(nil),                    // 18: MsgType.Action
-	(*Control)(nil),                   // 19: MsgType.Control
-	(*Controls)(nil),                  // 20: MsgType.Controls
-	(*timestamp.Timestamp)(nil),       // 21: google.protobuf.Timestamp
+	(*HccError)(nil),                  // 1: MsgType.HccError
+	(*Node)(nil),                      // 2: MsgType.Node
+	(*NodeDetail)(nil),                // 3: MsgType.NodeDetail
+	(*Server)(nil),                    // 4: MsgType.Server
+	(*ServerNode)(nil),                // 5: MsgType.ServerNode
+	(*Quota)(nil),                     // 6: MsgType.Quota
+	(*VNC)(nil),                       // 7: MsgType.VNC
+	(*Volume)(nil),                    // 8: MsgType.Volume
+	(*VolumeAttachment)(nil),          // 9: MsgType.VolumeAttachment
+	(*AdaptiveIPSetting)(nil),         // 10: MsgType.AdaptiveIPSetting
+	(*AdaptiveIPAvailableIPList)(nil), // 11: MsgType.AdaptiveIPAvailableIPList
+	(*AdaptiveIPServer)(nil),          // 12: MsgType.AdaptiveIPServer
+	(*Subnet)(nil),                    // 13: MsgType.Subnet
+	(*Series)(nil),                    // 14: MsgType.Series
+	(*MetricInfo)(nil),                // 15: MsgType.MetricInfo
+	(*MonitoringData)(nil),            // 16: MsgType.MonitoringData
+	(*NormalAction)(nil),              // 17: MsgType.NormalAction
+	(*HccAction)(nil),                 // 18: MsgType.HccAction
+	(*Action)(nil),                    // 19: MsgType.Action
+	(*Control)(nil),                   // 20: MsgType.Control
+	(*Controls)(nil),                  // 21: MsgType.Controls
+	(*timestamp.Timestamp)(nil),       // 22: google.protobuf.Timestamp
 }
 var file_msgType_proto_depIdxs = []int32{
-	21, // 0: MsgType.Node.created_at:type_name -> google.protobuf.Timestamp
-	21, // 1: MsgType.Server.created_at:type_name -> google.protobuf.Timestamp
-	21, // 2: MsgType.ServerNode.created_at:type_name -> google.protobuf.Timestamp
-	21, // 3: MsgType.Volume.created_at:type_name -> google.protobuf.Timestamp
-	21, // 4: MsgType.VolumeAttachment.created_at:type_name -> google.protobuf.Timestamp
-	21, // 5: MsgType.VolumeAttachment.updated_at:type_name -> google.protobuf.Timestamp
-	21, // 6: MsgType.AdaptiveIPServer.created_at:type_name -> google.protobuf.Timestamp
-	21, // 7: MsgType.Subnet.created_at:type_name -> google.protobuf.Timestamp
-	13, // 8: MsgType.MonitoringData.series:type_name -> MsgType.Series
-	16, // 9: MsgType.Action.normal_action:type_name -> MsgType.NormalAction
-	17, // 10: MsgType.Action.hcc_action:type_name -> MsgType.HccAction
-	18, // 11: MsgType.Control.action:type_name -> MsgType.Action
-	19, // 12: MsgType.Controls.control:type_name -> MsgType.Control
+	22, // 0: MsgType.Node.created_at:type_name -> google.protobuf.Timestamp
+	22, // 1: MsgType.Server.created_at:type_name -> google.protobuf.Timestamp
+	22, // 2: MsgType.ServerNode.created_at:type_name -> google.protobuf.Timestamp
+	22, // 3: MsgType.Volume.created_at:type_name -> google.protobuf.Timestamp
+	22, // 4: MsgType.VolumeAttachment.created_at:type_name -> google.protobuf.Timestamp
+	22, // 5: MsgType.VolumeAttachment.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 6: MsgType.AdaptiveIPServer.created_at:type_name -> google.protobuf.Timestamp
+	22, // 7: MsgType.Subnet.created_at:type_name -> google.protobuf.Timestamp
+	14, // 8: MsgType.MonitoringData.series:type_name -> MsgType.Series
+	17, // 9: MsgType.Action.normal_action:type_name -> MsgType.NormalAction
+	18, // 10: MsgType.Action.hcc_action:type_name -> MsgType.HccAction
+	19, // 11: MsgType.Control.action:type_name -> MsgType.Action
+	20, // 12: MsgType.Controls.control:type_name -> MsgType.Control
 	13, // [13:13] is the sub-list for method output_type
 	13, // [13:13] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -1983,7 +2044,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Node); i {
+			switch v := v.(*HccError); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1995,7 +2056,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeDetail); i {
+			switch v := v.(*Node); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2007,7 +2068,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Server); i {
+			switch v := v.(*NodeDetail); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2019,7 +2080,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServerNode); i {
+			switch v := v.(*Server); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2031,7 +2092,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Quota); i {
+			switch v := v.(*ServerNode); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2043,7 +2104,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VNC); i {
+			switch v := v.(*Quota); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2055,7 +2116,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Volume); i {
+			switch v := v.(*VNC); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2067,7 +2128,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VolumeAttachment); i {
+			switch v := v.(*Volume); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2079,7 +2140,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AdaptiveIPSetting); i {
+			switch v := v.(*VolumeAttachment); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2091,7 +2152,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AdaptiveIPAvailableIPList); i {
+			switch v := v.(*AdaptiveIPSetting); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2103,7 +2164,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AdaptiveIPServer); i {
+			switch v := v.(*AdaptiveIPAvailableIPList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2115,7 +2176,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Subnet); i {
+			switch v := v.(*AdaptiveIPServer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2127,7 +2188,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Series); i {
+			switch v := v.(*Subnet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2139,7 +2200,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MetricInfo); i {
+			switch v := v.(*Series); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2151,7 +2212,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MonitoringData); i {
+			switch v := v.(*MetricInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2163,7 +2224,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NormalAction); i {
+			switch v := v.(*MonitoringData); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2175,7 +2236,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*HccAction); i {
+			switch v := v.(*NormalAction); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2187,7 +2248,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Action); i {
+			switch v := v.(*HccAction); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2199,7 +2260,7 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Control); i {
+			switch v := v.(*Action); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2211,6 +2272,18 @@ func file_msgType_proto_init() {
 			}
 		}
 		file_msgType_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Control); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_msgType_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Controls); i {
 			case 0:
 				return &v.state
@@ -2229,7 +2302,7 @@ func file_msgType_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_msgType_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

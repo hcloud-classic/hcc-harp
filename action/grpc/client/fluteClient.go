@@ -14,7 +14,7 @@ import (
 
 var fluteConn *grpc.ClientConn
 
-func initFlute() *errors.HccError {
+func initFlute() error {
 	var err error
 
 	addr := config.Flute.ServerAddress + ":" + strconv.FormatInt(config.Flute.ServerPort, 10)
@@ -36,7 +36,8 @@ func initFlute() *errors.HccError {
 		return nil
 	}
 
-	return errors.NewHccError(errors.HarpInternalInitFail, "retry count exceeded to connect flute module")
+	hccErrStack := errors.ReturnHccError(errors.HarpInternalInitFail, "initFlute(): retry count exceeded to connect flute module")
+	return hccErrStack[0].New()
 }
 
 func closeFlute() {
@@ -52,7 +53,8 @@ func (rc *RPCClient) GetNode(uuid string) (*rpcflute.Node, *errors.HccErrorStack
 	defer cancel()
 	node, err := rc.flute.GetNode(ctx, &rpcflute.ReqGetNode{UUID: uuid})
 	if err != nil {
-		return nil, errors.NewHccErrorStack(errors.NewHccError(errors.HarpGrpcRequestError, "GetNode "+err.Error()))
+		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "GetNode(): "+err.Error())
+		return nil, &hccErrStack
 	}
 	if es := node.GetHccErrorStack(); es != nil {
 		errStack = errconv.GrpcStackToHcc(&es)
@@ -71,7 +73,8 @@ func (rc *RPCClient) GetNodeList(serverUUID string) ([]rpcflute.Node, *errors.Hc
 	defer cancel()
 	pnodeList, err := rc.flute.GetNodeList(ctx, &rpcflute.ReqGetNodeList{Node: &rpcflute.Node{ServerUUID: serverUUID}})
 	if err != nil {
-		return nil, errors.NewHccErrorStack(errors.NewHccError(errors.HarpGrpcRequestError, "GetNodeList "+err.Error()))
+		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "GetNodeList(): "+err.Error())
+		return nil, &hccErrStack
 	}
 
 	for _, pnode := range pnodeList.Node {

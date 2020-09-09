@@ -100,7 +100,7 @@ func getAvailableIPsStatusMap() map[string]bool {
 }
 
 // GetAvailableIPList : Get available IP lists by checking config files and sending arping.
-func GetAvailableIPList() *pb.AdaptiveIPAvailableIPList {
+func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 	var availableIPList pb.AdaptiveIPAvailableIPList
 	var availableIPs []string
 
@@ -113,7 +113,7 @@ func GetAvailableIPList() *pb.AdaptiveIPAvailableIPList {
 	extIPaddrs, err := extIface.Addrs()
 	if err != nil {
 		logger.Logger.Println(err)
-		return &availableIPList
+		return nil, err
 	}
 
 	ipMap := getAvailableIPsStatusMap()
@@ -148,5 +148,5 @@ func GetAvailableIPList() *pb.AdaptiveIPAvailableIPList {
 
 	availableIPList.AvailableIp = availableIPs
 
-	return &availableIPList
+	return &availableIPList, nil
 }

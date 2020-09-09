@@ -7,6 +7,7 @@ import (
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
+	hccerr "hcc/harp/lib/errors"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iputil"
@@ -42,9 +43,9 @@ type NodeData struct {
 }
 
 func getNodePXEMACAddress(nodeUUID string) (string, error) {
-	node, err := client.RC.GetNode(nodeUUID)
-	if err != nil {
-		return "", err
+	node, hccErrStack := client.RC.GetNode(nodeUUID)
+	if hccErrStack != nil {
+		return "", (*hccErrStack)[0].New()
 	}
 
 	return node.PXEMacAddr, nil
@@ -167,9 +168,10 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return errors.New("subnetUUID is needed for make dhcpd config file")
 	}
 
-	subnet, err := dao.ReadSubnet(subnetUUID)
-	if err != nil {
-		return err
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "CreateConfig(): "+errStr)
+		return hccErrStack[0].New()
 	}
 
 	if len(subnet.SubnetName) == 0 {
@@ -325,15 +327,19 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 		return "", errors.New("need a SubnetUUID argument")
 	}
 
-	subnet, err := dao.ReadSubnet(subnetUUID)
-	if err != nil {
-		return "", err
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "CreateDHCPDConfig(): "+errStr)
+		return "", hccErrStack[0].New()
 	}
 
-	nodes, err := client.RC.GetNodeList(subnet.ServerUUID)
-	if err != nil {
-		logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
-			subnet.ServerUUID + " (" + err.Error() + ")"))
+	nodes, hccErrStack := client.RC.GetNodeList(subnet.ServerUUID)
+	if errCode != 0 {
+		err := (*hccErrStack)[0].New()
+		if err != nil {
+			logger.Logger.Println(errors.New("CreateDHCPDConfig(): Failed to get nodes by server UUID: " +
+				subnet.ServerUUID + " (" + err.Error() + ")"))
+		}
 		return "", err
 	}
 
@@ -343,7 +349,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 		nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 	}
 
-	err = CreateConfig(subnetUUID, nodeUUIDs)
+	err := CreateConfig(subnetUUID, nodeUUIDs)
 	if err != nil {
 		return "", err
 	}
@@ -371,13 +377,14 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 		return "", errors.New("need a SubnetUUID argument")
 	}
 
-	subnet, err := dao.ReadSubnet(subnetUUID)
-	if err != nil {
-		return "", err
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfigFile(): "+errStr)
+		return "", hccErrStack[0].New()
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
-	err = fileutil.DeleteFile(dhcpdConfLocation)
+	err := fileutil.DeleteFile(dhcpdConfLocation)
 	if err != nil {
 		return "", err
 	}
@@ -393,16 +400,19 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 
 // CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
 func CheckDatabaseAndGenerateDHCPDConfigs() error {
-	serverUUIDs, err := client.RC.AllServerUUID()
-	if err != nil {
-		return err
+	serverUUIDs, hccErrStack := client.RC.AllServerUUID()
+	if hccErrStack != nil {
+		return (*hccErrStack)[0].New()
 	}
 
 	for i := range serverUUIDs {
-		nodes, err := client.RC.GetNodeList(serverUUIDs[i])
-		if err != nil {
-			logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
-				serverUUIDs[i] + " (" + err.Error() + ")"))
+		nodes, hccErrStack := client.RC.GetNodeList(serverUUIDs[i])
+		if hccErrStack != nil {
+			err := (*hccErrStack)[0].New()
+			if err != nil {
+				logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
+					serverUUIDs[i] + " (" + err.Error() + ")"))
+			}
 			continue
 		}
 
@@ -412,15 +422,19 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
-		subnet, err := dao.ReadSubnetByServer(serverUUIDs[i])
-		if err != nil {
-			logger.Logger.Println("Failed to get subnet by server UUID: " +
-				serverUUIDs[i] + " (" + err.Error() + ")")
+		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
+		if errCode != 0 {
+			hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfigFile(): "+errStr)
+			err := hccErrStack[0].New()
+			if err != nil {
+				logger.Logger.Println("Failed to get subnet by server UUID: " +
+					serverUUIDs[i] + " (" + err.Error() + ")")
+			}
 			continue
 		}
 
 		subnetUUID := subnet.UUID
-		err = CreateConfig(subnetUUID, nodeUUIDs)
+		err := CreateConfig(subnetUUID, nodeUUIDs)
 		if err != nil {
 			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" +
 				subnetUUID + " (" + err.Error() + ")")

@@ -14,7 +14,7 @@ import (
 
 var violinConn *grpc.ClientConn
 
-func initViolin() *errors.HccError {
+func initViolin() error {
 	var err error
 
 	addr := config.Violin.ServerAddress + ":" + strconv.FormatInt(config.Violin.ServerPort, 10)
@@ -36,7 +36,8 @@ func initViolin() *errors.HccError {
 		return nil
 	}
 
-	return errors.NewHccError(errors.HarpInternalInitFail, "retry count exceeded to connect violin module")
+	hccErrStack := errors.ReturnHccError(errors.HarpInternalInitFail, "initViolin(): retry count exceeded to connect violin module")
+	return hccErrStack[0].New()
 }
 
 func closeViolin() {
@@ -53,7 +54,8 @@ func (rc *RPCClient) AllServerUUID() ([]string, *errors.HccErrorStack) {
 	defer cancel()
 	resServerList, err := rc.violin.GetServerList(ctx, &rpcviolin.ReqGetServerList{})
 	if err != nil {
-		return nil, errors.NewHccErrorStack(errors.NewHccError(errors.HarpGrpcRequestError, "GetServerList "+err.Error()))
+		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "AllServerUUID(): "+err.Error())
+		return nil, &hccErrStack
 	}
 
 	if pserverList := resServerList.GetServer(); pserverList != nil {

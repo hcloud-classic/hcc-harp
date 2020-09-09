@@ -1,12 +1,24 @@
 package errors
 
 const (
-	HarpInternalInitFail      uint64 = harp + internal + initFail
-	HarpInternalOperationFail uint64 = harp + internal + operationFail
+	HarpInternalInitFail                 = harp + internal + initFail
+	HarpInternalOperationFail            = harp + internal + operationFail
+	HarpInternalUUIDGenerationError      = harp + internal + UUIDGenerationError
+	HarpInternalTimeStampConversionError = harp + internal + timestampConversionError
+	HarpInternalInterfaceLookupError     = harp + internal + interfaceAddrLookupError
+	HarpInternalPFError                  = harp + internal + pfError
+	HarpInternalDHCPDError               = harp + internal + dhcpdError
+	HarpInternalFileError                = harp + internal + fileError
+	HarpInternalIfconfigError            = harp + internal + ifconfigError
+	HarpInternalIPAddressError           = harp + internal + IPAddressError
+	HarpInternalSubnetInUseError         = harp + internal + subnetInUseError
+	HarpInternalSubnetNotAllocatedError  = harp + internal + subnetNotAllocatedError
+	HarpInternalAdaptiveIPAllocatedError = harp + internal + adaptiveIPAllocatedError
 
-	HarpGrpcRequestError uint64 = harp + grpc + requestError
+	HarpGrpcArgumentError = harp + grpc + argumentError
+	HarpGrpcRequestError  = harp + grpc + requestError
 
-	HarpSQLOperationFail uint64 = harp + sql + operationFail
-	HarpSQLNoResult      uint64 = harp + sql + noResult
-	HarpSQLArgumentError uint64 = harp + sql + argumentError
+	HarpSQLOperationFail = harp + sql + operationFail
+	HarpSQLNoResult      = harp + sql + noResult
+	HarpSQLArgumentError = harp + sql + argumentError
 )

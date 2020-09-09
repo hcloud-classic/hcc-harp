@@ -7,67 +7,64 @@ import (
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
+	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func init() {
-	err := syscheck.CheckRoot()
+	err := logger.Init()
 	if err != nil {
-		log.Fatalf("syscheck.CheckRoot(): %v", err.Error())
+		errors.SetErrLogger(logger.Logger)
+		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
 	}
+	errors.SetErrLogger(logger.Logger)
 
 	err = syscheck.CheckArpingCommand()
 	if err != nil {
-		log.Fatalf("syscheck.CheckArpingCommand(): %v", err.Error())
-	}
-
-	err = logger.Init()
-	if err != nil {
-		log.Fatalf("logger.Init(): %v", err.Error())
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckArpingCommand(): "+err.Error()).Fatal()
 	}
 
 	config.Init()
 
 	err = mysql.Init()
 	if err != nil {
-		logger.Logger.Fatalf("mysql.Init(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
 	}
 
 	err = client.Init()
 	if err != nil {
-		logger.Logger.Fatalf("client.Init(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "client.Init(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
-		logger.Logger.Fatalf("syscheck.CheckIfaceExist(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
 	if err != nil {
-		logger.Logger.Fatalf("syscheck.CheckIfaceExist(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
-		logger.Logger.Fatalf("dhcpd.CheckLocalDHCPDConfig(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
 	}
 
 	err = pf.PreparePFConfigFiles()
 	if err != nil {
-		logger.Logger.Fatalf("pf.PreparePFConfigFiles(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
 	}
 
 	err = adaptiveip.LoadHarpPFRules()
 	if err != nil {
-		logger.Logger.Fatalf("adaptiveip.LoadHarpPFRules(): %v", err.Error())
+		errors.NewHccError(errors.PiccoloInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
 	}
 }
 
