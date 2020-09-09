@@ -32,7 +32,7 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 		&privateGateway,
 		&createdAt)
 	if err != nil {
-		errStr := "ReadAdaptiveIPServer() " + err.Error()
+		errStr := "ReadAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
@@ -43,7 +43,7 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 
 	_createdAt, err := ptypes.TimestampProto(createdAt)
 	if err != nil {
-		errStr := "ReadAdaptiveIPServer() " + err.Error()
+		errStr := "ReadAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpInternalTimeStampConversionError, errStr
 	}
@@ -122,7 +122,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	for stmt.Next() {
 		err := stmt.Scan(&serverUUID, &publicIP, &privateIP, &privateGateway, &createdAt)
 		if err != nil {
-			errStr := "ReadAdaptiveIPServerList() " + err.Error()
+			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			if strings.Contains(err.Error(), "no rows in result set") {
 				return nil, hccerr.HarpSQLNoResult, errStr
@@ -133,7 +133,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		_createdAt, err := ptypes.TimestampProto(createdAt)
 		if err != nil {
 			logger.Logger.Println(err)
-			errStr := "ReadAdaptiveIPServerList() " + err.Error()
+			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			return nil, hccerr.HarpInternalTimeStampConversionError, errStr
 		}
@@ -151,7 +151,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		logger.Logger.Println(err)
-		errStr := "ReadAdaptiveIPServerList() " + err.Error()
+		errStr := "ReadAdaptiveIPServerList(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpInternalIPAddressError, errStr
 	}
@@ -180,7 +180,7 @@ func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
 	sql := "select count(*) from adaptiveip_server"
 	err := mysql.Db.QueryRow(sql).Scan(&adaptiveIPServerNr)
 	if err != nil {
-		errStr := "ReadAdaptiveIPServerNum() " + err.Error()
+		errStr := "ReadAdaptiveIPServerNum(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
@@ -244,7 +244,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	sql := "insert into adaptiveip_server(server_uuid, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, now())"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
-		errStr := "CreateAdaptiveIPServer() " + err.Error()
+		errStr := "CreateAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
@@ -280,7 +280,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 
 	err = pf.DeleteAndUnloadAnchorConfig(adaptiveIPServer.PublicIP)
 	if err != nil {
-		errStr := "DeleteAdaptiveIPServer() " + err.Error()
+		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return "", hccerr.HarpInternalPFError, errStr
 	}
@@ -288,7 +288,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	sql := "delete from adaptiveip_server where server_uuid = ?"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
-		errStr := "DeleteAdaptiveIPServer() " + err.Error()
+		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return "", hccerr.HarpSQLOperationFail, errStr
 	}

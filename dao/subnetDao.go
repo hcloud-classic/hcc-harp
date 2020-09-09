@@ -67,7 +67,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 
 	subnet.CreatedAt, err = ptypes.TimestampProto(createdAt)
 	if err != nil {
-		errStr := "ReadSubnet() " + err.Error()
+		errStr := "ReadSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpInternalTimeStampConversionError, errStr
 	}
@@ -127,7 +127,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 
 	subnet.CreatedAt, err = ptypes.TimestampProto(createdAt)
 	if err != nil {
-		errStr := "ReadSubnetByServer() " + err.Error()
+		errStr := "ReadSubnetByServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpInternalTimeStampConversionError, errStr
 	}
@@ -252,7 +252,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	for stmt.Next() {
 		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
 		if err != nil {
-			errStr := "ReadSubnetList() " + err.Error()
+			errStr := "ReadSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			if strings.Contains(err.Error(), "no rows in result set") {
 				return nil, hccerr.HarpSQLNoResult, errStr
@@ -262,7 +262,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 
 		_createdAt, err := ptypes.TimestampProto(createdAt)
 		if err != nil {
-			errStr := "ReadSubnetList() " + err.Error()
+			errStr := "ReadSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			return nil, hccerr.HarpInternalTimeStampConversionError, errStr
 		}
@@ -299,7 +299,7 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 	sql := "select count(*) from subnet"
 	err := mysql.Db.QueryRow(sql).Scan(&subnetNr)
 	if err != nil {
-		errStr := "ReadSubnetNum() " + err.Error()
+		errStr := "ReadSubnetNum(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
@@ -376,7 +376,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 
 	out, err := gouuid.NewV4()
 	if err != nil {
-		errStr := "CreateSubnet: " + err.Error()
+		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpInternalUUIDGenerationError, errStr
 	}
@@ -596,7 +596,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
 	requestedUUID := in.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return "", hccerr.HarpGrpcArgumentError, "DeleteSubnet() : need a uuid argument"
+		return "", hccerr.HarpGrpcArgumentError, "DeleteSubnet(): need a uuid argument"
 	}
 
 	subnet, errCode, errStr := ReadSubnet(requestedUUID)
@@ -613,7 +613,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
 	sql := "delete from subnet where uuid = ?"
 	stmt, err := mysql.Db.Prepare(sql)
 	if err != nil {
-		errStr := "DeleteSubnet() " + err.Error()
+		errStr := "DeleteSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return "", hccerr.HarpSQLOperationFail, errStr
 	}
