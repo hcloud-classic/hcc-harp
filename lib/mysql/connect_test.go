@@ -2,21 +2,18 @@ package mysql
 
 import (
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/syscheck"
 	"testing"
 )
 
 func Test_DB_Prepare(t *testing.T) {
-	err := syscheck.CheckRoot()
+	err := logger.Init()
 	if err != nil {
-		t.Fatal("Failed to get root permission!")
+		errors.SetErrLogger(logger.Logger)
+		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
 	}
-
-	err = logger.Init()
-	if err != nil {
-		t.Fatal("Failed to prepare logger!")
-	}
+	errors.SetErrLogger(logger.Logger)
 	defer func() {
 		_ = logger.FpLog.Close()
 	}()
