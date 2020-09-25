@@ -18,7 +18,12 @@ import (
 )
 
 func init() {
-	err := logger.Init()
+	err := syscheck.CheckRoot()
+	if err != nil {
+		panic(err)
+	}
+
+	err = logger.Init()
 	if err != nil {
 		errors.SetErrLogger(logger.Logger)
 		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
