@@ -295,13 +295,12 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err2 := stmt.Exec(serverUUID)
+	_, err2 := stmt.Exec(serverUUID)
 	if err2 != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err2.Error()
 		logger.Logger.Println(errStr)
 		return "", hccerr.HarpSQLOperationFail, errStr
 	}
-	logger.Logger.Println(result.RowsAffected())
 
 	return serverUUID, 0, ""
 }
