@@ -14,7 +14,6 @@ type adaptiveIP struct {
 	DefaultGatewayAddr         string `goconf:"adaptiveip:adaptiveip_default_gateway_addr"`          // DefaultGatewayAddr : Default gateway address for use adaptive IP
 	DefaultStartIPAddr         string `goconf:"adaptiveip:adaptiveip_default_start_ip"`              // DefaultStartIPAddr : Default start IP address for use adaptive IP
 	DefaultEndIPAddr           string `goconf:"adaptiveip:adaptiveip_default_end_ip"`                // DefaultEndIPAddr : Default end IP address for use adaptive IP
-	ArpingRetryCount           int64  `goconf:"adaptiveip:adaptiveip_arping_retry_count"`            // ArpingRetryCount : Retry count for arping to check duplicated IP address
 	ArpingRoutineMaxNum        int64  `goconf:"adaptiveip:adaptiveip_arping_routine_max_num"`        // ArpingRoutineMaxNum : Max number of arping go routine jobs
 }
 

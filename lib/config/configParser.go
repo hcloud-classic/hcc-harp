@@ -237,11 +237,6 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.ArpingRetryCount, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_retry_count")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
 	AdaptiveIP.ArpingRoutineMaxNum, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_routine_max_num")
 	if err != nil {
 		logger.Logger.Panicln(err)

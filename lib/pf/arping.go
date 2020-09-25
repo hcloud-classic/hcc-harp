@@ -1,48 +1,53 @@
 package pf
 
 import (
-	"bytes"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/mdlayher/arp"
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
+	"log"
 	"net"
-	"os/exec"
-	"strconv"
-	"strings"
 	"sync"
+	"time"
 )
 
 // checkDuplicatedIPAddress : Check duplicated ip address by sending arping.
 func checkDuplicatedIPAddress(IP string) error {
-	cmd := exec.Command("arping", "-i", config.AdaptiveIP.ExternalIfaceName, "-c",
-		strconv.Itoa(int(config.AdaptiveIP.ArpingRetryCount)), IP)
-
-	cmdOutput := &bytes.Buffer{}
-	cmd.Stdout = cmdOutput
-	err := cmd.Run()
-	cmdOutputStr := string(cmdOutput.Bytes())
-
-	if strings.Contains(cmdOutputStr, "Timeout") ||
-		strings.Contains(cmdOutputStr, "timeout") {
-		return nil
-	}
-
+	// Ensure valid network interface
+	ifi, err := net.InterfaceByName(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
-		logger.Logger.Println("arping: " + err.Error())
-	}
-
-	if strings.Contains(cmdOutputStr, "from") {
-		err := errors.New("checkDuplicatedIPAddress(): Found duplicated IP address for " + IP)
-		logger.Logger.Println(err.Error())
 		return err
 	}
 
-	return nil
+	// Set up ARP client with socket
+	c, err := arp.Dial(ifi)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = c.Close()
+	}()
+
+	// Set request deadline from flag
+	if err := c.SetDeadline(time.Now().Add(1 * time.Second)); err != nil {
+		return err
+	}
+
+	// Request hardware address for IP address
+	ip := net.ParseIP(IP).To4()
+	mac, err := c.Resolve(ip)
+	if err != nil {
+		return nil
+	}
+
+	err = errors.New("checkDuplicatedIPAddress(): Found duplicated IP address for " + IP + "(MAC: " + mac.String() + ")")
+	logger.Logger.Println(err.Error())
+	return err
 }
 
 // true : available, false : not available
