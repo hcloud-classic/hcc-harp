@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
+	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
@@ -361,7 +362,7 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
 		goto Error
 	}
 
-	err = checkDuplicatedIPAddress(publicIP)
+	err = arping.CheckDuplicatedIPAddress(publicIP)
 	if err != nil {
 		goto Error
 	}

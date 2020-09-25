@@ -10,7 +10,6 @@ import (
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/pf"
 )
 
 type harpServer struct {
@@ -141,7 +140,7 @@ func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.R
 func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPAvailableIPList, error) {
 	logger.Logger.Println("Request received: GetAdaptiveIPAvailableIPList()")
 
-	adaptiveIPAvailableIPList, err := pf.GetAvailableIPList()
+	adaptiveIPAvailableIPList, err := adaptiveip.GetAvailableIPList()
 	if err != nil {
 		errStack := errors.ReturnHccError(errors.HarpInternalPFError, "GetAdaptiveIPAvailableIPList(): "+err.Error())
 		return &pb.ResGetAdaptiveIPAvailableIPList{AdaptiveipAvailableipList: &pb.AdaptiveIPAvailableIPList{}, HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
