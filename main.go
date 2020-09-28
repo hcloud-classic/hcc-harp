@@ -36,6 +36,11 @@ func init() {
 	}
 	errors.SetErrLogger(logger.Logger)
 
+	err = syscheck.CheckFirewall()
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
+	}
+
 	config.Init()
 
 	err = mysql.Init()
