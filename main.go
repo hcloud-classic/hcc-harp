@@ -34,37 +34,37 @@ func init() {
 
 	err = mysql.Init()
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
 	}
 
 	err = client.Init()
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "client.Init(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
 	}
 
 	err = pf.PreparePFConfigFiles()
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
 	}
 
 	err = adaptiveip.LoadHarpPFRules()
 	if err != nil {
-		errors.NewHccError(errors.PiccoloInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
+		errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
 	}
 }
 
