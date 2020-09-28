@@ -18,7 +18,13 @@ import (
 )
 
 func init() {
-	err := syscheck.CheckRoot()
+	err := syscheck.CheckOS()
+	if err != nil {
+		fmt.Println("Please run harp module on Linux or FreeBSD machine.")
+		panic(err)
+	}
+
+	err = syscheck.CheckRoot()
 	if err != nil {
 		panic(err)
 	}
