@@ -101,9 +101,9 @@ func settingExternalInterfaceLinux() error {
 func settingExternalInterface() error {
 	if syscheck.OS == "freebsd" {
 		return settingExternalInterfaceFreeBSD()
-	} else {
-		return settingExternalInterfaceLinux()
 	}
+
+	return settingExternalInterfaceLinux()
 }
 
 func settingDefaultGatewayFreeBSD() error {

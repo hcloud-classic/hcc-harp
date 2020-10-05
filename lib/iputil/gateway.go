@@ -143,22 +143,24 @@ func GetDefaultRoute() (net.IP, error) {
 		}
 
 		ip, err := parseBSDSolarisNetstat(output)
+
 		return ip, err
-	} else {
-		var file = "/proc/net/route"
-		f, err := os.Open(file)
-		if err != nil {
-			return nil, fmt.Errorf("can't access %s", file)
-		}
-		defer func() {
-			_ = f.Close()
-		}()
-
-		readAll, err := ioutil.ReadAll(f)
-		if err != nil {
-			return nil, fmt.Errorf("can't read %s", file)
-		}
-
-		return parseLinuxProcNetRoute(readAll)
 	}
+
+	// Linux
+	var file = "/proc/net/route"
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("can't access %s", file)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	readAll, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("can't read %s", file)
+	}
+
+	return parseLinuxProcNetRoute(readAll)
 }
