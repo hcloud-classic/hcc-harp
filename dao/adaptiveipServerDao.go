@@ -258,14 +258,13 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err := stmt.Exec(adaptiveIPServer.ServerUUID, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
+	_, err = stmt.Exec(adaptiveIPServer.ServerUUID, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
 		adaptiveIPServer.PrivateGateway)
 	if err != nil {
 		errStr := "CreateAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
-	logger.Logger.Println(result.LastInsertId())
 
 	return &adaptiveIPServer, 0, ""
 }

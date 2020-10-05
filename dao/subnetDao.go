@@ -573,13 +573,12 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		_ = stmt.Close()
 	}()
 
-	result, err2 := stmt.Exec(subnet.UUID)
+	_, err2 := stmt.Exec(subnet.UUID)
 	if err2 != nil {
 		errStr := "UpdateSubnet(): " + err2.Error()
 		logger.Logger.Println(errStr)
 		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
-	logger.Logger.Println(result.LastInsertId())
 
 	subnet, errCode, errStr = ReadSubnet(subnet.UUID)
 	if errCode != 0 {
@@ -620,13 +619,12 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	result, err2 := stmt.Exec(requestedUUID)
+	_, err2 := stmt.Exec(requestedUUID)
 	if err2 != nil {
 		errStr := "DeleteSubnet(): " + err2.Error()
 		logger.Logger.Println(errStr)
 		return "", hccerr.HarpSQLOperationFail, errStr
 	}
-	logger.Logger.Println(result.RowsAffected())
 
 	return requestedUUID, 0, ""
 }
