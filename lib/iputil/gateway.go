@@ -75,6 +75,11 @@ func parseLinuxProcNetRoute(f []byte) (net.IP, error) {
 		return nil, errors.New("invalid linux route file")
 	}
 
+	var i = 0
+
+	// make net.IP address from uint32
+	ipd32 := make(net.IP, 4)
+
 	for scanner.Scan() {
 		row := scanner.Text()
 		tokens := strings.Split(row, sep)
@@ -95,36 +100,42 @@ func parseLinuxProcNetRoute(f []byte) (net.IP, error) {
 		}
 
 		// The default interface is the one that's 0
-		if destination != 0 {
-			continue
+		if destination == 0 {
+			i++
+
+			if i > 1 {
+				return nil, errors.New("found multiple routes")
+			}
+
+			gatewayHex := "0x" + tokens[gatewayField]
+
+			// cast hex address to uint32
+			d, err := strconv.ParseInt(gatewayHex, 0, 64)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"parsing default interface address field hex '%s' in row '%s': %w",
+					destinationHex,
+					row,
+					err,
+				)
+			}
+			d32 := uint32(d)
+
+
+			binary.LittleEndian.PutUint32(ipd32, d32)
 		}
-
-		gatewayHex := "0x" + tokens[gatewayField]
-
-		// cast hex address to uint32
-		d, err := strconv.ParseInt(gatewayHex, 0, 64)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"parsing default interface address field hex '%s' in row '%s': %w",
-				destinationHex,
-				row,
-				err,
-			)
-		}
-		d32 := uint32(d)
-
-		// make net.IP address from uint32
-		ipd32 := make(net.IP, 4)
-		binary.LittleEndian.PutUint32(ipd32, d32)
-
-		// format net.IP to dotted ipV4 string
-		return net.IP(ipd32), nil
 	}
-	return nil, errors.New("interface with default destination not found")
+
+	if i == 0 {
+		return nil, errors.New("interface with default destination not found")
+	}
+
+	// format net.IP to dotted ipV4 string
+	return ipd32, nil
 }
 
 // GetDefaultRoute : Return IP of default route
-func GetDefaultRoute() (ip net.IP, err error) {
+func GetDefaultRoute() (net.IP, error) {
 	if syscheck.OS == "freebsd" {
 		routeCmd := exec.Command("netstat", "-rn")
 		output, err := routeCmd.CombinedOutput()
@@ -132,7 +143,8 @@ func GetDefaultRoute() (ip net.IP, err error) {
 			return nil, err
 		}
 
-		return parseBSDSolarisNetstat(output)
+		ip, err := parseBSDSolarisNetstat(output)
+		return ip, err
 	} else {
 		var file = "/proc/net/route"
 		f, err := os.Open(file)
