@@ -2,28 +2,15 @@ package iptables
 
 import (
 	"bufio"
+	"errors"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
+	"hcc/harp/dao"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/logger"
 	"os"
 	"os/exec"
 )
-
-// InitIPTABLES : Prepare for use iptables
-func InitIPTABLES() error {
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
-
-	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
-	if err != nil {
-		return err
-	}
-
-	//err = ReplaceBaseConfigAnchorStrings()
-	//if err != nil {
-	//	return err
-	//}
-
-	return nil
-}
 
 func getNFTables() ([]string, error) {
 	var nfTables []string
@@ -86,6 +73,84 @@ func FlushIPTABLESRules() error {
 		}
 
 		cmd = exec.Command("iptables", "-t", table, "-Z")
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// InitIPTABLES : Prepare for use iptables
+func InitIPTABLES() error {
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
+
+	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
+	if err != nil {
+		return err
+	}
+
+	err = FlushIPTABLESRules()
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("Restoring iptables rules from " + config.AdaptiveIP.IPTABLESInitConfigFileLocation + "...")
+	cmd := exec.Command("iptables-restore", config.AdaptiveIP.IPTABLESInitConfigFileLocation)
+	err = cmd.Run()
+	if err != nil {
+		logger.Logger.Println("Failed to restore iptables rules. Skipping...")
+	}
+
+	return nil
+}
+
+// LoadAdaptiveIPIPTABLESRules : Load iptables rules for AdaptiveIP
+func LoadAdaptiveIPIPTABLESRules() error {
+	var adaptiveIPServer pb.AdaptiveIPServer
+	in := &pb.ReqGetAdaptiveIPServerList{
+		AdaptiveipServer: &adaptiveIPServer,
+		Row:              0,
+		Page:             0,
+	}
+
+	adaptiveIPServerList, errCode, errString := dao.ReadAdaptiveIPServerList(in)
+	if errCode != 0 {
+		return errors.New(errString)
+	}
+
+	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
+		cmd := exec.Command("iptables", "-t", "nat",
+			"-A", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+			"-s", adaptiveIPServer.PrivateIP,
+			"-j", "SNAT",
+			"--to-source", adaptiveIPServer.PublicIP)
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		cmd = exec.Command("iptables", "-t", "nat",
+			"-A", "PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+			"-d", adaptiveIPServer.PublicIP,
+			"-j", "DNAT",
+			"--to-destination", adaptiveIPServer.PrivateIP)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		cmd = exec.Command("iptables",
+			"-A", "FORWARD",
+			"-s", adaptiveIPServer.PublicIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+
+		cmd = exec.Command("iptables",
+			"-A", "FORWARD",
+			"-d", adaptiveIPServer.PrivateIP,
+			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
 			return err

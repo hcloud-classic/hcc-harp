@@ -8,7 +8,6 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/errors"
-	"hcc/harp/lib/iptables"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
@@ -80,11 +79,6 @@ func init() {
 			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
 		}
 	} else {
-		err = iptables.InitIPTABLES()
-		if err != nil {
-			errors.NewHccError(errors.HarpInternalInitFail, "iptables.InitIPTABLES(): "+err.Error()).Fatal()
-		}
-
 		err = adaptiveip.LoadHarpIPTABLESRules()
 		if err != nil {
 			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()

@@ -6,10 +6,12 @@ import (
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/configext"
 	hccerr "hcc/harp/lib/errors"
+	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
+	"hcc/harp/lib/syscheck"
 	"net"
 	"strings"
 	"time"
@@ -236,7 +238,12 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIPServer.PrivateIP = firstIP.String()
 	adaptiveIPServer.PrivateGateway = subnet.Gateway
 
-	err = pf.CreateAndLoadAnchorConfig(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	if syscheck.OS == "freebsd" {
+		err = pf.CreateAndLoadAnchorConfig(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	} else {
+		err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	}
+
 	if err != nil {
 		return nil, hccerr.HarpInternalPFError, "CreateAdaptiveIPServer(): " + err.Error()
 	}
@@ -278,7 +285,11 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hccerr.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
 
-	err = pf.DeleteAndUnloadAnchorConfig(adaptiveIPServer.PublicIP)
+	if syscheck.OS == "freebsd" {
+		err = pf.DeleteAndUnloadAnchorConfig(adaptiveIPServer.PublicIP)
+	} else {
+		err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	}
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)

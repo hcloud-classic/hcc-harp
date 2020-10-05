@@ -268,30 +268,35 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	//err = ifconfig.LoadExistingIfconfigScriptsInternal()
-	//if err != nil {
-	//	return err
-	//}
-	//
-	err = iptables.FlushIPTABLESRules()
+	err = ifconfig.LoadExistingIfconfigScriptsInternal()
 	if err != nil {
 		return err
 	}
-	//
-	//err = pf.LoadPFRules(config.AdaptiveIP.PFRulesFileLocation)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = pf.LoadExstingBinatAndNATRules()
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = ifconfig.LoadExistingIfconfigScriptsExternal()
-	//if err != nil {
-	//	return err
-	//}
+
+	err = ifconfig.LoadExistingIfconfigScriptsExternal()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.InitIPTABLES()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.LoadAdaptiveIPIPTABLESRules()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.EnableAllRouteLocal()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.EnableIPForwardV4()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
