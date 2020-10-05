@@ -13,6 +13,8 @@ import (
 )
 
 func getNFTables() ([]string, error) {
+	logger.Logger.Println("Checking available tables for iptables...")
+
 	var nfTables []string
 	file, err := os.Open("/proc/net/ip_tables_names")
 	if err != nil {
@@ -84,6 +86,8 @@ func FlushIPTABLESRules() error {
 
 // InitIPTABLES : Prepare for use iptables
 func InitIPTABLES() error {
+	logger.Logger.Println("Initializing iptables...")
+
 	adaptiveIP := configext.GetAdaptiveIPNetwork()
 
 	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
@@ -108,6 +112,8 @@ func InitIPTABLES() error {
 
 // LoadAdaptiveIPIPTABLESRules : Load iptables rules for AdaptiveIP
 func LoadAdaptiveIPIPTABLESRules() error {
+	logger.Logger.Println("Loading iptables rules for AdaptiveIP...")
+
 	var adaptiveIPServer pb.AdaptiveIPServer
 	in := &pb.ReqGetAdaptiveIPServerList{
 		AdaptiveipServer: &adaptiveIPServer,

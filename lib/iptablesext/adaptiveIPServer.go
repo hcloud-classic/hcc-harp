@@ -5,10 +5,13 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/logger"
 	"os/exec"
 )
 
 func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
+	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP +")")
+
 	cmd := exec.Command("iptables", "-t", "nat",
 		"-A", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 		"-s", privateIP,
@@ -48,6 +51,8 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 }
 
 func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
+	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP +")")
+
 	cmd := exec.Command("iptables", "-t", "nat",
 		"-D", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 		"-s", privateIP,
