@@ -61,6 +61,12 @@ func FlushIPTABLESRules() error {
 		return err
 	}
 
+	cmd = exec.Command("iptables", "-Z")
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
 	nfTables, err := getNFTables()
 	if err != nil {
 		return err
@@ -74,6 +80,12 @@ func FlushIPTABLESRules() error {
 		}
 
 		cmd = exec.Command("iptables", "-t", table, "-X")
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		cmd = exec.Command("iptables", "-t", table, "-Z")
 		err = cmd.Run()
 		if err != nil {
 			return err
