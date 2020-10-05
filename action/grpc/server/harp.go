@@ -122,7 +122,7 @@ func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreate
 
 	adaptiveIPSetting, err := adaptiveip.WriteNetworkConfigAndReloadHarpNetwork(in)
 	if err != nil {
-		errStack := errors.ReturnHccError(errors.HarpInternalPFError, "WriteNetworkConfigAndReloadHarpNetwork(): "+err.Error())
+		errStack := errors.ReturnHccError(errors.HarpInternalOperationFail, "WriteNetworkConfigAndReloadHarpNetwork(): "+err.Error())
 		return &pb.ResCreateAdaptiveIPSetting{AdaptiveipSetting: &pb.AdaptiveIPSetting{}, HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 
@@ -142,7 +142,7 @@ func (s *harpServer) GetAdaptiveIPAvailableIPList(_ context.Context, _ *pb.Empty
 
 	adaptiveIPAvailableIPList, err := adaptiveip.GetAvailableIPList()
 	if err != nil {
-		errStack := errors.ReturnHccError(errors.HarpInternalPFError, "GetAdaptiveIPAvailableIPList(): "+err.Error())
+		errStack := errors.ReturnHccError(errors.HarpInternalOperationFail, "GetAdaptiveIPAvailableIPList(): "+err.Error())
 		return &pb.ResGetAdaptiveIPAvailableIPList{AdaptiveipAvailableipList: &pb.AdaptiveIPAvailableIPList{}, HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 

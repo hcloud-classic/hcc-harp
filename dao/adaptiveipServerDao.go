@@ -245,7 +245,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	}
 
 	if err != nil {
-		return nil, hccerr.HarpInternalPFError, "CreateAdaptiveIPServer(): " + err.Error()
+		return nil, hccerr.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
 
 	sql := "insert into adaptiveip_server(server_uuid, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, now())"
@@ -293,7 +293,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return "", hccerr.HarpInternalPFError, errStr
+		return "", hccerr.HarpInternalOperationFail, errStr
 	}
 
 	sql := "delete from adaptiveip_server where server_uuid = ?"
