@@ -7,10 +7,12 @@ import (
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/iptables"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/servicecontrol"
+	"hcc/harp/lib/syscheck"
 	"net"
 	"os/exec"
 )
@@ -59,7 +61,7 @@ func checkGatewayConfigured(gateway string) (bool, error) {
 	return false, nil
 }
 
-func settingExternalInterface() error {
+func settingExternalInterfaceFreeBSD() error {
 	logger.Logger.Println("Setting external interface...")
 
 	cmd := exec.Command("/usr/bin/sed", "-i", "", "/ifconfig_"+
@@ -81,9 +83,30 @@ func settingExternalInterface() error {
 	return nil
 }
 
-func settingDefaultGateway() error {
-	logger.Logger.Println("Setting default gateway...")
+func settingExternalInterfaceLinux() error {
+	logger.Logger.Println("Setting external interface...")
 
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	cmd := exec.Command("ifconfig", config.AdaptiveIP.ExternalIfaceName, adaptiveip.ExtIfaceIPAddress, "netmask",
+		adaptiveip.Netmask)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingExternalInterface() error {
+	if syscheck.OS == "freebsd" {
+		return settingExternalInterfaceFreeBSD()
+	} else {
+		return settingExternalInterfaceLinux()
+	}
+}
+
+func settingDefaultGatewayFreeBSD() error {
 	cmd := exec.Command("/usr/bin/sed", "-i", "", "/defaultrouter/d", "/etc/rc.conf")
 	err := cmd.Run()
 	if err != nil {
@@ -99,6 +122,45 @@ func settingDefaultGateway() error {
 	}
 
 	return nil
+}
+
+func flushDefaultGatewaysLinux() error {
+	logger.Logger.Println("Flushing default gateways...")
+
+	cmd := exec.Command("ip", "route", "flush", "0/0")
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingDefaultGatewayLinux() error {
+	err := flushDefaultGatewaysLinux()
+	if err != nil {
+		return err
+	}
+
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	cmd := exec.Command("route", "add", "default", "gw", adaptiveip.GatewayAddress)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingDefaultGateway() error {
+	logger.Logger.Println("Setting default gateway...")
+
+	if syscheck.OS == "freebsd" {
+		return settingDefaultGatewayFreeBSD()
+	}
+
+	return settingDefaultGatewayLinux()
 }
 
 func settingExternalNetwork() error {
@@ -135,7 +197,7 @@ func settingExternalNetwork() error {
 		needNetworkRestart = true
 	}
 
-	if needNetworkRestart {
+	if syscheck.OS == "freebsd" && needNetworkRestart {
 		client.End()
 
 		err = servicecontrol.RestartNetwork()
@@ -188,6 +250,46 @@ func LoadHarpPFRules() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// LoadHarpIPTABLESRules : Load iptables rules for harp module
+func LoadHarpIPTABLESRules() error {
+	err := settingExternalNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
+	if err != nil {
+		return err
+	}
+
+	//err = ifconfig.LoadExistingIfconfigScriptsInternal()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	err = iptables.FlushIPTABLESRules()
+	if err != nil {
+		return err
+	}
+	//
+	//err = pf.LoadPFRules(config.AdaptiveIP.PFRulesFileLocation)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = pf.LoadExstingBinatAndNATRules()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = ifconfig.LoadExistingIfconfigScriptsExternal()
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }

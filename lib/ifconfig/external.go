@@ -4,8 +4,10 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -63,14 +65,27 @@ func LoadExistingIfconfigScriptsExternal() error {
 // CreateAndLoadIfconfigScriptExternal : Create and load ifconfig scripts for external network
 func CreateAndLoadIfconfigScriptExternal(externelIfacename string, publicIP string, netmaskPublic string) error {
 	var ifconfigExternalScriptData string
-	ifconfigExternalScriptData = ifconfigReplaceString
+	ifconfigExternalScriptData = ifconfigReplaceString()
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_NAME", externelIfacename, -1)
+	if syscheck.OS == "linux" {
+		var ifaceVNUM = 0
+
+		ipSplit := strings.Split(publicIP, ".")
+		for _, ipSplited := range ipSplit {
+			ipSplitedInt, _ := strconv.Atoi(ipSplited)
+			ifaceVNUM += ipSplitedInt
+		}
+
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_VNUM", strconv.Itoa(ifaceVNUM), -1)
+	}
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IP", publicIP, -1)
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_NETMASK", netmaskPublic, -1)
 
 	var ifconfigScriptData string
-	ifconfigScriptData = ifconfigSHELL + ifconfigExternalScriptData
-	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	ifconfigScriptData = ifconfigShell() + ifconfigExternalScriptData
+	if syscheck.OS == "freebsd" {
+		ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	}
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("createAndLoadIfconfigScriptExternal: Creating ifconfig script file: " + ifconfigScriptFileName)
@@ -98,14 +113,36 @@ func CreateAndLoadIfconfigScriptExternal(externelIfacename string, publicIP stri
 // DeleteAndUnloadIfconfigScriptExternal : Delete and unload ifconfig scripts for external network
 func DeleteAndUnloadIfconfigScriptExternal(externelIfacename string, publicIP string, netmaskPublic string) error {
 	var ifconfigExternalScriptData string
-	ifconfigExternalScriptData = ifconfigReplaceString
+
+	if syscheck.OS == "linux" {
+		ifconfigExternalScriptData = ifconfigDownStringLinux()
+	} else {
+		ifconfigExternalScriptData = ifconfigReplaceString()
+	}
+
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_NAME", externelIfacename, -1)
-	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IP", publicIP, -1)
-	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_NETMASK", netmaskPublic, -1)
+	if syscheck.OS == "linux" {
+		var ifaceVNUM = 0
+
+		ipSplit := strings.Split(publicIP, ".")
+		for _, ipSplited := range ipSplit {
+			ipSplitedInt, _ := strconv.Atoi(ipSplited)
+			ifaceVNUM += ipSplitedInt
+		}
+
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_VNUM", strconv.Itoa(ifaceVNUM), -1)
+	}
+
+	if syscheck.OS == "freebsd" {
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IP", publicIP, -1)
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_NETMASK", netmaskPublic, -1)
+	}
 
 	var ifconfigScriptData string
-	ifconfigScriptData = ifconfigSHELL + ifconfigExternalScriptData
-	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "-alias", -1)
+	ifconfigScriptData = ifconfigShell() + ifconfigExternalScriptData
+	if syscheck.OS == "freebsd" {
+		ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "-alias", -1)
+	}
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Creating ifconfig temporary script file: " + ifconfigScriptFileName)

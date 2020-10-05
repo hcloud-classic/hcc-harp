@@ -7,6 +7,7 @@ type adaptiveIP struct {
 	PFRulesFileLocation        string `goconf:"adaptiveip:adaptiveip_pf_rules_file_location"`        // PFRulesFileLocation : pf.rules file location to use in harp module
 	PFBinatConfigFileLocation  string `goconf:"adaptiveip:adaptiveip_pf_binat_config_file_location"` // PFBinatConfigFileLocation : PF configuration file location of binat
 	PFnatConfigFileLocation    string `goconf:"adaptiveip:adaptiveip_pf_nat_config_file_location"`   // PFnatConfigFileLocation : PF configuration file location of nat
+	IPTABLESInitConfigFileLocation string `goconf:"adaptiveip:adaptiveip_iptables_init_config_file_location"`   // IPTABLESInitConfigFileLocation : iptables init configuration file location
 	IfconfigScriptFileLocation string `goconf:"adaptiveip:adaptiveip_ifconfig_script_file_location"` // IfconfigScriptFileLocation : Script file location of ifconfig
 	NetworkConfigFile          string `goconf:"adaptiveip:adaptiveip_network_config_file"`           // NetworkConfigFile : Adaptive IP network networkConfig file location
 	DefaultExtIfaceIPAddr      string `goconf:"adaptiveip:adaptiveip_default_ext_iface_ip_addr"`     // DefaultExtIfaceIPAddr : Default IP address of external interface for use adaptive IP
