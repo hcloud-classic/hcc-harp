@@ -425,7 +425,7 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
 		if errCode != 0 {
 			hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfigFile(): "+errStr)
-			err := hccErrStack[0].New()
+			err := hccErrStack[1].New()
 			if err != nil {
 				logger.Logger.Println("Failed to get subnet by server UUID: " +
 					serverUUIDs[i] + " (" + err.Error() + ")")
