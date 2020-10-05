@@ -10,7 +10,7 @@ import (
 )
 
 func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP +")")
+	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
 		"-A", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
@@ -51,7 +51,7 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 }
 
 func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP +")")
+	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
 		"-D", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,

@@ -57,7 +57,6 @@ func GetAvailableIPsStatusMap(netStartIP net.IP, netEndIP net.IP) (map[string]bo
 		return nil, err
 	}
 
-
 	var RoutineMAX = int(config.AdaptiveIP.ArpingRoutineMaxNum)
 	if RoutineMAX == 0 {
 		RoutineMAX = 5
@@ -101,4 +100,3 @@ func GetAvailableIPsStatusMap(netStartIP net.IP, netEndIP net.IP) (map[string]bo
 
 	return ipMap, nil
 }
-

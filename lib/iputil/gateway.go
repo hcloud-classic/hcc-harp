@@ -121,7 +121,6 @@ func parseLinuxProcNetRoute(f []byte) (net.IP, error) {
 			}
 			d32 := uint32(d)
 
-
 			binary.LittleEndian.PutUint32(ipd32, d32)
 		}
 	}

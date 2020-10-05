@@ -13,4 +13,3 @@ func CheckRoot() error {
 
 	return nil
 }
-
