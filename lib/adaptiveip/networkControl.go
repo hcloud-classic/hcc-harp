@@ -107,6 +107,8 @@ func settingExternalInterface() error {
 }
 
 func settingDefaultGatewayFreeBSD() error {
+	logger.Logger.Println("Setting default gateway...")
+
 	cmd := exec.Command("/usr/bin/sed", "-i", "", "/defaultrouter/d", "/etc/rc.conf")
 	err := cmd.Run()
 	if err != nil {
@@ -142,6 +144,8 @@ func settingDefaultGatewayLinux() error {
 		return err
 	}
 
+	logger.Logger.Println("Setting default gateway...")
+
 	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	cmd := exec.Command("route", "add", "default", "gw", adaptiveip.GatewayAddress)
@@ -154,8 +158,6 @@ func settingDefaultGatewayLinux() error {
 }
 
 func settingDefaultGateway() error {
-	logger.Logger.Println("Setting default gateway...")
-
 	if syscheck.OS == "freebsd" {
 		return settingDefaultGatewayFreeBSD()
 	}
