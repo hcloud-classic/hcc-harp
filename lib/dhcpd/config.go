@@ -124,7 +124,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
+		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.UUID
 		node.PXEMACAddress = pxeMacAddr
 		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
