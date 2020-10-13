@@ -20,10 +20,10 @@
   - For FreeBSD
     - PF firewall enabled with kernel module loaded.
   - For Linux
-    - SELinux disabled (If enabled, iptables will not working correctly.)
+    - SELinux disabled (If enabled, iptables will not work correctly.)
     - iptables installed with NAT kernel module loaded (iptable_nat, nf_nat)
   - For both FreeBSD and Linux
-    - 2 network interfaces for use external network and internal network.
+    - 2 network interfaces for use an external network and internal networks.
 
 <br>
 
@@ -52,7 +52,7 @@
 
 #### Adaptive IP
 
-- How it allocate public IP addresses.
+- How it allocates public IP addresses.
 
   1. Get server's UUID and public IP address from user.
   2. Check if provided server's UUID is already used in Adaptive IP.
@@ -65,12 +65,12 @@
 
 - How it listing available public IP addresses.
   1. Make a array from start IP address to end IP address that configured as Adaptive IP range in `harp.conf`.
-  2. Check from start IP address to end IP. First, check if the IP address is configured to external network interface.
-  3. Second, send ARP request. If it received ARP reply, then the IP address is duplicated with someone.
+  2. Check from start IP address to end IP. First, check if the IP address is configure to external network interface.
+  3. Second, send ARP request. If it received ARP reply, then the IP address is duplicate with someone.
   4. Show the available IP addresses except in 2 and 3 .
 
 <br>
 
-#### Additinal infos
+#### Additional infos
 
 - See configuration comments in `.go` files located in `./lib/config/`.
