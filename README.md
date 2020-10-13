@@ -3,7 +3,6 @@
 [![go report](http://210.207.104.150:8100/iitp-sds/hcloud-badge/raw/feature/dev/hcloud-badge_harp.svg)](http://210.207.104.150:8100/iitp-sds/hcloud-badge/raw/feature/dev/goreport_harp)
 
 
-
 ## Harp
 
 - Features
@@ -23,28 +22,27 @@
     - SELinux disabled (If enabled, iptables will not work correctly.)
     - iptables installed with NAT kernel module loaded (iptable_nat, nf_nat)
   - For both FreeBSD and Linux
+    - Golang installed
     - 2 network interfaces for use an external network and internal networks.
 
 <br>
 
 - How to build
-  - Just run `make` command.
+  - FreeBSD
+    - Just run `gmake` command.
+  - Linux
+    - Just run `make` command.
 
 <br>
 
 - How to run
-
   - FreeBSD
-
     1. Copy `harp.conf_FreeBSD` to `/etc/hcc/harp/harp.conf`
-
     2. Change your settings in `harp.conf`
     3. Run `harp` binary.
 
   - Linux
-
     1. Copy `harp.conf_Linux` to `/etc/hcc/harp/harp.conf`
-
     2. Change your settings in `harp.conf`
     3. Run `harp` binary.
 
@@ -53,7 +51,6 @@
 #### Adaptive IP
 
 - How it allocates public IP addresses.
-
   1. Get server's UUID and public IP address from user.
   2. Check if provided server's UUID is already used in Adaptive IP.
   3. Get the private subnet information related with sever.
