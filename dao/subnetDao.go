@@ -309,14 +309,6 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 }
 
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet) error {
-	isPrivate, err := iputil.CheckPrivateSubnet(networkIP, netmask)
-	if !isPrivate {
-		return errors.New("given network IP address is not in private network")
-	}
-	if err != nil {
-		return err
-	}
-
 	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet)
 	if isConflict {
 		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
@@ -326,6 +318,14 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 	}
 
 	netNetwork, err := iputil.CheckNetwork(networkIP, netmask)
+	if err != nil {
+		return err
+	}
+
+	isPrivate, err := iputil.CheckPrivateSubnet(netNetwork.IP.String(), netmask)
+	if !isPrivate {
+		return errors.New("given network IP address is not in private network")
+	}
 	if err != nil {
 		return err
 	}
