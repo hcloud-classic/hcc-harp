@@ -8,6 +8,9 @@ database harp
 [grpc]
 port 7400
 
+[cello]
+cello_server_address 172.19.0.1
+
 [flute]
 flute_server_address 192.168.110.10
 flute_server_port 7000

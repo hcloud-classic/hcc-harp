@@ -4,6 +4,7 @@ import (
 	"github.com/Terry-Mao/goconf"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
+	"net"
 )
 
 var conf = goconf.New()
@@ -52,6 +53,24 @@ func parseGrpc() {
 	Grpc.Port, err = config.GrpcConfig.Int("port")
 	if err != nil {
 		logger.Logger.Panicln(err)
+	}
+}
+
+func parseCello() {
+	config.CelloConfig = conf.Get("cello")
+	if config.CelloConfig == nil {
+		logger.Logger.Panicln("no cello section")
+	}
+
+	Cello = cello{}
+	Cello.ServerAddress, err = config.CelloConfig.String("cello_server_address")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	netIP := net.ParseIP(Cello.ServerAddress).To4()
+	if netIP == nil {
+		logger.Logger.Panicln("Cello server address is configured incorrectly")
 	}
 }
 
@@ -259,6 +278,7 @@ func Init() {
 
 	parseMysql()
 	parseGrpc()
+	parseCello()
 	parseFlute()
 	parseViolin()
 	parseDHCPD()
