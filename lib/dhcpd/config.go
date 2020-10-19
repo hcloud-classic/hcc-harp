@@ -389,6 +389,11 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 		return "", err
 	}
 
+	_, err = UpdateHarpDHCPDConfig()
+	if err != nil {
+		return "", err
+	}
+
 	err = servicecontrol.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
