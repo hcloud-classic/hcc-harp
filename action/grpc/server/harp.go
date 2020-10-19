@@ -209,26 +209,26 @@ func (s *harpServer) DeleteAdaptiveIPServer(_ context.Context, in *pb.ReqDeleteA
 	return &pb.ResDeleteAdaptiveIPServer{ServerUUID: serverUUID}, nil
 }
 
-func (s *harpServer) CreateDHPCDConf(_ context.Context, in *pb.ReqCreateDHPCDConf) (*pb.ResCreateDHPCDConf, error) {
-	logger.Logger.Println("Request received: CreateDHPCDConf()")
+func (s *harpServer) CreateDHCPDConf(_ context.Context, in *pb.ReqCreateDHCPDConf) (*pb.ResCreateDHCPDConf, error) {
+	logger.Logger.Println("Request received: CreateDHCPDConf()")
 
 	result, err := dhcpd.CreateDHCPDConfig(in)
 	if err != nil {
 		errStack := errors.ReturnHccError(errors.HarpInternalDHCPDError, "CreateDHCPDConfig(): "+err.Error())
-		return &pb.ResCreateDHPCDConf{Result: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
+		return &pb.ResCreateDHCPDConf{Result: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 
-	return &pb.ResCreateDHPCDConf{Result: result}, nil
+	return &pb.ResCreateDHCPDConf{Result: result}, nil
 }
 
-func (s *harpServer) DeleteDHPCDConf(_ context.Context, in *pb.ReqDeleteDHPCDConf) (*pb.ResDeleteDHPCDConf, error) {
-	logger.Logger.Println("Request received: DeleteDHPCDConf()")
+func (s *harpServer) DeleteDHCPDConf(_ context.Context, in *pb.ReqDeleteDHCPDConf) (*pb.ResDeleteDHCPDConf, error) {
+	logger.Logger.Println("Request received: DeleteDHCPDConf()")
 
 	result, err := dhcpd.DeleteDHCPDConfig(in)
 	if err != nil {
 		errStack := errors.ReturnHccError(errors.HarpInternalDHCPDError, "DeleteDHCPDConfig(): "+err.Error())
-		return &pb.ResDeleteDHPCDConf{Result: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
+		return &pb.ResDeleteDHCPDConf{Result: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 
-	return &pb.ResDeleteDHPCDConf{Result: result}, nil
+	return &pb.ResDeleteDHCPDConf{Result: result}, nil
 }

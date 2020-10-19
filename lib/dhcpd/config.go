@@ -319,7 +319,7 @@ func UpdateHarpDHCPDConfig() (int, error) {
 }
 
 // CreateDHCPDConfig : Do dhcpd config file creation works
-func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
+func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	subnetUUID := in.GetSubnetUUID()
 	subnetUUIDOk := len(subnetUUID) != 0
 
@@ -369,7 +369,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 }
 
 // DeleteDHCPDConfig : Do dhcpd config file deletion works
-func DeleteDHCPDConfig(in *pb.ReqDeleteDHPCDConf) (string, error) {
+func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	subnetUUID := in.GetSubnetUUID()
 	subnetUUIDOk := len(subnetUUID) != 0
 
