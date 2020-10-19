@@ -7,6 +7,7 @@ import (
 	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpdext"
 	hccerr "hcc/harp/lib/errors"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
@@ -16,8 +17,6 @@ import (
 	"hcc/harp/model"
 	"io/ioutil"
 	"net"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -260,24 +259,9 @@ func CheckLocalDHCPDConfig() error {
 	return nil
 }
 
-func getSubnetConfFiles() ([]string, error) {
-	var files []string
-
-	folder := config.DHCPD.ConfigFileLocation
-	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return files, nil
-}
-
 // UpdateHarpDHCPDConfig : Update harp dhcpd main config file. Write subnet config files include lines to 'harp_dhcpd.conf'
 func UpdateHarpDHCPDConfig() (int, error) {
-	configFiles, err := getSubnetConfFiles()
+	configFiles, err := dhcpdext.GetSubnetConfFiles()
 	if err != nil {
 		return 0, err
 	}
@@ -287,11 +271,6 @@ func UpdateHarpDHCPDConfig() (int, error) {
 	var files = 0
 
 	for _, filename := range configFiles {
-		if strings.Contains(filename, "harp_dhcpd.conf") ||
-			filename == config.DHCPD.ConfigFileLocation {
-			continue
-		}
-
 		include := "    " + includeStr
 		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
 		allIncludeLines += include + "\n"
