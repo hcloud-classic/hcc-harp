@@ -224,9 +224,9 @@ func (s *harpServer) CreateDHPCDConf(_ context.Context, in *pb.ReqCreateDHPCDCon
 func (s *harpServer) DeleteDHPCDConf(_ context.Context, in *pb.ReqDeleteDHPCDConf) (*pb.ResDeleteDHPCDConf, error) {
 	logger.Logger.Println("Request received: DeleteDHPCDConf()")
 
-	result, err := dhcpd.DeleteDHCPDConfigFile(in)
+	result, err := dhcpd.DeleteDHCPDConfig(in)
 	if err != nil {
-		errStack := errors.ReturnHccError(errors.HarpInternalDHCPDError, "DeleteDHCPDConfigFile(): "+err.Error())
+		errStack := errors.ReturnHccError(errors.HarpInternalDHCPDError, "DeleteDHCPDConfig(): "+err.Error())
 		return &pb.ResDeleteDHPCDConf{Result: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 

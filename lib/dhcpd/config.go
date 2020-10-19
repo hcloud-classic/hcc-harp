@@ -368,8 +368,8 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHPCDConf) (string, error) {
 	return "CreateDHCPDConfig: succeed", nil
 }
 
-// DeleteDHCPDConfigFile : Do dhcpd config file deletion works
-func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
+// DeleteDHCPDConfig : Do dhcpd config file deletion works
+func DeleteDHCPDConfig(in *pb.ReqDeleteDHPCDConf) (string, error) {
 	subnetUUID := in.GetSubnetUUID()
 	subnetUUIDOk := len(subnetUUID) != 0
 
@@ -379,7 +379,7 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
-		hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfigFile(): "+errStr)
+		hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfig(): "+errStr)
 		return "", hccErrStack[0].New()
 	}
 
@@ -395,7 +395,7 @@ func DeleteDHCPDConfigFile(in *pb.ReqDeleteDHPCDConf) (string, error) {
 		return "", err
 	}
 
-	return "DeleteDHCPDConfigFile: succeed", nil
+	return "DeleteDHCPDConfig: succeed", nil
 }
 
 // CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
