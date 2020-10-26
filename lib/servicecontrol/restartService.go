@@ -39,6 +39,11 @@ func RestartDHCPDServer() error {
 	}
 	if len(configFiles) == 0 {
 		logger.Logger.Println("No need to restart dhcpd service.")
+
+		logger.Logger.Println("Stopping dhcpd service...")
+		cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "stop")
+		_ = cmd.Run()
+
 		return nil
 	}
 
