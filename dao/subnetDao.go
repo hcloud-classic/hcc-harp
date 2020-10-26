@@ -522,7 +522,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hccerr.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}
 
-	if serverUUIDOk {
+	if serverUUIDOk && subnet.ServerUUID != "-" {
 		errStack := checkServerUUID(subnet.ServerUUID)
 		if errStack != nil {
 			return nil, (*errStack)[errStack.Len()].ErrCode, "UpdateSubnet(): " + (*errStack)[errStack.Len()].ErrText
@@ -550,9 +550,15 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		updateSet += " domain_name = '" + subnet.DomainName + "', "
 	}
 	if serverUUIDOk {
+		if subnet.ServerUUID == "-" {
+			subnet.ServerUUID = ""
+		}
 		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
 	}
 	if leaderNodeUUIDOk {
+		if subnet.LeaderNodeUUID == "-" {
+			subnet.LeaderNodeUUID = ""
+		}
 		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
 	}
 	if osOk {
