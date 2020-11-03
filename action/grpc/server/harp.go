@@ -108,13 +108,13 @@ func (s *harpServer) UpdateSubnet(_ context.Context, in *pb.ReqUpdateSubnet) (*p
 func (s *harpServer) DeleteSubnet(_ context.Context, in *pb.ReqDeleteSubnet) (*pb.ResDeleteSubnet, error) {
 	logger.Logger.Println("Request received: DeleteSubnet()")
 
-	uuid, errCode, errStr := dao.DeleteSubnet(in)
+	deleteSubnet, errCode, errStr := dao.DeleteSubnet(in)
 	if errCode != 0 {
 		errStack := errors.ReturnHccError(errCode, errStr)
-		return &pb.ResDeleteSubnet{UUID: "", HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
+		return &pb.ResDeleteSubnet{Subnet: &pb.Subnet{}, HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
 	}
 
-	return &pb.ResDeleteSubnet{UUID: uuid}, nil
+	return &pb.ResDeleteSubnet{Subnet: deleteSubnet}, nil
 }
 
 func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreateAdaptiveIPSetting) (*pb.ResCreateAdaptiveIPSetting, error) {
