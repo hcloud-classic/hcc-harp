@@ -27,7 +27,8 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 	var createdAt time.Time
 
 	sql := "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where server_uuid = ?"
-	err := mysql.Db.QueryRow(sql, serverUUID).Scan(
+	row := mysql.Db.QueryRow(sql, serverUUID)
+	err := mysql.QueryRowScan(row,
 		&serverUUID,
 		&publicIP,
 		&privateIP,
@@ -106,10 +107,10 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	var err error
 	if isLimit {
 		sql += " order by created_at desc limit ? offset ?"
-		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+		stmt, err = mysql.Query(sql, row, row*(page-1))
 	} else {
 		sql += " order by created_at desc"
-		stmt, err = mysql.Db.Query(sql)
+		stmt, err = mysql.Query(sql)
 	}
 
 	if err != nil {
@@ -180,7 +181,8 @@ func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
 	var adaptiveIPServerNr int64
 
 	sql := "select count(*) from adaptiveip_server"
-	err := mysql.Db.QueryRow(sql).Scan(&adaptiveIPServerNr)
+	row := mysql.Db.QueryRow(sql)
+	err := mysql.QueryRowScan(row, &adaptiveIPServerNr)
 	if err != nil {
 		errStr := "ReadAdaptiveIPServerNum(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -249,7 +251,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	}
 
 	sql := "insert into adaptiveip_server(server_uuid, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, now())"
-	stmt, err := mysql.Db.Prepare(sql)
+	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "CreateAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -296,7 +298,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	}
 
 	sql := "delete from adaptiveip_server where server_uuid = ?"
-	stmt, err := mysql.Db.Prepare(sql)
+	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)

@@ -32,7 +32,8 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	var createdAt time.Time
 
 	sql := "select network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
-	err := mysql.Db.QueryRow(sql, uuid).Scan(
+	row := mysql.Db.QueryRow(sql, uuid)
+	err := mysql.QueryRowScan(row,
 		&networkIP,
 		&netmask,
 		&gateway,
@@ -92,7 +93,8 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	var createdAt time.Time
 
 	sql := "select uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, leader_node_uuid, os, subnet_name, created_at from subnet where server_uuid = ?"
-	err := mysql.Db.QueryRow(sql, serverUUID).Scan(
+	row := mysql.Db.QueryRow(sql, serverUUID)
+	err := mysql.QueryRowScan(row,
 		&uuid,
 		&networkIP,
 		&netmask,
@@ -234,10 +236,10 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	var err error
 	if isLimit {
 		sql += " order by created_at desc limit ? offset ?"
-		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+		stmt, err = mysql.Query(sql, row, row*(page-1))
 	} else {
 		sql += " order by created_at desc"
-		stmt, err = mysql.Db.Query(sql)
+		stmt, err = mysql.Query(sql)
 	}
 
 	if err != nil {
@@ -310,9 +312,8 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 	var subnetName string
 	var createdAt time.Time
 
-
 	sql := "select * from subnet where server_uuid = '' order by created_at desc"
-	stmt, err := mysql.Db.Query(sql)
+	stmt, err := mysql.Query(sql)
 	if err != nil {
 		errStr := "ReadAvailableSubnetList(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -370,7 +371,8 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 	var subnetNr int64
 
 	sql := "select count(*) from subnet"
-	err := mysql.Db.QueryRow(sql).Scan(&subnetNr)
+	row := mysql.Db.QueryRow(sql)
+	err := mysql.QueryRowScan(row, &subnetNr)
 	if err != nil {
 		errStr := "ReadSubnetNum(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -479,7 +481,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	}
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
-	stmt, err := mysql.Db.Prepare(sql)
+	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -642,7 +644,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	}
 	sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
 
-	stmt, err := mysql.Db.Prepare(sql)
+	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "UpdateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -689,7 +691,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	}
 
 	sql := "delete from subnet where uuid = ?"
-	stmt, err := mysql.Db.Prepare(sql)
+	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "DeleteSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
