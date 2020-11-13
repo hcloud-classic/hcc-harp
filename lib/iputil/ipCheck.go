@@ -65,4 +65,3 @@ func CheckGateway(subnet net.IPNet, gateway string) error {
 
 	return nil
 }
-

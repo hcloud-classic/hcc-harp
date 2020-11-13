@@ -6,12 +6,12 @@ import (
 )
 
 func Test_CheckIP(t *testing.T) {
-	netIP := CheckValidIP("Vaild IP")
+	netIP := CheckValidIP("192.168.100.0")
 	if netIP == nil {
 		t.Fatal("wrong network IP")
 	}
 
-	mask, err := CheckNetmask("Vaild Netmask")
+	mask, err := CheckNetmask("255.255.255.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func Test_CheckIP(t *testing.T) {
 		Mask: mask,
 	}
 
-	err = CheckGateway(ipNet, "Valid Gateway")
+	err = CheckGateway(ipNet, "192.168.100.1")
 	if err != nil {
 		t.Fatal(err)
 	}
