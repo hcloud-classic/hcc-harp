@@ -1,13 +1,17 @@
 package dao
 
 import (
+	dbsql "database/sql"
 	"errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/model"
 	"time"
+
+	gouuid "github.com/nu7hatch/gouuid"
 )
 
+// ReadSubnet : Get infos of a subnet
 func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	var subnet model.Subnet
 
@@ -58,6 +62,7 @@ func ReadSubnet(args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
+// ReadSubnetByServer : Get infos of a subnet by server UUID
 func ReadSubnetByServer(serverUUID string) (interface{}, error) {
 	var subnet model.Subnet
 
@@ -107,14 +112,7 @@ func ReadSubnetByServer(serverUUID string) (interface{}, error) {
 	return subnet, nil
 }
 
-
-func checkReadSubnetListPageRow(args map[string]interface{}) bool {
-	_, rowOk := args["row"].(int)
-	_, pageOk := args["page"].(int)
-
-	return !rowOk || !pageOk
-}
-
+// ReadSubnetList : Get list of subnet with selected infos
 func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	var subnets []model.Subnet
 	var uuid string
@@ -131,10 +129,15 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	os, osOk := args["os"].(string)
 	subnetName, subnetNameOk := args["subnet_name"].(string)
 
-	row, _ := args["row"].(int)
-	page, _ := args["page"].(int)
-	if checkReadSubnetListPageRow(args) {
-		return nil, errors.New("need row and page arguments")
+	var isLimit bool
+	row, rowOk := args["row"].(int)
+	page, pageOk := args["page"].(int)
+	if !rowOk && !pageOk {
+		isLimit = false
+	} else if rowOk && pageOk {
+		isLimit = true
+	} else {
+		return nil, errors.New("please insert row and page arguments or leave arguments as empty state")
 	}
 
 	sql := "select * from subnet where 1=1"
@@ -170,9 +173,16 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 		sql += " and subnet_name = '" + subnetName + "'"
 	}
 
-	sql += " order by created_at desc limit ? offset ?"
+	var stmt *dbsql.Rows
+	var err error
+	if isLimit {
+		sql += " order by created_at desc limit ? offset ?"
+		stmt, err = mysql.Db.Query(sql, row, row*(page-1))
+	} else {
+		sql += " order by created_at desc"
+		stmt, err = mysql.Db.Query(sql)
+	}
 
-	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
 	if err != nil {
 		logger.Logger.Println(err.Error())
 		return nil, err
@@ -193,50 +203,7 @@ func ReadSubnetList(args map[string]interface{}) (interface{}, error) {
 	return subnets, nil
 }
 
-func ReadSubnetAll(args map[string]interface{}) (interface{}, error) {
-	var err error
-	var subnets []model.Subnet
-	var uuid string
-	var networkIP string
-	var netmask string
-	var gateway string
-	var nextServer string
-	var nameServer string
-	var domainName string
-	var serverUUID string
-	var leaderNodeUUID string
-	var os string
-	var subnetName string
-	var createdAt time.Time
-	row, rowOk := args["row"].(int)
-	page, pageOk := args["page"].(int)
-	if !rowOk || !pageOk {
-		return nil, err
-	}
-
-	sql := "select * from subnet order by created_at desc limit ? offset ?"
-
-	stmt, err := mysql.Db.Query(sql, row, row*(page-1))
-	if err != nil {
-		logger.Logger.Println(err.Error())
-		return nil, err
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
-	for stmt.Next() {
-		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
-		if err != nil {
-			logger.Logger.Println(err)
-			return nil, err
-		}
-		subnet := model.Subnet{UUID: uuid, NetworkIP: networkIP, Netmask: netmask, Gateway: gateway, NextServer: nextServer, NameServer: nameServer, DomainName: domainName, ServerUUID: serverUUID, LeaderNodeUUID: leaderNodeUUID, OS: os, SubnetName: subnetName, CreatedAt: createdAt}
-		subnets = append(subnets, subnet)
-	}
-
-	return subnets, nil
-}
+// ReadSubnetNum : Get the number of subnets
 func ReadSubnetNum() (model.SubnetNum, error) {
 	var subnetNum model.SubnetNum
 	var subnetNr int
@@ -253,7 +220,8 @@ func ReadSubnetNum() (model.SubnetNum, error) {
 	return subnetNum, nil
 }
 
-func (args map[string]interface{}) (interface{}, error) {
+// CreateSubnet : Create a subnet
+func CreateSubnet(args map[string]interface{}) (interface{}, error) {
 	out, err := gouuid.NewV4()
 	if err != nil {
 		logger.Logger.Println(err)
@@ -294,72 +262,36 @@ func (args map[string]interface{}) (interface{}, error) {
 	return subnet, nil
 }
 
-
-
-func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
-	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
-	netmaskOk := len(reqSubnet.GetNetmask()) != 0
-	gatewayOk := len(reqSubnet.GetGateway()) != 0
-	nextServerOk := len(reqSubnet.GetNextServer()) != 0
-	nameServerOk := len(reqSubnet.GetNameServer()) != 0
-	domainNameOk := len(reqSubnet.GetDomainName()) != 0
-	serverUUIDOk := len(reqSubnet.GetServerUUID()) != 0
-	leaderNodeUUIDOk := len(reqSubnet.GetLeaderNodeUUID()) != 0
-	osOk := len(reqSubnet.GetOS()) != 0
-	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
+func checkUpdateSubnetArgs(args map[string]interface{}) bool {
+	_, networkIPOk := args["network_ip"].(string)
+	_, netmaskOk := args["netmask"].(string)
+	_, gatewayOk := args["gateway"].(string)
+	_, nextServerOk := args["next_server"].(string)
+	_, nameServerOk := args["name_server"].(string)
+	_, domainNameOk := args["domain_name"].(string)
+	_, serverUUIDOk := args["server_uuid"].(string)
+	_, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
+	_, osOk := args["os"].(string)
+	_, subnetNameOk := args["subnet_name"].(string)
 
 	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
 
-func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
-	if in.Subnet == nil {
-		return nil, errors.New("subnet is nil")
-	}
-	reqSubnet := in.Subnet
+// UpdateSubnet : Update infos of a subnet
+func UpdateSubnet(args map[string]interface{}) (interface{}, error) {
+	requestedUUID, requestedUUIDOk := args["uuid"].(string)
+	networkIP, networkIPOk := args["network_ip"].(string)
+	netmask, netmaskOk := args["netmask"].(string)
+	gateway, gatewayOk := args["gateway"].(string)
+	nextServer, nextServerOk := args["next_server"].(string)
+	nameServer, nameServerOk := args["name_server"].(string)
+	domainName, domainNameOk := args["domain_name"].(string)
+	serverUUID, serverUUIDOk := args["server_uuid"].(string)
+	leaderNodeUUID, leaderNodeUUIDOk := args["leader_node_uuid"].(string)
+	os, osOk := args["os"].(string)
+	subnetName, subnetNameOk := args["subnet_name"].(string)
 
-	requestedUUID := reqSubnet.GetUUID()
-	requestedUUIDOk := len(requestedUUID) != 0
-	if !requestedUUIDOk {
-		return nil, errors.New("need a uuid argument")
-	}
-
-	if checkUpdateSubnetArgs(reqSubnet) {
-		return nil, errors.New("need some arguments")
-	}
-
-	var networkIP string
-	var netmask string
-	var gateway string
-	var nextServer string
-	var nameServer string
-	var domainName string
-	var serverUUID string
-	var leaderNodeUUID string
-	var os string
-	var subnetName string
-
-	networkIP = in.GetSubnet().NetworkIP
-	networkIPOk := len(networkIP) != 0
-	netmask = in.GetSubnet().Netmask
-	netmaskOk := len(netmask) != 0
-	gateway = in.GetSubnet().Gateway
-	gatewayOk := len(gateway) != 0
-	nextServer = in.GetSubnet().NextServer
-	nextServerOk := len(nextServer) != 0
-	nameServer = in.GetSubnet().NameServer
-	nameServerOk := len(nameServer) != 0
-	domainName = in.GetSubnet().DomainName
-	domainNameOk := len(domainName) != 0
-	serverUUID = in.GetSubnet().ServerUUID
-	serverUUIDOk := len(serverUUID) != 0
-	leaderNodeUUID = in.GetSubnet().LeaderNodeUUID
-	leaderNodeUUIDOk := len(leaderNodeUUID) != 0
-	os = in.GetSubnet().OS
-	osOk := len(os) != 0
-	subnetName = in.GetSubnet().SubnetName
-	subnetNameOk := len(subnetName) != 0
-
-	subnet := new(pb.Subnet)
+	subnet := new(model.Subnet)
 	subnet.UUID = requestedUUID
 	subnet.NetworkIP = networkIP
 	subnet.Netmask = netmask
@@ -372,122 +304,92 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, error) {
 	subnet.OS = os
 	subnet.SubnetName = subnetName
 
-	oldSubnet, err := ReadSubnet(subnet.GetUUID())
-	if err != nil {
-		return nil, err
-	}
+	if requestedUUIDOk {
+		if checkUpdateSubnetArgs(args) {
+			return nil, errors.New("need some arguments")
+		}
 
-	if !networkIPOk {
-		subnet.NetworkIP = oldSubnet.NetworkIP
-	}
-	if !netmaskOk {
-		subnet.Netmask = oldSubnet.Netmask
-	}
-	if !gatewayOk {
-		subnet.Gateway = oldSubnet.Gateway
-	}
+		sql := "update subnet set"
+		var updateSet = ""
+		if networkIPOk {
+			updateSet += " network_ip = '" + subnet.NetworkIP + "', "
+		}
+		if netmaskOk {
+			updateSet += " netmask = '" + subnet.Netmask + "', "
+		}
+		if gatewayOk {
+			updateSet += " gateway = '" + subnet.Gateway + "', "
+		}
+		if nextServerOk {
+			updateSet += " next_server = '" + subnet.NextServer + "', "
+		}
+		if nameServerOk {
+			updateSet += " name_server = '" + subnet.NameServer + "', "
+		}
+		if domainNameOk {
+			updateSet += " domain_name = '" + subnet.DomainName + "', "
+		}
+		if serverUUIDOk {
+			updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
+		}
+		if leaderNodeUUIDOk {
+			updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
+		}
+		if osOk {
+			updateSet += " os = '" + subnet.OS + "', "
+		}
+		if subnetNameOk {
+			updateSet += " subnet_name = '" + subnet.SubnetName + "', "
+		}
+		sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
-	if err != nil {
-		return nil, err
-	}
+		logger.Logger.Println("update_subnet sql : ", sql)
 
-	if serverUUIDOk {
-		err = checkServerUUID(subnet.ServerUUID)
+		stmt, err := mysql.Db.Prepare(sql)
 		if err != nil {
+			logger.Logger.Println(err.Error())
 			return nil, err
 		}
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		result, err2 := stmt.Exec(subnet.UUID)
+		if err2 != nil {
+			logger.Logger.Println(err2)
+			return nil, err
+		}
+		logger.Logger.Println(result.LastInsertId())
+		return subnet, nil
 	}
 
-	sql := "update subnet set"
-	var updateSet = ""
-	if networkIPOk {
-		updateSet += " network_ip = '" + subnet.NetworkIP + "', "
-	}
-	if netmaskOk {
-		updateSet += " netmask = '" + subnet.Netmask + "', "
-	}
-	if gatewayOk {
-		updateSet += " gateway = '" + subnet.Gateway + "', "
-	}
-	if nextServerOk {
-		updateSet += " next_server = '" + subnet.NextServer + "', "
-	}
-	if nameServerOk {
-		updateSet += " name_server = '" + subnet.NameServer + "', "
-	}
-	if domainNameOk {
-		updateSet += " domain_name = '" + subnet.DomainName + "', "
-	}
-	if serverUUIDOk {
-		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
-	}
-	if leaderNodeUUIDOk {
-		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
-	}
-	if osOk {
-		updateSet += " os = '" + subnet.OS + "', "
-	}
-	if subnetNameOk {
-		updateSet += " subnet_name = '" + subnet.SubnetName + "', "
-	}
-	sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
-
-	logger.Logger.Println("update_subnet sql : ", sql)
-
-	stmt, err := mysql.Db.Prepare(sql)
-	if err != nil {
-		logger.Logger.Println(err.Error())
-		return nil, err
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
-	result, err2 := stmt.Exec(subnet.UUID)
-	if err2 != nil {
-		logger.Logger.Println(err2)
-		return nil, err
-	}
-	logger.Logger.Println(result.LastInsertId())
-	return subnet, nil
+	return nil, errors.New("need uuid argument")
 }
 
-func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, error) {
+// DeleteSubnet : Delete a subnet by UUID
+func DeleteSubnet(args map[string]interface{}) (interface{}, error) {
 	var err error
 
-	requestedUUID := in.GetUUID()
-	requestedUUIDOk := len(requestedUUID) != 0
-	if !requestedUUIDOk {
-		return "", errors.New("need a uuid argument")
+	requestedUUID, ok := args["uuid"].(string)
+	if ok {
+		sql := "delete from subnet where uuid = ?"
+		stmt, err := mysql.Db.Prepare(sql)
+		if err != nil {
+			logger.Logger.Println(err.Error())
+			return nil, err
+		}
+		defer func() {
+			_ = stmt.Close()
+		}()
+		result, err2 := stmt.Exec(requestedUUID)
+		if err2 != nil {
+			logger.Logger.Println(err2)
+			return nil, err
+		}
+		logger.Logger.Println(result.RowsAffected())
+
+		return requestedUUID, nil
 	}
 
-	subnet, err := ReadSubnet(requestedUUID)
-	if err != nil {
-		return "", err
-	}
-
-	if len(subnet.ServerUUID) == 0 {
-		msg := "subnet is used by the server (UUID:" + subnet.ServerUUID + ")"
-		logger.Logger.Println(msg)
-		return "", errors.New(msg)
-	}
-
-	sql := "delete from subnet where uuid = ?"
-	stmt, err := mysql.Db.Prepare(sql)
-	if err != nil {
-		logger.Logger.Println(err.Error())
-		return "", err
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-	result, err2 := stmt.Exec(requestedUUID)
-	if err2 != nil {
-		logger.Logger.Println(err2)
-		return "", err
-	}
-	logger.Logger.Println(result.RowsAffected())
-
-	return requestedUUID, nil
+	return requestedUUID, err
 }
