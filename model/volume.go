@@ -8,6 +8,7 @@ var DefaultPXEdir = "/HCC"
 // OSDiskSize : Disk size for OS use
 var OSDiskSize = 20
 
+// Volume : Structure of Volume
 type Volume struct {
 	UUID       string    `json:"uuid"`
 	Size       int       `json:"size"`
@@ -18,10 +19,12 @@ type Volume struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// Volumes : Structure of Volumes
 type Volumes struct {
 	Volumes []Volume `json:"volume"`
 }
 
+// VolumeNum : Structure of VolumeNum
 type VolumeNum struct {
 	Number int `json:"number"`
 }
