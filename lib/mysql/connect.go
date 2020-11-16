@@ -2,11 +2,10 @@ package mysql
 
 import (
 	"database/sql"
+	_ "github.com/go-sql-driver/mysql" // Needed for connect mysql
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"strconv"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 // Db : Pointer of mysql connection
