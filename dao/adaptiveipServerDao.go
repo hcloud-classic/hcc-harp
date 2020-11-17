@@ -13,6 +13,7 @@ import (
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -225,6 +226,32 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	err := iputil.CheckIPisInSubnet(netIP, publicIP)
 	if err != nil {
 		return nil, hccerr.HarpInternalIPAddressError, "CreateAdaptiveIPServer(): " + err.Error()
+	}
+
+	var startIPSum = 0
+	var endIPSsum = 0
+	var publicIPSum = 0
+
+	startIPSplit := strings.Split(adaptiveIP.StartIPAddress, ".")
+	endIPSplit := strings.Split(adaptiveIP.EndIPAddress, ".")
+	publicIPSplit := strings.Split(publicIP, ".")
+
+	for _, startIPSplited := range startIPSplit {
+		num, _ := strconv.Atoi(startIPSplited)
+		startIPSum += num
+	}
+	for _, endIPSplited := range endIPSplit {
+		num, _ := strconv.Atoi(endIPSplited)
+		endIPSsum += num
+	}
+	for _, publicIPSplited := range publicIPSplit {
+		num, _ := strconv.Atoi(publicIPSplited)
+		publicIPSum += num
+	}
+
+	if publicIPSum < startIPSum || publicIPSum > endIPSsum {
+		return nil, hccerr.HarpInternalIPAddressError,
+			"CreateAdaptiveIPServer(): Provided public IP address is out of range. Check AdaptiveIP settings."
 	}
 
 	adaptiveIPServer := pb.AdaptiveIPServer{
