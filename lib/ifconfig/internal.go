@@ -4,8 +4,10 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -63,20 +65,33 @@ func LoadExistingIfconfigScriptsInternal() error {
 // CreateAndLoadIfconfigScriptInternal : Create and load ifconfig script for internal interface
 func CreateAndLoadIfconfigScriptInternal(internelIfacename string, privateGatewayIP string, netmaskPrivate string) error {
 	var ifconfigInternalScriptData string
-	ifconfigInternalScriptData = ifconfigReplaceString
+	ifconfigInternalScriptData = ifconfigReplaceString()
 	ifconfigInternalScriptData = strings.Replace(ifconfigInternalScriptData, "IFCONFIG_IFACE_NAME", internelIfacename, -1)
+	if syscheck.OS == "linux" {
+		var ifaceVNUM = 0
+
+		ipSplit := strings.Split(privateGatewayIP, ".")
+		for _, ipSplited := range ipSplit {
+			ipSplitedInt, _ := strconv.Atoi(ipSplited)
+			ifaceVNUM += ipSplitedInt
+		}
+
+		ifconfigInternalScriptData = strings.Replace(ifconfigInternalScriptData, "IFCONFIG_IFACE_VNUM", strconv.Itoa(ifaceVNUM), -1)
+	}
 	ifconfigInternalScriptData = strings.Replace(ifconfigInternalScriptData, "IFCONFIG_IP", privateGatewayIP, -1)
 	ifconfigInternalScriptData = strings.Replace(ifconfigInternalScriptData, "IFCONFIG_NETMASK", netmaskPrivate, -1)
 
 	var ifconfigScriptData string
-	ifconfigScriptData = ifconfigSHELL + ifconfigInternalScriptData
-	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	ifconfigScriptData = ifconfigShell() + ifconfigInternalScriptData
+	if syscheck.OS == "freebsd" {
+		ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	}
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + privateGatewayIP + ".sh"
 	logger.Logger.Println("CreateAndLoadIfconfigScriptInternal: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.DHCPD.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
 
-	err := logger.CreateDirIfNotExist(config.DHCPD.IfconfigScriptFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.DHCPD.IfconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}

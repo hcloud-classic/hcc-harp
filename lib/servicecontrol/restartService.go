@@ -2,6 +2,7 @@ package servicecontrol
 
 import (
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -32,10 +33,19 @@ func restartRouting() error {
 
 // RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
 func RestartDHCPDServer() error {
+	configFiles, err := dhcpdext.GetSubnetConfFiles()
+	if err != nil {
+		return err
+	}
+	if len(configFiles) == 0 {
+		logger.Logger.Println("No need to restart dhcpd service.")
+		return nil
+	}
+
 	logger.Logger.Println("Restarting dhcpd service...")
 
 	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}

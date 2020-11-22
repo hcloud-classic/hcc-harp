@@ -28,7 +28,7 @@ func CheckNetmask(netmask string) (net.IPMask, error) {
 	for i := range maskPartsStr {
 		maskParts[i], err = strconv.Atoi(maskPartsStr[i])
 		if err != nil {
-			return nil, errors.New("netmask contained none integer value")
+			return nil, errors.New("netmask contained non-integer value")
 		}
 	}
 
@@ -50,17 +50,17 @@ func CheckNetmask(netmask string) (net.IPMask, error) {
 	return mask, err
 }
 
-// CheckGateway : Check if gateway IP address is in the given network IP address.
-// Network IP address must be given as net.IPNet and gateway must be given as string value.
-// It will return error if given invalid IP address or not in the network IP address.
-func CheckGateway(subnet net.IPNet, gateway string) error {
-	netIPgateway := CheckValidIP(gateway)
-	if netIPgateway == nil {
-		return errors.New("wrong gateway IP")
+// CheckIPisInSubnet : Check if provided IP address is in the given subnet.
+// Subnet must be given as net.IPNet and IP must be given as string value.
+// It will return error if given invalid IP address or IP is not in the subnet.
+func CheckIPisInSubnet(subnet net.IPNet, IP string) error {
+	netIP := CheckValidIP(IP)
+	if netIP == nil {
+		return errors.New("wrong IP address")
 	}
-	isGatewayInSubnet := subnet.Contains(netIPgateway)
-	if isGatewayInSubnet == false {
-		return errors.New("gateway IP is not in the subnet")
+	IPisInSubnet := subnet.Contains(netIP)
+	if IPisInSubnet == false {
+		return errors.New("given IP address is not in the subnet")
 	}
 
 	return nil

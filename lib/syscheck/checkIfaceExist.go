@@ -2,7 +2,6 @@ package syscheck
 
 import (
 	"errors"
-	"fmt"
 	"net"
 )
 
@@ -17,11 +16,9 @@ func CheckIfaceExist(ifaceName string) (net.Interface, error) {
 
 	for _, i := range interfaces {
 		if i.Name == ifaceName {
-			fmt.Println("checkIfaceExist: '" + ifaceName + "' interface found.")
 			return i, nil
 		}
 	}
 
-	fmt.Println("checkIfaceExist: '" + ifaceName + "' interface not found. Please check the configuration file.")
-	return iface, errors.New("interface not found")
+	return iface, errors.New(ifaceName + "' interface not found. Please check the configuration file.")
 }

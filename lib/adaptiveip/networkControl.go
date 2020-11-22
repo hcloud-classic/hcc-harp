@@ -1,17 +1,67 @@
 package adaptiveip
 
 import (
+	"hcc/harp/action/grpc/client"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/iptables"
+	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/servicecontrol"
+	"hcc/harp/lib/syscheck"
+	"net"
 	"os/exec"
 )
 
-func settingExternalInterface() error {
+func checkIPConfigured(ifaceName string, ip string) (bool, error) {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return false, err
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return false, err
+	}
+
+	netIP := iputil.CheckValidIP(ip)
+
+	for _, addr := range addrs {
+		var ifaceIP net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ifaceIP = v.IP
+		case *net.IPAddr:
+			ifaceIP = v.IP
+		}
+
+		if ifaceIP != nil && ifaceIP.Equal(netIP) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func checkGatewayConfigured(gateway string) (bool, error) {
+	systemGateway, err := iputil.GetDefaultRoute()
+	if err != nil {
+		return false, err
+	}
+
+	gatewayNetIP := iputil.CheckValidIP(gateway)
+	if systemGateway.Equal(gatewayNetIP) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func settingExternalInterfaceFreeBSD() error {
 	logger.Logger.Println("Setting external interface...")
 
 	cmd := exec.Command("/usr/bin/sed", "-i", "", "/ifconfig_"+
@@ -21,7 +71,7 @@ func settingExternalInterface() error {
 		return err
 	}
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	externalInterfaceString := "ifconfig_" + config.AdaptiveIP.ExternalIfaceName +
 		"=\"inet " + adaptiveip.ExtIfaceIPAddress + " netmask " + adaptiveip.Netmask + "\"\n"
@@ -33,7 +83,30 @@ func settingExternalInterface() error {
 	return nil
 }
 
-func settingDefaultGateway() error {
+func settingExternalInterfaceLinux() error {
+	logger.Logger.Println("Setting external interface...")
+
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	cmd := exec.Command("ifconfig", config.AdaptiveIP.ExternalIfaceName, adaptiveip.ExtIfaceIPAddress, "netmask",
+		adaptiveip.Netmask)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingExternalInterface() error {
+	if syscheck.OS == "freebsd" {
+		return settingExternalInterfaceFreeBSD()
+	}
+
+	return settingExternalInterfaceLinux()
+}
+
+func settingDefaultGatewayFreeBSD() error {
 	logger.Logger.Println("Setting default gateway...")
 
 	cmd := exec.Command("/usr/bin/sed", "-i", "", "/defaultrouter/d", "/etc/rc.conf")
@@ -42,7 +115,7 @@ func settingDefaultGateway() error {
 		return err
 	}
 
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	defaultrouteString := "defaultrouter=\"" + adaptiveip.GatewayAddress + "\"\n"
 	err = fileutil.WriteFileAppend("/etc/rc.conf", defaultrouteString)
@@ -53,17 +126,91 @@ func settingDefaultGateway() error {
 	return nil
 }
 
+func flushDefaultGatewaysLinux() error {
+	logger.Logger.Println("Flushing default gateways...")
+
+	cmd := exec.Command("ip", "route", "flush", "0/0")
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingDefaultGatewayLinux() error {
+	err := flushDefaultGatewaysLinux()
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("Setting default gateway...")
+
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	cmd := exec.Command("route", "add", "default", "gw", adaptiveip.GatewayAddress)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingDefaultGateway() error {
+	if syscheck.OS == "freebsd" {
+		return settingDefaultGatewayFreeBSD()
+	}
+
+	return settingDefaultGatewayLinux()
+}
+
 func settingExternalNetwork() error {
 	logger.Logger.Println("Setting external network...")
 
-	err := settingExternalInterface()
+	var needNetworkRestart = false
+
+	ifaceName := config.AdaptiveIP.ExternalIfaceName
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	isIPConfigured, err := checkIPConfigured(ifaceName, adaptiveip.ExtIfaceIPAddress)
 	if err != nil {
 		logger.Logger.Println(err)
 	}
 
-	err = settingDefaultGateway()
+	if !isIPConfigured {
+		err = settingExternalInterface()
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+		needNetworkRestart = true
+	}
+
+	isGatewayConfigured, err := checkGatewayConfigured(adaptiveip.GatewayAddress)
 	if err != nil {
 		logger.Logger.Println(err)
+	}
+
+	if !isGatewayConfigured {
+		err = settingDefaultGateway()
+		if err != nil {
+			logger.Logger.Println(err)
+		}
+		needNetworkRestart = true
+	}
+
+	if syscheck.OS == "freebsd" && needNetworkRestart {
+		client.End()
+
+		err = servicecontrol.RestartNetwork()
+		if err != nil {
+			return err
+		}
+
+		err = client.Init()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return nil
@@ -72,11 +219,6 @@ func settingExternalNetwork() error {
 // LoadHarpPFRules : Load pf rules for harp module
 func LoadHarpPFRules() error {
 	err := settingExternalNetwork()
-	if err != nil {
-		return err
-	}
-
-	err = servicecontrol.RestartNetwork()
 	if err != nil {
 		return err
 	}
@@ -107,6 +249,51 @@ func LoadHarpPFRules() error {
 	}
 
 	err = ifconfig.LoadExistingIfconfigScriptsExternal()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// LoadHarpIPTABLESRules : Load iptables rules for harp module
+func LoadHarpIPTABLESRules() error {
+	err := settingExternalNetwork()
+	if err != nil {
+		return err
+	}
+
+	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
+	if err != nil {
+		return err
+	}
+
+	err = ifconfig.LoadExistingIfconfigScriptsInternal()
+	if err != nil {
+		return err
+	}
+
+	err = ifconfig.LoadExistingIfconfigScriptsExternal()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.InitIPTABLES()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.LoadAdaptiveIPIPTABLESRules()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.EnableAllRouteLocal()
+	if err != nil {
+		return err
+	}
+
+	err = iptables.EnableIPForwardV4()
 	if err != nil {
 		return err
 	}

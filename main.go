@@ -1,32 +1,107 @@
 package main
 
 import (
-	"hcc/harp/action/graphql"
-	harpEnd "hcc/harp/end"
-	harpInit "hcc/harp/init"
+	"fmt"
+	"hcc/harp/action/grpc/client"
+	"hcc/harp/action/grpc/server"
+	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpd"
+	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
-	"net/http"
-	"strconv"
+	"hcc/harp/lib/mysql"
+	"hcc/harp/lib/pf"
+	"hcc/harp/lib/syscheck"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func init() {
-	err := harpInit.MainInit()
+	err := syscheck.CheckOS()
+	if err != nil {
+		fmt.Println("Please run harp module on Linux or FreeBSD machine.")
+		panic(err)
+	}
+
+	err = syscheck.CheckRoot()
 	if err != nil {
 		panic(err)
 	}
+
+	err = logger.Init()
+	if err != nil {
+		errors.SetErrLogger(logger.Logger)
+		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
+	}
+	errors.SetErrLogger(logger.Logger)
+
+	err = syscheck.CheckFirewall()
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
+	}
+
+	config.Init()
+
+	err = mysql.Init()
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
+	}
+
+	err = client.Init()
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
+	}
+
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+	}
+
+	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+	}
+
+	err = dhcpd.CheckLocalDHCPDConfig()
+	if err != nil {
+		errors.NewHccError(errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
+	}
+
+	if syscheck.OS == "freebsd" {
+		err = pf.PreparePFConfigFiles()
+		if err != nil {
+			errors.NewHccError(errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
+		}
+
+		err = adaptiveip.LoadHarpPFRules()
+		if err != nil {
+			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
+		}
+	} else {
+		err = adaptiveip.LoadHarpIPTABLESRules()
+		if err != nil {
+			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()
+		}
+	}
+}
+
+func end() {
+	client.End()
+	mysql.End()
+	logger.End()
 }
 
 func main() {
-	defer func() {
-		harpEnd.MainEnd()
+	// Catch the exit signal
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		end()
+		fmt.Println("Exiting harp module...")
+		os.Exit(0)
 	}()
 
-	http.Handle("/graphql", graphql.GraphqlHandler)
-	logger.Logger.Println("Opening server on port " + strconv.Itoa(int(config.HTTP.Port)) + "...")
-	err := http.ListenAndServe(":"+strconv.Itoa(int(config.HTTP.Port)), nil)
-	if err != nil {
-		logger.Logger.Println(err)
-		logger.Logger.Println("Failed to prepare http server!")
-	}
+	server.Init()
 }

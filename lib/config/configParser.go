@@ -3,6 +3,8 @@ package config
 import (
 	"github.com/Terry-Mao/goconf"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
+	"net"
 )
 
 var conf = goconf.New()
@@ -42,21 +44,33 @@ func parseMysql() {
 	}
 }
 
-func parseHTTP() {
-	config.HTTPConfig = conf.Get("http")
-	if config.HTTPConfig == nil {
-		logger.Logger.Panicln("no http section")
+func parseGrpc() {
+	config.GrpcConfig = conf.Get("grpc")
+	if config.GrpcConfig == nil {
+		logger.Logger.Panicln("no grpc section")
 	}
 
-	HTTP = http{}
-	HTTP.Port, err = config.HTTPConfig.Int("port")
+	Grpc.Port, err = config.GrpcConfig.Int("port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
+func parseCello() {
+	config.CelloConfig = conf.Get("cello")
+	if config.CelloConfig == nil {
+		logger.Logger.Panicln("no cello section")
+	}
+
+	Cello = cello{}
+	Cello.ServerAddress, err = config.CelloConfig.String("cello_server_address")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	HTTP.RequestRetryCount, err = config.HTTPConfig.Int("request_retry_count")
-	if err != nil {
-		logger.Logger.Panicln(err)
+	netIP := net.ParseIP(Cello.ServerAddress).To4()
+	if netIP == nil {
+		logger.Logger.Panicln("Cello server address is configured incorrectly")
 	}
 }
 
@@ -73,6 +87,16 @@ func parseFlute() {
 	}
 
 	Flute.ServerPort, err = config.FluteConfig.Int("flute_server_port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Flute.ConnectionTimeOutMs, err = config.FluteConfig.Int("flute_connection_timeout_ms")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Flute.ConnectionRetryCount, err = config.FluteConfig.Int("flute_connection_retry_count")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -96,6 +120,16 @@ func parseViolin() {
 	}
 
 	Violin.ServerPort, err = config.ViolinConfig.Int("violin_server_port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Violin.ConnectionTimeOutMs, err = config.ViolinConfig.Int("violin_connection_timeout_ms")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Violin.ConnectionRetryCount, err = config.ViolinConfig.Int("violin_connection_retry_count")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -168,24 +202,31 @@ func parseAdaptiveIP() {
 		logger.Logger.Panic(err)
 	}
 
-	AdaptiveIP.PFBaseConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_base_config_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
+	if syscheck.OS == "freebsd" {
+		AdaptiveIP.PFBaseConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_base_config_file_location")
+		if err != nil {
+			logger.Logger.Panicln(err)
+		}
 
-	AdaptiveIP.PFRulesFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_rules_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
+		AdaptiveIP.PFRulesFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_rules_file_location")
+		if err != nil {
+			logger.Logger.Panicln(err)
+		}
 
-	AdaptiveIP.PFBinatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_binat_config_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
+		AdaptiveIP.PFBinatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_binat_config_file_location")
+		if err != nil {
+			logger.Logger.Panicln(err)
+		}
 
-	AdaptiveIP.PFnatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_nat_config_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
+		AdaptiveIP.PFnatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_nat_config_file_location")
+		if err != nil {
+			logger.Logger.Panicln(err)
+		}
+	} else {
+		AdaptiveIP.IPTABLESInitConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_iptables_init_config_file_location")
+		if err != nil {
+			logger.Logger.Panicln(err)
+		}
 	}
 
 	AdaptiveIP.IfconfigScriptFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_ifconfig_script_file_location")
@@ -223,25 +264,21 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.ArpingRetryCount, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_retry_count")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
 	AdaptiveIP.ArpingRoutineMaxNum, err = config.AdaptiveIPConfig.Int("adaptiveip_arping_routine_max_num")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 }
 
-// Parser : Parse config file
-func Parser() {
+// Init : Parse config file and initialize config structure
+func Init() {
 	if err = conf.Parse(configLocation); err != nil {
 		logger.Logger.Panicln(err)
 	}
 
 	parseMysql()
-	parseHTTP()
+	parseGrpc()
+	parseCello()
 	parseFlute()
 	parseViolin()
 	parseDHCPD()

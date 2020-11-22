@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
+	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iputil"
@@ -87,7 +89,7 @@ func ReplaceBaseConfigAnchorStrings() error {
 		return errors.New("failed reading data from base pf config file location")
 	}
 
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveIP.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveIP.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
@@ -271,9 +273,9 @@ func LoadExstingBinatAndNATRules() error {
 
 // PreparePFConfigFiles : Prepare pf.rules config file for use in adaptive IP
 func PreparePFConfigFiles() error {
-	adaptiveIP := config.GetAdaptiveIPNetwork()
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
 
-	err := config.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return err
 	}
@@ -299,7 +301,7 @@ func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
 
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFBinatConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.PFBinatConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -318,7 +320,7 @@ func createAndLoadBinatAnchorConfig(privateIP string, publicIP string) error {
 	return nil
 }
 
-func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
+func createAndLoadNatAnchorConfig(privateIP string, publicIP string) error {
 	var natanchorConfData string
 
 	natanchorConfData = natStr
@@ -327,11 +329,11 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 	natanchorConfData = strings.Replace(natanchorConfData, "HARP_PF_PUBLIC_IP", publicIP, -1)
 
 	natanchorName := natanchorFilenamePrefix + publicIP
-	logger.Logger.Println("createAndLoadnatAnchorConfig: Creating config file for " + natanchorName +
+	logger.Logger.Println("createAndLoadNatAnchorConfig: Creating config file for " + natanchorName +
 		" (publicIP: " + publicIP + ", privateIP: " + privateIP + ")")
 	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
 
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.PFnatConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.PFnatConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -341,7 +343,7 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 		return err
 	}
 
-	logger.Logger.Println("createAndLoadnatAnchorConfig: Load nat anchor config file for " + natanchorName)
+	logger.Logger.Println("createAndLoadNatAnchorConfig: Load nat anchor config file for " + natanchorName)
 	err = LoadPFAnchorRule(natanchorName, natanchorConfigFileLocation)
 	if err != nil {
 		return err
@@ -353,14 +355,14 @@ func createAndLoadnatAnchorConfig(privateIP string, publicIP string) error {
 // CreateAndLoadAnchorConfig : Create anchor config files to match private IP address
 // to available public IP address. Then load them to pf firewall.
 func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
-	adaptiveip := config.GetAdaptiveIPNetwork()
+	adaptiveip := configext.GetAdaptiveIPNetwork()
 
 	err := CheckBinatAnchorFileExist(publicIP)
 	if err != nil {
 		goto Error
 	}
 
-	err = checkDuplicatedIPAddress(publicIP)
+	err = arping.CheckDuplicatedIPAddress(publicIP)
 	if err != nil {
 		goto Error
 	}
@@ -370,12 +372,78 @@ func CreateAndLoadAnchorConfig(publicIP string, privateIP string) error {
 		goto Error
 	}
 
-	err = createAndLoadnatAnchorConfig(privateIP, publicIP)
+	err = createAndLoadNatAnchorConfig(privateIP, publicIP)
 	if err != nil {
 		goto Error
 	}
 
 	err = ifconfig.CreateAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
+		adaptiveip.Netmask)
+	if err != nil {
+		goto Error
+	}
+
+	return nil
+Error:
+	return err
+}
+
+func deleteAndUnloadBinatAnchorConfig(publicIP string) error {
+	binatanchorName := binatanchorFilenamePrefix + publicIP
+	logger.Logger.Println("deleteAndUnloadBinatAnchorConfig: Deleting config file of " + binatanchorName +
+		" (publicIP: " + publicIP + ")")
+	binatanchorConfigFileLocation := config.AdaptiveIP.PFBinatConfigFileLocation + "/" + binatanchorName + ".conf"
+
+	err := fileutil.DeleteFile(binatanchorConfigFileLocation)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
+
+	logger.Logger.Println("deleteAndUnloadBinatAnchorConfig: Remove binat anchor rules of " + binatanchorName)
+	err = removePFAnchorRule(binatanchorName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteAndUnloadNatAnchorConfig(publicIP string) error {
+	natanchorName := natanchorFilenamePrefix + publicIP
+	logger.Logger.Println("deleteAndUnloadNatAnchorConfig: Deleting config file of " + natanchorName +
+		" (publicIP: " + publicIP + ")")
+	natanchorConfigFileLocation := config.AdaptiveIP.PFnatConfigFileLocation + "/" + natanchorName + ".conf"
+
+	err := fileutil.DeleteFile(natanchorConfigFileLocation)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
+
+	logger.Logger.Println("deleteAndUnloadNatAnchorConfig: Remove nat anchor rules of " + natanchorName)
+	err = removePFAnchorRule(natanchorName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteAndUnloadAnchorConfig : Delete anchor config files to match public IP address.
+// Then unload them from pf firewall.
+func DeleteAndUnloadAnchorConfig(publicIP string) error {
+	adaptiveip := configext.GetAdaptiveIPNetwork()
+
+	err := deleteAndUnloadBinatAnchorConfig(publicIP)
+	if err != nil {
+		goto Error
+	}
+
+	err = deleteAndUnloadNatAnchorConfig(publicIP)
+	if err != nil {
+		goto Error
+	}
+
+	err = ifconfig.DeleteAndUnloadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
 		adaptiveip.Netmask)
 	if err != nil {
 		goto Error

@@ -4,8 +4,10 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/syscheck"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -63,20 +65,33 @@ func LoadExistingIfconfigScriptsExternal() error {
 // CreateAndLoadIfconfigScriptExternal : Create and load ifconfig scripts for external network
 func CreateAndLoadIfconfigScriptExternal(externelIfacename string, publicIP string, netmaskPublic string) error {
 	var ifconfigExternalScriptData string
-	ifconfigExternalScriptData = ifconfigReplaceString
+	ifconfigExternalScriptData = ifconfigReplaceString()
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_NAME", externelIfacename, -1)
+	if syscheck.OS == "linux" {
+		var ifaceVNUM = 0
+
+		ipSplit := strings.Split(publicIP, ".")
+		for _, ipSplited := range ipSplit {
+			ipSplitedInt, _ := strconv.Atoi(ipSplited)
+			ifaceVNUM += ipSplitedInt
+		}
+
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_VNUM", strconv.Itoa(ifaceVNUM), -1)
+	}
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IP", publicIP, -1)
 	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_NETMASK", netmaskPublic, -1)
 
 	var ifconfigScriptData string
-	ifconfigScriptData = ifconfigSHELL + ifconfigExternalScriptData
-	ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	ifconfigScriptData = ifconfigShell() + ifconfigExternalScriptData
+	if syscheck.OS == "freebsd" {
+		ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "alias", -1)
+	}
 
 	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
 	logger.Logger.Println("createAndLoadIfconfigScriptExternal: Creating ifconfig script file: " + ifconfigScriptFileName)
 	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
 
-	err := logger.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation)
 	if err != nil {
 		return err
 	}
@@ -90,6 +105,81 @@ func CreateAndLoadIfconfigScriptExternal(externelIfacename string, publicIP stri
 	err = loadIfconfigScript(ifconfigScriptFileLocation)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// DeleteAndUnloadIfconfigScriptExternal : Delete and unload ifconfig scripts for external network
+func DeleteAndUnloadIfconfigScriptExternal(externelIfacename string, publicIP string, netmaskPublic string) error {
+	var ifconfigExternalScriptData string
+
+	if syscheck.OS == "linux" {
+		ifconfigExternalScriptData = ifconfigDownStringLinux()
+	} else {
+		ifconfigExternalScriptData = ifconfigReplaceString()
+	}
+
+	ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_NAME", externelIfacename, -1)
+	if syscheck.OS == "linux" {
+		var ifaceVNUM = 0
+
+		ipSplit := strings.Split(publicIP, ".")
+		for _, ipSplited := range ipSplit {
+			ipSplitedInt, _ := strconv.Atoi(ipSplited)
+			ifaceVNUM += ipSplitedInt
+		}
+
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IFACE_VNUM", strconv.Itoa(ifaceVNUM), -1)
+	}
+
+	if syscheck.OS == "freebsd" {
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_IP", publicIP, -1)
+		ifconfigExternalScriptData = strings.Replace(ifconfigExternalScriptData, "IFCONFIG_NETMASK", netmaskPublic, -1)
+	}
+
+	var ifconfigScriptData string
+	ifconfigScriptData = ifconfigShell() + ifconfigExternalScriptData
+	if syscheck.OS == "freebsd" {
+		ifconfigScriptData = strings.Replace(ifconfigScriptData, "ALIAS_STATE", "-alias", -1)
+	}
+
+	ifconfigScriptFileName := ifconfigFilenamePrefix + publicIP + ".sh"
+	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Creating ifconfig temporary script file: " + ifconfigScriptFileName)
+	ifconfigScriptFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/" + ifconfigScriptFileName
+	ifconfigScriptTemporaryFileLocation := config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/" + ifconfigScriptFileName
+
+	err := fileutil.CreateDirIfNotExist(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
+	if err != nil {
+		return err
+	}
+
+	err = fileutil.WriteFile(ifconfigScriptTemporaryFileLocation, ifconfigScriptData)
+	if err != nil {
+		return err
+	}
+
+	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Running ifconfig temporary script file: " + ifconfigScriptFileName)
+	err = loadIfconfigScript(ifconfigScriptTemporaryFileLocation)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
+
+	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig temporary script file: " + ifconfigScriptFileName)
+	err = fileutil.DeleteFile(ifconfigScriptTemporaryFileLocation)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
+
+	err = fileutil.DeleteDir(config.AdaptiveIP.IfconfigScriptFileLocation + "/tmp/")
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
+
+	logger.Logger.Println("DeleteAndUnloadIfconfigScriptExternal: Deleting ifconfig script file: " + ifconfigScriptFileName)
+	err = fileutil.DeleteFile(ifconfigScriptFileLocation)
+	if err != nil {
+		logger.Logger.Println(err.Error())
 	}
 
 	return nil

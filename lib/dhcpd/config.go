@@ -1,34 +1,24 @@
 package dhcpd
 
 import (
-	"encoding/json"
-	"github.com/graphql-go/graphql"
+	"errors"
+	"github.com/apparentlymart/go-cidr/cidr"
+	"hcc/harp/action/grpc/client"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/dao"
-	"hcc/harp/data"
-	"hcc/harp/driver"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/dhcpdext"
+	hccerr "hcc/harp/lib/errors"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/ifconfig"
-	"hcc/harp/lib/servicecontrol"
-	"net/http"
-	"time"
-
-	// "encoding/json"
-	"errors"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/servicecontrol"
 	"hcc/harp/model"
 	"io/ioutil"
 	"net"
-
-	"github.com/apparentlymart/go-cidr/cidr"
-
-	// "net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	// "time"
 )
 
 type nodeEntries struct {
@@ -44,55 +34,6 @@ func getPXEFilename(serverUUID string) (string, error) {
 	return model.DefaultPXEdir + "/" + serverUUID + "/pxelinux.0", nil
 }
 
-//type nodePXEMACAddr struct {
-//	Data struct {
-//		Node struct {
-//			PxeMacAddr string `json:"pxe_mac_addr"`
-//		} `json:"node"`
-//	} `json:"data"`
-//}
-
-/*
-func getPXEMACAddress(nodeUUID string) (string, error) {
-	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
-	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+"/graphql?query={node(uuid:%22"+
-		nodeUUID+"%22){pxe_mac_addr}}", nil)
-	if err != nil {
-		return "", err
-	}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		// Check response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			str := string(respBody)
-
-			var MACAddr nodePXEMACAddr
-			err = json.Unmarshal([]byte(str), &MACAddr)
-			if err != nil {
-				return "", err
-			}
-
-			return MACAddr.Data.Node.PxeMacAddr, nil
-		}
-
-		return "", err
-	}
-
-	return "", errors.New("http response returned error code")
-}
-*/
-
-// Flute
-
 // NodeData : Data structure of list_node
 type NodeData struct {
 	Data struct {
@@ -100,56 +41,17 @@ type NodeData struct {
 	} `json:"data"`
 }
 
-func getNodePXEMACAddress(nodeUUID string) (NodeData, error) {
-	var nodePXEMACAddressData NodeData
-
-	client := &http.Client{Timeout: time.Duration(config.Flute.RequestTimeoutMs) * time.Millisecond}
-	req, err := http.NewRequest("GET", "http://"+config.Flute.ServerAddress+":"+strconv.Itoa(int(config.Flute.ServerPort))+
-		"/graphql?query=query%20%7B%0A%20%20node(uuid%3A%20%22"+nodeUUID+"%22)%20%7B%0A%20%20%20%20pxe_mac_addr%0A%20%20%7D%0A%7D", nil)
-
-	if err != nil {
-		return nodePXEMACAddressData, err
-	}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return nodePXEMACAddressData, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		// Check response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			str := string(respBody)
-
-			err = json.Unmarshal([]byte(str), &nodePXEMACAddressData)
-			if err != nil {
-				return nodePXEMACAddressData, err
-			}
-
-			return nodePXEMACAddressData, nil
-		}
-
-		return nodePXEMACAddressData, err
+func getNodePXEMACAddress(nodeUUID string) (string, error) {
+	node, hccErrStack := client.RC.GetNode(nodeUUID)
+	if hccErrStack != nil {
+		return "", (*hccErrStack)[0].New()
 	}
 
-	return nodePXEMACAddressData, errors.New("http response returned error code")
-}
-
-func getPXEMACAddress(nodeUUID string) (string, error) {
-	nodePXEMACAddress, err := getNodePXEMACAddress(nodeUUID)
-	if err != nil {
-		return "", err
-	}
-
-	return nodePXEMACAddress.Data.Node.PXEMacAddr, nil
+	return node.PXEMacAddr, nil
 }
 
 func writeConfigFile(input string, name string) error {
-	err := logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	err := fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
 		return err
 	}
@@ -187,7 +89,7 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 	return nil
 }
 
-func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
+func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
 	useSamePXEFileForCompute bool) error {
 	confContent := subnetConfBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
@@ -195,7 +97,7 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 	confContent = strings.Replace(confContent, "HARP_DHCPD_START_IP", firstIP.String(), -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_LAST_IP", lastIP.String(), -1)
 
-	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", subnet.NextServer, -1)
+	confContent = strings.Replace(confContent, "HARP_DHCPD_NEXT_SERVER", config.Cello.ServerAddress, -1)
 	if useSamePXEFileForCompute {
 		confContent = strings.Replace(confContent, "HARP_DHCPD_PXE_FILENAME", pxeFileName, -1)
 	} else {
@@ -214,14 +116,14 @@ func doWriteConfig(subnet model.Subnet, firstIP net.IP, lastIP net.IP, pxeFileNa
 
 	var nodeEntryConfPart = ""
 	for i, uuid := range nodeUUIDs {
-		pxeMacAddr, err := getPXEMACAddress(uuid)
+		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
 			return err
 		}
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.SubnetName
+		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.UUID
 		node.PXEMACAddress = pxeMacAddr
 		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
@@ -265,15 +167,11 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return errors.New("subnetUUID is needed for make dhcpd config file")
 	}
 
-	args := make(map[string]interface{})
-	args["uuid"] = subnetUUID
-
-	subnetInterface, err := dao.ReadSubnet(args)
-	if err != nil {
-		return err
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "CreateConfig(): "+errStr)
+		return hccErrStack[0].New()
 	}
-
-	var subnet = subnetInterface.(model.Subnet)
 
 	if len(subnet.SubnetName) == 0 {
 		return errors.New("name is needed for make dhcpd config file")
@@ -294,7 +192,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		Mask: mask,
 	}
 
-	err = iputil.CheckGateway(ipNet, subnet.Gateway)
+	err = iputil.CheckIPisInSubnet(ipNet, subnet.Gateway)
 	if err != nil {
 		return err
 	}
@@ -347,12 +245,12 @@ func CheckLocalDHCPDConfig() error {
 	include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION",
 		config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", -1)
 
-	data, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
+	confData, err := ioutil.ReadFile(config.DHCPD.LocalConfigFileLocation)
 	if err != nil {
-		return errors.New("failed reading data from local dhcpd config file location")
+		return errors.New("failed to reading data from local dhcpd config file location")
 	}
 
-	isHarpDHCPDIncluded := strings.Contains(string(data), include)
+	isHarpDHCPDIncluded := strings.Contains(string(confData), include)
 	if !isHarpDHCPDIncluded {
 		logger.Logger.Println("Please add this line to dhcpd config file!\n" + include)
 		return errors.New("cannot find harp dhcp config include line from local dhcpd config file")
@@ -361,130 +259,186 @@ func CheckLocalDHCPDConfig() error {
 	return nil
 }
 
-func getSubnetConfFiles() ([]string, error) {
-	var files []string
-
-	folder := config.DHCPD.ConfigFileLocation
-	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	})
+// UpdateHarpDHCPDConfig : Update harp dhcpd main config file. Write subnet config files include lines to 'harp_dhcpd.conf'
+func UpdateHarpDHCPDConfig() (int, error) {
+	configFiles, err := dhcpdext.GetSubnetConfFiles()
 	if err != nil {
-		return nil, err
+		return 0, err
+	}
+
+	harpDHCPDConf := harpDHCPDConfBase
+	var allIncludeLines = ""
+	var files = 0
+
+	for _, filename := range configFiles {
+		include := "    " + includeStr
+		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
+		allIncludeLines += include + "\n"
+
+		files++
+	}
+
+	if files == 0 {
+		harpDHCPDConf = ""
+	} else {
+		harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
+	}
+
+	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
+	if err != nil {
+		return 0, err
+	}
+
+	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
+	if err != nil {
+		return 0, err
 	}
 
 	return files, nil
 }
 
-// UpdateHarpDHCPDConfig : Update harp dhcpd main config file. Write subnet config files include lines to 'harp_dhcpd.conf'
-func UpdateHarpDHCPDConfig() error {
-	configFiles, err := getSubnetConfFiles()
-	if err != nil {
-		return err
-	}
-
-	harpDHCPDConf := harpDHCPDConfBase
-	var allIncludeLines = ""
-	for _, filename := range configFiles {
-		if strings.Contains(filename, "harp_dhcpd.conf") ||
-			filename == config.DHCPD.ConfigFileLocation {
-			continue
-		}
-
-		include := "    " + includeStr
-		include = strings.Replace(include, "HARP_DHCPD_CONF_LOCATION", filename, -1)
-		allIncludeLines += include + "\n"
-	}
-	harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
-
-	err = logger.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
-	if err != nil {
-		return err
-	}
-
-	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // CreateDHCPDConfig : Do dhcpd config file creation works
-func CreateDHCPDConfig(params graphql.ResolveParams) (interface{}, error) {
-	subnetUUID := params.Args["subnet_uuid"].(string)
-	nodeUUIDs := params.Args["node_uuids"].(string)
+func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
+	subnetUUID := in.GetSubnetUUID()
+	subnetUUIDOk := len(subnetUUID) != 0
 
-	nodeUUIDsParts := strings.Split(nodeUUIDs, ",")
-
-	err := CreateConfig(subnetUUID, nodeUUIDsParts)
-	if err != nil {
-		return nil, err
+	if !subnetUUIDOk {
+		return "", errors.New("need a SubnetUUID argument")
 	}
 
-	err = UpdateHarpDHCPDConfig()
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "CreateDHCPDConfig(): "+errStr)
+		return "", hccErrStack[0].New()
+	}
+
+	nodes, hccErrStack := client.RC.GetNodeList(subnet.ServerUUID)
+	if errCode != 0 {
+		err := (*hccErrStack)[0].New()
+		if err != nil {
+			logger.Logger.Println(errors.New("CreateDHCPDConfig(): Failed to get nodes by server UUID: " +
+				subnet.ServerUUID + " (" + err.Error() + ")"))
+		}
+		return "", err
+	}
+
+	var nodeUUIDs []string
+
+	for i := range nodes {
+		nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
+	}
+
+	err := CreateConfig(subnetUUID, nodeUUIDs)
 	if err != nil {
-		return nil, err
+		return "", err
+	}
+
+	_, err = UpdateHarpDHCPDConfig()
+	if err != nil {
+		return "", err
 	}
 
 	err = servicecontrol.RestartDHCPDServer()
 	if err != nil {
 		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
-		return nil, err
+		return "", err
 	}
 
 	return "CreateDHCPDConfig: succeed", nil
 }
 
-// CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
-func CheckDatabaseAndGenerateDHCPDConfigs() error {
-	allServerData, err := driver.AllServerUUID()
-	if err != nil {
-		return err
+// DeleteDHCPDConfig : Do dhcpd config file deletion works
+func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
+	subnetUUID := in.GetSubnetUUID()
+	subnetUUIDOk := len(subnetUUID) != 0
+
+	if !subnetUUIDOk {
+		return "", errors.New("need a SubnetUUID argument")
 	}
 
-	allServer := allServerData.(data.AllServerData).Data.AllServer
-	for _, server := range allServer {
-		serverUUID := server.UUID
+	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
+	if errCode != 0 {
+		hccErrStack := hccerr.ReturnHccError(errCode, "DeleteDHCPDConfig(): "+errStr)
+		return "", hccErrStack[0].New()
+	}
 
-		listNodeData, err := driver.ListNode(server.UUID)
-		if err != nil {
-			logger.Logger.Println(errors.New("Failed to get listNodeData by server UUID: " + serverUUID))
+	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
+	err := fileutil.DeleteFile(dhcpdConfLocation)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = UpdateHarpDHCPDConfig()
+	if err != nil {
+		return "", err
+	}
+
+	err = servicecontrol.RestartDHCPDServer()
+	if err != nil {
+		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
+		return "", err
+	}
+
+	return "DeleteDHCPDConfig: succeed", nil
+}
+
+// CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
+func CheckDatabaseAndGenerateDHCPDConfigs() error {
+	serverUUIDs, hccErrStack := client.RC.AllServerUUID()
+	if hccErrStack != nil {
+		return (*hccErrStack)[0].New()
+	}
+
+	for i := range serverUUIDs {
+		nodes, hccErrStack := client.RC.GetNodeList(serverUUIDs[i])
+		if hccErrStack != nil {
+			err := (*hccErrStack)[0].New()
+			if err != nil {
+				logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
+					serverUUIDs[i] + " (" + err.Error() + ")"))
+			}
 			continue
 		}
 
-		nodes := listNodeData.(data.ListNodeData).Data.ListNode
 		var nodeUUIDs []string
 
-		for _, node := range nodes {
-			nodeUUIDs = append(nodeUUIDs, node.UUID)
+		for i := range nodes {
+			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
-		subnet, err := dao.ReadSubnetByServer(serverUUID)
-		if err != nil {
-			logger.Logger.Println("Failed to get subnet by server UUID: " + serverUUID)
+		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
+		if errCode != 0 {
+			hccErrStack := hccerr.ReturnHccError(errCode, "CheckDatabaseAndGenerateDHCPDConfigs(): "+errStr)
+			err := hccErrStack[1].New()
+			if err != nil {
+				logger.Logger.Println("Failed to get subnet by server UUID: " +
+					serverUUIDs[i] + " (" + err.Error() + ")")
+			}
 			continue
 		}
 
-		subnetUUID := subnet.(model.Subnet).UUID
-		err = CreateConfig(subnetUUID, nodeUUIDs)
+		subnetUUID := subnet.UUID
+		err := CreateConfig(subnetUUID, nodeUUIDs)
 		if err != nil {
-			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" + subnetUUID)
+			logger.Logger.Println("Failed to create dhcpd config of subnetUUID=" +
+				subnetUUID + " (" + err.Error() + ")")
 			continue
 		}
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 	}
 
-	err = UpdateHarpDHCPDConfig()
+	files, err := UpdateHarpDHCPDConfig()
 	if err != nil {
 		return err
 	}
 
-	err = servicecontrol.RestartDHCPDServer()
-	if err != nil {
-		logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
-		return err
+	if files != 0 {
+		err = servicecontrol.RestartDHCPDServer()
+		if err != nil {
+			logger.Logger.Println("Failed to restart dhcpd server (" + config.DHCPD.LocalDHCPDServiceName + ")")
+			return err
+		}
 	}
 
 	return nil

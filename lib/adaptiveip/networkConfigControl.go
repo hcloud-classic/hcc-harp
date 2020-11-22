@@ -2,43 +2,50 @@ package adaptiveip
 
 import (
 	"errors"
+	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
 	"hcc/harp/lib/pf"
-	"hcc/harp/model"
+	"hcc/harp/lib/syscheck"
 	"strings"
 )
 
-func checkWriteAdaptiveIPNetworkConfigAllArgs(args map[string]interface{}) bool {
-	_, extIPAddressOk := args["ext_iface_ip_address"].(string)
-	_, netmaskOk := args["netmask"].(string)
-	_, gatewayOk := args["gateway"].(string)
-	_, startIPAdressOk := args["start_ip_address"].(string)
-	_, endIPAdressOk := args["end_ip_address"].(string)
+func checkWriteAdaptiveIPNetworkConfigAllArgs(adaptiveIPSetting *pb.AdaptiveIPSetting) bool {
+	extIPAddressOk := len(adaptiveIPSetting.ExtIfaceIPAddress) != 0
+	netmaskOk := len(adaptiveIPSetting.Netmask) != 0
+	gatewayOk := len(adaptiveIPSetting.GatewayAddress) != 0
+	startIPAddressOk := len(adaptiveIPSetting.StartIPAddress) != 0
+	endIPAddressOk := len(adaptiveIPSetting.EndIPAddress) != 0
 
-	return extIPAddressOk && netmaskOk && gatewayOk && startIPAdressOk && endIPAdressOk
+	return extIPAddressOk && netmaskOk && gatewayOk && startIPAddressOk && endIPAddressOk
 }
 
-func writeAdaptiveIPNetworkConfig(args map[string]interface{}) (interface{}, error) {
-	if !checkWriteAdaptiveIPNetworkConfigAllArgs(args) {
+func writeAdaptiveIPNetworkConfig(in *pb.ReqCreateAdaptiveIPSetting) (*pb.AdaptiveIPSetting, error) {
+	adaptiveIPSetting := in.GetAdaptiveipSetting()
+	if adaptiveIPSetting == nil {
+		return nil, errors.New("AdaptiveIPSetting is nil")
+	}
+
+	if !checkWriteAdaptiveIPNetworkConfigAllArgs(adaptiveIPSetting) {
 		return nil, errors.New("needed arguments: ext_iface_ip_address, netmask, gateway, start_ip_address," +
 			"end_ip_address")
 	}
 
-	extIPAddress, _ := args["ext_iface_ip_address"].(string)
-	netmask, _ := args["netmask"].(string)
-	gateway, _ := args["gateway"].(string)
-	startIP, _ := args["start_ip_address"].(string)
-	endIP, _ := args["end_ip_address"].(string)
+	extIPAddress := adaptiveIPSetting.ExtIfaceIPAddress
+	netmask := adaptiveIPSetting.Netmask
+	gateway := adaptiveIPSetting.GatewayAddress
+	startIP := adaptiveIPSetting.StartIPAddress
+	endIP := adaptiveIPSetting.EndIPAddress
 
-	var adaptiveIP model.AdaptiveIP
+	var adaptiveIP pb.AdaptiveIPSetting
 	adaptiveIP.ExtIfaceIPAddress = extIPAddress
 	adaptiveIP.Netmask = netmask
 	adaptiveIP.GatewayAddress = gateway
 	adaptiveIP.StartIPAddress = startIP
 	adaptiveIP.EndIPAddress = endIP
 
-	err := config.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configext.CheckAdaptiveIPConfig(&adaptiveIP)
 	if err != nil {
 		return nil, err
 	}
@@ -57,24 +64,30 @@ func writeAdaptiveIPNetworkConfig(args map[string]interface{}) (interface{}, err
 		return nil, err
 	}
 
-	return adaptiveIP, nil
+	return &adaptiveIP, nil
 }
 
 // WriteNetworkConfigAndReloadHarpNetwork : Write network config files then reload network related services.
-func WriteNetworkConfigAndReloadHarpNetwork(args map[string]interface{}) (interface{}, error) {
-	adaptiveIP, err := writeAdaptiveIPNetworkConfig(args)
+func WriteNetworkConfigAndReloadHarpNetwork(in *pb.ReqCreateAdaptiveIPSetting) (*pb.AdaptiveIPSetting, error) {
+	adaptiveIP, err := writeAdaptiveIPNetworkConfig(in)
 	if err != nil {
 		return nil, err
 	}
+	if syscheck.OS == "freebsd" {
+		err = pf.PreparePFConfigFiles()
+		if err != nil {
+			return nil, err
+		}
 
-	err = pf.PreparePFConfigFiles()
-	if err != nil {
-		return nil, err
-	}
-
-	err = LoadHarpPFRules()
-	if err != nil {
-		return nil, err
+		err = LoadHarpPFRules()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = LoadHarpIPTABLESRules()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return adaptiveIP, nil

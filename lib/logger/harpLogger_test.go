@@ -1,26 +1,17 @@
 package logger
 
 import (
-	"hcc/harp/lib/syscheck"
+	"hcc/harp/lib/errors"
 	"testing"
 )
 
-func Test_CreateDirIfNotExist(t *testing.T) {
-	err := CreateDirIfNotExist("/var/log/" + LogName)
-	if err != nil {
-		t.Fatal("Failed to create dir!")
-	}
-}
-
 func Test_Logger_Prepare(t *testing.T) {
-	err := syscheck.CheckRoot()
+	err := Init()
 	if err != nil {
-		t.Fatal("Failed to get root permission!")
+		errors.SetErrLogger(Logger)
+		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
 	}
-
-	if !Prepare() {
-		t.Fatal("Failed to prepare logger!")
-	}
+	errors.SetErrLogger(Logger)
 	defer func() {
 		_ = FpLog.Close()
 	}()

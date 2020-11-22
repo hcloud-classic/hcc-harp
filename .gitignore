@@ -1,5 +1,9 @@
 harp
 coverage.out
+tmp_melody
+*.proto
+coverage.out
+goreport_grade
 .idea/
 .vscode/
 /vendor
