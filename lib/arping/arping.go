@@ -66,14 +66,14 @@ func GetAvailableIPsStatusMap(netStartIP net.IP, netEndIP net.IP) (map[string]bo
 	var mutex = &sync.Mutex{}
 
 	for i := 0; i < ipRangeCount; {
-		if ipRangeCount-i < RoutineMAX {
+		if ipRangeCount - i < RoutineMAX {
 			routineMax = ipRangeCount - i
 		}
 
 		wait.Add(routineMax)
 
 		for j := 0; j < routineMax; j++ {
-			go func(ip string) {
+			go func(wait *sync.WaitGroup, ip string) {
 				err := CheckDuplicatedIPAddress(ip)
 				// Write to map need a lock
 				mutex.Lock()
@@ -85,7 +85,7 @@ func GetAvailableIPsStatusMap(netStartIP net.IP, netEndIP net.IP) (map[string]bo
 				mutex.Unlock()
 
 				wait.Done()
-			}(netStartIP.String())
+			}(&wait, netStartIP.String())
 
 			netStartIP = cidr.Inc(netStartIP)
 
