@@ -595,24 +595,24 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 }
 
 // DeleteSubnet : Delete a subnet by UUID
-func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
+func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	var err error
 
 	requestedUUID := in.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return "", hccerr.HarpGrpcArgumentError, "DeleteSubnet(): need a uuid argument"
+		return nil, hccerr.HarpGrpcArgumentError, "DeleteSubnet(): need a uuid argument"
 	}
 
 	subnet, errCode, errStr := ReadSubnet(requestedUUID)
 	if errCode != 0 {
-		return "", errCode, "DeleteSubnet(): " + errStr
+		return nil, errCode, "DeleteSubnet(): " + errStr
 	}
 
 	if len(subnet.ServerUUID) != 0 {
 		errStr := "DeleteSubnet(): subnet is used by the server (UUID:" + subnet.ServerUUID + ")"
 		logger.Logger.Println(errStr)
-		return "", hccerr.HarpInternalSubnetInUseError, errStr
+		return nil, hccerr.HarpInternalSubnetInUseError, errStr
 	}
 
 	sql := "delete from subnet where uuid = ?"
@@ -620,7 +620,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
 	if err != nil {
 		errStr := "DeleteSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return "", hccerr.HarpSQLOperationFail, errStr
+		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -629,8 +629,8 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (string, uint64, string) {
 	if err2 != nil {
 		errStr := "DeleteSubnet(): " + err2.Error()
 		logger.Logger.Println(errStr)
-		return "", hccerr.HarpSQLOperationFail, errStr
+		return nil, hccerr.HarpSQLOperationFail, errStr
 	}
 
-	return requestedUUID, 0, ""
+	return subnet, 0, ""
 }
