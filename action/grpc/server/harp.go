@@ -81,6 +81,18 @@ func (s *harpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (
 	return &pb.ResGetSubnetList{Subnet: resGetSubnetList.Subnet}, nil
 }
 
+func (s *harpServer) GetAvailableSubnetList(_ context.Context, _ *pb.Empty) (*pb.ResGetAvailableSubnetList, error) {
+	logger.Logger.Println("Request received: GetAvailableSubnetList()")
+
+	resGetSubnetList, errCode, errStr := dao.ReadAvailableSubnetList()
+	if errCode != 0 {
+		errStack := errors.ReturnHccError(errCode, errStr)
+		return &pb.ResGetAvailableSubnetList{Subnet: []*pb.Subnet{}, HccErrorStack: errconv.HccStackToGrpc(&errStack)}, nil
+	}
+
+	return &pb.ResGetAvailableSubnetList{Subnet: resGetSubnetList.Subnet}, nil
+}
+
 func (s *harpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSubnetNum, error) {
 	logger.Logger.Println("Request received: GetSubnetNum()")
 

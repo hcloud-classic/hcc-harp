@@ -291,6 +291,79 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	return &subnetList, 0, ""
 }
 
+// ReadAvailableSubnetList : Get list of available subnets
+func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
+	var subnetList pb.ResGetSubnetList
+	var subnets []pb.Subnet
+	var psubnets []*pb.Subnet
+
+	var uuid string
+	var networkIP string
+	var netmask string
+	var gateway string
+	var nextServer string
+	var nameServer string
+	var domainName string
+	var serverUUID string
+	var leaderNodeUUID string
+	var os string
+	var subnetName string
+	var createdAt time.Time
+
+
+	sql := "select * from subnet where server_uuid = '' order by created_at desc"
+	stmt, err := mysql.Db.Query(sql)
+	if err != nil {
+		errStr := "ReadAvailableSubnetList(): " + err.Error()
+		logger.Logger.Println(errStr)
+		return nil, hccerr.HarpSQLOperationFail, errStr
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+
+	for stmt.Next() {
+		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
+		if err != nil {
+			errStr := "ReadAvailableSubnetList(): " + err.Error()
+			logger.Logger.Println(errStr)
+			if strings.Contains(err.Error(), "no rows in result set") {
+				return nil, hccerr.HarpSQLNoResult, errStr
+			}
+			return nil, hccerr.HarpSQLOperationFail, errStr
+		}
+
+		_createdAt, err := ptypes.TimestampProto(createdAt)
+		if err != nil {
+			errStr := "ReadAvailableSubnetList(): " + err.Error()
+			logger.Logger.Println(errStr)
+			return nil, hccerr.HarpInternalTimeStampConversionError, errStr
+		}
+
+		subnets = append(subnets, pb.Subnet{
+			UUID:           uuid,
+			NetworkIP:      networkIP,
+			Netmask:        netmask,
+			Gateway:        gateway,
+			NextServer:     nextServer,
+			NameServer:     nameServer,
+			DomainName:     domainName,
+			ServerUUID:     serverUUID,
+			LeaderNodeUUID: leaderNodeUUID,
+			OS:             os,
+			SubnetName:     subnetName,
+			CreatedAt:      _createdAt})
+	}
+
+	for i := range subnets {
+		psubnets = append(psubnets, &subnets[i])
+	}
+
+	subnetList.Subnet = psubnets
+
+	return &subnetList, 0, ""
+}
+
 // ReadSubnetNum : Get the number of subnets
 func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 	var resSubnetNum pb.ResGetSubnetNum
