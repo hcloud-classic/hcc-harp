@@ -62,7 +62,7 @@ func getSubnetList() ([]pb.Subnet, error) {
 	var netmask string
 
 	sql := "select uuid, network_ip, netmask from subnet"
-	stmt, err := mysql.Db.Query(sql)
+	stmt, err := mysql.Query(sql)
 	if err != nil {
 		logger.Logger.Println(err.Error())
 		return nil, err
