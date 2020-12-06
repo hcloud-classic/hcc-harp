@@ -66,7 +66,7 @@ func GetAvailableIPsStatusMap(netStartIP net.IP, netEndIP net.IP) (map[string]bo
 	var mutex = &sync.Mutex{}
 
 	for i := 0; i < ipRangeCount; {
-		if ipRangeCount - i < RoutineMAX {
+		if ipRangeCount-i < RoutineMAX {
 			routineMax = ipRangeCount - i
 		}
 
