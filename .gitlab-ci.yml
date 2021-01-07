@@ -63,6 +63,7 @@ build:
     - sudo cp $PWD/harp /bin/harp
     - sudo chmod 755 /bin/harp
     - sudo /usr/sbin/service harp start
+    - sudo /usr/sbin/service piccolo restart
     - echo "Finished"
 #  only:
 #  - master
