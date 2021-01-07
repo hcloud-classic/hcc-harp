@@ -8,6 +8,12 @@ before_script:
   - export GOROOT="/opt/go"
   - export GOPATH="/home/gitlab-runner/go"
   - export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
+  - export BUILD_DIR=$PWD
+  - cd $GOPATH/src/hcc/melody
+  - gmake
+  - rm -rf ../pb
+  - ln -s $GOPATH/src/hcc/pb ../pb
+  - cd $BUILD_DIR
 
 copy_dir:
   stage: init
