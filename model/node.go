@@ -1,7 +1,7 @@
 package model
 
 import (
-	"hcc/harp/lib/errors"
+	"github.com/hcloud-classic/hcc_errors"
 	"time"
 )
 
@@ -18,17 +18,17 @@ type Node struct {
 	CreatedAt   time.Time            `json:"created_at"`
 	Active      int                  `json:"active"`
 	ForceOff    bool                 `json:"force_off"`
-	Errors      errors.HccErrorStack `json:"errors"`
+	Errors      hcc_errors.HccErrorStack `json:"errors"`
 }
 
 // Nodes : Array struct of nodes
 type Nodes struct {
 	Nodes  []Node               `json:"node"`
-	Errors errors.HccErrorStack `json: "errors"`
+	Errors hcc_errors.HccErrorStack `json: "errors"`
 }
 
 // NodeNum : Struct of number of nodes
 type NodeNum struct {
 	Number int                  `json:"number"`
-	Errors errors.HccErrorStack `json: "errors"`
+	Errors hcc_errors.HccErrorStack `json: "errors"`
 }

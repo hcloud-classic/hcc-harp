@@ -1,9 +1,9 @@
 package server
 
 import (
+	"github.com/hcloud-classic/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	pb "hcc/harp/action/grpc/pb/rpcharp"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"net"

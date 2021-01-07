@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
+	"github.com/hcloud-classic/hcc_errors"
+	"github.com/hcloud-classic/pb"
 	"google.golang.org/grpc"
 	"hcc/harp/action/grpc/errconv"
-	"hcc/harp/action/grpc/pb/rpcviolin"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
 	"strconv"
 	"time"
@@ -30,14 +30,14 @@ func initViolin() error {
 			continue
 		}
 
-		RC.violin = rpcviolin.NewViolinClient(violinConn)
+		RC.violin = pb.NewViolinClient(violinConn)
 		logger.Logger.Println("gRPC client connected to violin module")
 
 		return nil
 	}
 
-	hccErrStack := errors.ReturnHccError(errors.HarpInternalInitFail, "initViolin(): retry count exceeded to connect violin module")
-	return hccErrStack[0].New()
+	hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "initViolin(): retry count exceeded to connect violin module")).Stack()
+	return (*hccErrStack)[0].ToError()
 }
 
 func closeViolin() {
@@ -45,17 +45,17 @@ func closeViolin() {
 }
 
 // AllServerUUID : Get all of server UUIDs
-func (rc *RPCClient) AllServerUUID() ([]string, *errors.HccErrorStack) {
+func (rc *RPCClient) AllServerUUID() ([]string, *hcc_errors.HccErrorStack) {
 	var serverUUIDs []string
-	var errStack *errors.HccErrorStack = nil
+	var errStack *hcc_errors.HccErrorStack = nil
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
 	defer cancel()
-	resServerList, err := rc.violin.GetServerList(ctx, &rpcviolin.ReqGetServerList{})
+	resServerList, err := rc.violin.GetServerList(ctx, &pb.ReqGetServerList{})
 	if err != nil {
-		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "AllServerUUID(): "+err.Error())
-		return nil, &hccErrStack
+		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpGrpcRequestError, "AllServerUUID(): "+err.Error()))
+		return nil, hccErrStack
 	}
 
 	if pserverList := resServerList.GetServer(); pserverList != nil {

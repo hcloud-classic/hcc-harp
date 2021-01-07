@@ -7,7 +7,7 @@ import (
 	"hcc/harp/lib/adaptiveip"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
-	"hcc/harp/lib/errors"
+	"github.com/hcloud-classic/hcc_errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
@@ -31,57 +31,57 @@ func init() {
 
 	err = logger.Init()
 	if err != nil {
-		errors.SetErrLogger(logger.Logger)
-		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
+		hcc_errors.SetErrLogger(logger.Logger)
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
 	}
-	errors.SetErrLogger(logger.Logger)
+	hcc_errors.SetErrLogger(logger.Logger)
 
 	err = syscheck.CheckFirewall()
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
 	}
 
 	config.Init()
 
 	err = mysql.Init()
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
 	}
 
 	err = client.Init()
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
 	}
 
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
-		errors.NewHccError(errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
 	}
 
 	if syscheck.OS == "freebsd" {
 		err = pf.PreparePFConfigFiles()
 		if err != nil {
-			errors.NewHccError(errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
+			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
 		}
 
 		err = adaptiveip.LoadHarpPFRules()
 		if err != nil {
-			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
+			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
 		}
 	} else {
 		err = adaptiveip.LoadHarpIPTABLESRules()
 		if err != nil {
-			errors.NewHccError(errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()
+			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()
 		}
 	}
 }

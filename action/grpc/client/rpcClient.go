@@ -1,14 +1,13 @@
 package client
 
 import (
-	"hcc/harp/action/grpc/pb/rpcflute"
-	"hcc/harp/action/grpc/pb/rpcviolin"
+	"github.com/hcloud-classic/pb"
 )
 
 // RPCClient : Struct type of gRPC clients
 type RPCClient struct {
-	flute  rpcflute.FluteClient
-	violin rpcviolin.ViolinClient
+	flute  pb.FluteClient
+	violin pb.ViolinClient
 }
 
 // RC : Exported variable pointed to RPCClient

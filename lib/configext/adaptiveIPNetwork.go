@@ -1,7 +1,7 @@
 package configext
 
 import (
-	pb "hcc/harp/action/grpc/pb/rpcharp"
+	"github.com/hcloud-classic/pb"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 )

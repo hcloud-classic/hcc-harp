@@ -3,7 +3,7 @@ package mysql
 import (
 	"fmt"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/errors"
+	"github.com/hcloud-classic/hcc_errors"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
 	"testing"
@@ -18,10 +18,10 @@ func Test_DB_Prepare(t *testing.T) {
 
 	err = logger.Init()
 	if err != nil {
-		errors.SetErrLogger(logger.Logger)
-		errors.NewHccError(errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
+		hcc_errors.SetErrLogger(logger.Logger)
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
 	}
-	errors.SetErrLogger(logger.Logger)
+	hcc_errors.SetErrLogger(logger.Logger)
 	defer func() {
 		_ = logger.FpLog.Close()
 	}()
