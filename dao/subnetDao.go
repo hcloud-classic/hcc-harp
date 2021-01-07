@@ -4,10 +4,10 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/hcloud-classic/pb"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/action/grpc/client"
-	pb "hcc/harp/action/grpc/pb/rpcharp"
-	hccerr "hcc/harp/lib/errors"
+	"github.com/hcloud-classic/hcc_errors"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -49,9 +49,9 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 		errStr := "ReadSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		if strings.Contains(err.Error(), "no rows in result set") {
-			return nil, hccerr.HarpSQLNoResult, errStr
+			return nil, hcc_errors.HarpSQLNoResult, errStr
 		}
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
 	subnet.UUID = uuid
@@ -70,7 +70,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "ReadSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpInternalTimeStampConversionError, errStr
+		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
 	}
 
 	return &subnet, 0, ""
@@ -110,9 +110,9 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 		errStr := "ReadSubnetByServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		if strings.Contains(err.Error(), "no rows in result set") {
-			return nil, hccerr.HarpSQLNoResult, errStr
+			return nil, hcc_errors.HarpSQLNoResult, errStr
 		}
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
 	subnet.UUID = uuid
@@ -131,7 +131,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "ReadSubnetByServer(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpInternalTimeStampConversionError, errStr
+		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
 	}
 
 	return &subnet, 0, ""
@@ -166,7 +166,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	} else if rowOk && pageOk {
 		isLimit = true
 	} else {
-		return nil, hccerr.HarpGrpcArgumentError, "ReadSubnetList(): please insert row and page arguments or leave arguments as empty state"
+		return nil, hcc_errors.HarpGrpcArgumentError, "ReadSubnetList(): please insert row and page arguments or leave arguments as empty state"
 	}
 
 	sql := "select * from subnet where 1=1"
@@ -245,7 +245,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	if err != nil {
 		errStr := "ReadSubnetList(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -257,16 +257,16 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 			errStr := "ReadSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			if strings.Contains(err.Error(), "no rows in result set") {
-				return nil, hccerr.HarpSQLNoResult, errStr
+				return nil, hcc_errors.HarpSQLNoResult, errStr
 			}
-			return nil, hccerr.HarpSQLOperationFail, errStr
+			return nil, hcc_errors.HarpSQLOperationFail, errStr
 		}
 
 		_createdAt, err := ptypes.TimestampProto(createdAt)
 		if err != nil {
 			errStr := "ReadSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
-			return nil, hccerr.HarpInternalTimeStampConversionError, errStr
+			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
 		}
 
 		subnets = append(subnets, pb.Subnet{
@@ -317,7 +317,7 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 	if err != nil {
 		errStr := "ReadAvailableSubnetList(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -329,16 +329,16 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 			errStr := "ReadAvailableSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
 			if strings.Contains(err.Error(), "no rows in result set") {
-				return nil, hccerr.HarpSQLNoResult, errStr
+				return nil, hcc_errors.HarpSQLNoResult, errStr
 			}
-			return nil, hccerr.HarpSQLOperationFail, errStr
+			return nil, hcc_errors.HarpSQLOperationFail, errStr
 		}
 
 		_createdAt, err := ptypes.TimestampProto(createdAt)
 		if err != nil {
 			errStr := "ReadAvailableSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
-			return nil, hccerr.HarpInternalTimeStampConversionError, errStr
+			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
 		}
 
 		subnets = append(subnets, pb.Subnet{
@@ -376,7 +376,7 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 	if err != nil {
 		errStr := "ReadSubnetNum(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	resSubnetNum.Num = subnetNr
 
@@ -413,7 +413,7 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 	return nil
 }
 
-func checkServerUUID(serverUUID string) *hccerr.HccErrorStack {
+func checkServerUUID(serverUUID string) *hcc_errors.HccErrorStack {
 	serverUUIDs, errStack := client.RC.AllServerUUID() // passing HccErrorStack to err
 	if errStack != nil {
 		return errStack
@@ -425,8 +425,8 @@ func checkServerUUID(serverUUID string) *hccerr.HccErrorStack {
 		}
 	}
 
-	hccErrStack := hccerr.ReturnHccError(hccerr.HarpSQLNoResult, "given server UUID is not in the database")
-	return &hccErrStack
+	hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpSQLNoResult, "given server UUID is not in the database"))
+	return hccErrStack
 }
 
 func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
@@ -446,19 +446,19 @@ func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
 func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	reqSubnet := in.GetSubnet()
 	if reqSubnet == nil {
-		return nil, hccerr.HarpGrpcArgumentError, "CreateSubnet(): subnet is nil"
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): subnet is nil"
 	}
 
 	out, err := gouuid.NewV4()
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpInternalUUIDGenerationError, errStr
+		return nil, hcc_errors.HarpInternalUUIDGenerationError, errStr
 	}
 	uuid := out.String()
 
 	if checkCreateSubnetArgs(reqSubnet) {
-		return nil, hccerr.HarpGrpcArgumentError, "CreateSubnet(): some of arguments are missing"
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): some of arguments are missing"
 	}
 
 	subnet := pb.Subnet{
@@ -477,7 +477,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 
 	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil)
 	if err != nil {
-		return nil, hccerr.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
+		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
 
 	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
@@ -485,7 +485,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -494,7 +494,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
 	return &subnet, 0, ""
@@ -518,18 +518,18 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 // UpdateSubnet : Update infos of the subnet
 func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	if in.Subnet == nil {
-		return nil, hccerr.HarpGrpcArgumentError, "UpdateSubnet(): subnet is nil"
+		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): subnet is nil"
 	}
 	reqSubnet := in.Subnet
 
 	requestedUUID := reqSubnet.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return nil, hccerr.HarpGrpcArgumentError, "UpdateSubnet(): need a uuid argument"
+		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need a uuid argument"
 	}
 
 	if checkUpdateSubnetArgs(reqSubnet) {
-		return nil, hccerr.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
+		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
 	}
 
 	var networkIP string
@@ -594,13 +594,13 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 
 	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
 	if err != nil {
-		return nil, hccerr.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
+		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}
 
 	if serverUUIDOk && subnet.ServerUUID != "-" {
 		errStack := checkServerUUID(subnet.ServerUUID)
 		if errStack != nil {
-			return nil, (*errStack)[errStack.Len()].ErrCode, "UpdateSubnet(): " + (*errStack)[errStack.Len()].ErrText
+			return nil, (*errStack.Stack())[errStack.Len()].Code(), "UpdateSubnet(): " + (*errStack.Stack())[errStack.Len()].Text()
 		}
 	}
 
@@ -648,7 +648,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "UpdateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -658,7 +658,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	if err2 != nil {
 		errStr := "UpdateSubnet(): " + err2.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
 	subnet, errCode, errStr = ReadSubnet(subnet.UUID)
@@ -676,7 +676,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	requestedUUID := in.GetUUID()
 	requestedUUIDOk := len(requestedUUID) != 0
 	if !requestedUUIDOk {
-		return nil, hccerr.HarpGrpcArgumentError, "DeleteSubnet(): need a uuid argument"
+		return nil, hcc_errors.HarpGrpcArgumentError, "DeleteSubnet(): need a uuid argument"
 	}
 
 	subnet, errCode, errStr := ReadSubnet(requestedUUID)
@@ -687,7 +687,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	if len(subnet.ServerUUID) != 0 {
 		errStr := "DeleteSubnet(): subnet is used by the server (UUID:" + subnet.ServerUUID + ")"
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpInternalSubnetInUseError, errStr
+		return nil, hcc_errors.HarpInternalSubnetInUseError, errStr
 	}
 
 	sql := "delete from subnet where uuid = ?"
@@ -695,7 +695,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	if err != nil {
 		errStr := "DeleteSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 	defer func() {
 		_ = stmt.Close()
@@ -704,7 +704,7 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	if err2 != nil {
 		errStr := "DeleteSubnet(): " + err2.Error()
 		logger.Logger.Println(errStr)
-		return nil, hccerr.HarpSQLOperationFail, errStr
+		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
 	return subnet, 0, ""

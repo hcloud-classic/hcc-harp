@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
+	"github.com/hcloud-classic/hcc_errors"
+	"github.com/hcloud-classic/pb"
 	"google.golang.org/grpc"
 	"hcc/harp/action/grpc/errconv"
-	"hcc/harp/action/grpc/pb/rpcflute"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/errors"
 	"hcc/harp/lib/logger"
 	"strconv"
 	"time"
@@ -30,14 +30,14 @@ func initFlute() error {
 			continue
 		}
 
-		RC.flute = rpcflute.NewFluteClient(fluteConn)
+		RC.flute = pb.NewFluteClient(fluteConn)
 		logger.Logger.Println("gRPC client connected to flute module")
 
 		return nil
 	}
 
-	hccErrStack := errors.ReturnHccError(errors.HarpInternalInitFail, "initFlute(): retry count exceeded to connect flute module")
-	return hccErrStack[0].New()
+	hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "initFlute(): retry count exceeded to connect flute module")).Stack()
+	return (*hccErrStack)[0].ToError()
 }
 
 func closeFlute() {
@@ -45,16 +45,16 @@ func closeFlute() {
 }
 
 // GetNode : Get infos of the node
-func (rc *RPCClient) GetNode(uuid string) (*rpcflute.Node, *errors.HccErrorStack) {
-	var errStack *errors.HccErrorStack = nil
+func (rc *RPCClient) GetNode(uuid string) (*pb.Node, *hcc_errors.HccErrorStack) {
+	var errStack *hcc_errors.HccErrorStack = nil
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
 	defer cancel()
-	node, err := rc.flute.GetNode(ctx, &rpcflute.ReqGetNode{UUID: uuid})
+	node, err := rc.flute.GetNode(ctx, &pb.ReqGetNode{UUID: uuid})
 	if err != nil {
-		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "GetNode(): "+err.Error())
-		return nil, &hccErrStack
+		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpGrpcRequestError, "GetNode(): "+err.Error()))
+		return nil, hccErrStack
 	}
 	if es := node.GetHccErrorStack(); es != nil {
 		errStack = errconv.GrpcStackToHcc(&es)
@@ -64,21 +64,21 @@ func (rc *RPCClient) GetNode(uuid string) (*rpcflute.Node, *errors.HccErrorStack
 }
 
 // GetNodeList : Get the list of nodes by server UUID.
-func (rc *RPCClient) GetNodeList(serverUUID string) ([]rpcflute.Node, *errors.HccErrorStack) {
-	var nodeList []rpcflute.Node
-	var errStack *errors.HccErrorStack = nil
+func (rc *RPCClient) GetNodeList(serverUUID string) ([]pb.Node, *hcc_errors.HccErrorStack) {
+	var nodeList []pb.Node
+	var errStack *hcc_errors.HccErrorStack = nil
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
 	defer cancel()
-	pnodeList, err := rc.flute.GetNodeList(ctx, &rpcflute.ReqGetNodeList{Node: &rpcflute.Node{ServerUUID: serverUUID}})
+	pnodeList, err := rc.flute.GetNodeList(ctx, &pb.ReqGetNodeList{Node: &pb.Node{ServerUUID: serverUUID}})
 	if err != nil {
-		hccErrStack := errors.ReturnHccError(errors.HarpGrpcRequestError, "GetNodeList(): "+err.Error())
-		return nil, &hccErrStack
+		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpGrpcRequestError, "GetNodeList(): "+err.Error()))
+		return nil, hccErrStack
 	}
 
 	for _, pnode := range pnodeList.Node {
-		nodeList = append(nodeList, rpcflute.Node{
+		nodeList = append(nodeList, pb.Node{
 			UUID:        pnode.UUID,
 			ServerUUID:  pnode.ServerUUID,
 			BmcMacAddr:  pnode.BmcMacAddr,
