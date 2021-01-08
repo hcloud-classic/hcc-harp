@@ -1,6 +1,4 @@
 harp
-tmp_melody
-*.proto
 coverage.out
 goreport_grade
 .idea/
