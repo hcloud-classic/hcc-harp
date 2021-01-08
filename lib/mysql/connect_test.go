@@ -2,8 +2,8 @@ package mysql
 
 import (
 	"fmt"
-	"hcc/harp/lib/config"
 	"github.com/hcloud-classic/hcc_errors"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
 	"testing"
