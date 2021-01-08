@@ -38,7 +38,7 @@ func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*p
 
 	subnet, errCode, errStr := dao.CreateSubnet(in)
 	if errCode != 0 {
-		errStack :=hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResCreateSubnet{Subnet: &pb.Subnet{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
 	}
 
