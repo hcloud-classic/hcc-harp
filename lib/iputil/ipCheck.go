@@ -65,3 +65,35 @@ func CheckIPisInSubnet(subnet net.IPNet, IP string) error {
 
 	return nil
 }
+
+// CheckSubnetIsUsedByIface : Check if given subnet is used in one of iface
+func CheckSubnetIsUsedByIface(subnet net.IPNet) error {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	for _, iface := range interfaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return err
+		}
+
+		for _, addr := range addrs {
+			var netIP net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				netIP = v.IP
+			case *net.IPAddr:
+				netIP = v.IP
+			}
+
+			IPisInSubnet := subnet.Contains(netIP)
+			if IPisInSubnet {
+				return errors.New("Given subnet is conflicted with a network interface (" + iface.Name + ")")
+			}
+		}
+	}
+
+	return nil
+}

@@ -68,7 +68,7 @@ func (rc *RPCClient) AllServerUUID() ([]string, *hcc_errors.HccErrorStack) {
 	}
 
 	if es := resServerList.GetHccErrorStack(); es != nil {
-		errStack = errconv.GrpcStackToHcc(&es)
+		errStack = errconv.GrpcStackToHcc(es)
 	}
 
 	return serverUUIDs, errStack

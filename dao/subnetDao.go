@@ -410,6 +410,11 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return err
 	}
 
+	err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
