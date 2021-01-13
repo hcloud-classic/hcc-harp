@@ -60,7 +60,7 @@ func (rc *RPCClient) GetNode(uuid string) (*pb.Node, *hcc_errors.HccErrorStack) 
 		return nil, hccErrStack
 	}
 	if es := node.GetHccErrorStack(); es != nil {
-		errStack = errconv.GrpcStackToHcc(&es)
+		errStack = errconv.GrpcStackToHcc(es)
 	}
 
 	return node.Node, errStack
@@ -96,7 +96,7 @@ func (rc *RPCClient) GetNodeList(serverUUID string) ([]pb.Node, *hcc_errors.HccE
 		})
 	}
 	if es := pnodeList.GetHccErrorStack(); es != nil {
-		errStack = errconv.GrpcStackToHcc(&es)
+		errStack = errconv.GrpcStackToHcc(es)
 	}
 
 	return nodeList, errStack
