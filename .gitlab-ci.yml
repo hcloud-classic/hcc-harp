@@ -1,6 +1,5 @@
 stages:
   - init
-  - pb
   - test
   - build
   - run
