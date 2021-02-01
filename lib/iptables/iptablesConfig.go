@@ -7,18 +7,22 @@ import (
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
+	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"os"
 	"os/exec"
+	"strings"
 )
 
-func getNFTables() ([]string, error) {
+func checkNFTables() error {
+	var nfTablesMatched = 0
+	var nfTablesOk = false
+
 	logger.Logger.Println("Checking available tables for iptables...")
 
-	var nfTables []string
 	file, err := os.Open("/proc/net/ip_tables_names")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() {
 		_ = file.Close()
@@ -28,54 +32,82 @@ func getNFTables() ([]string, error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		nfTables = append(nfTables, line)
+		for _, table := range iptablesext.NeededTablesForHarp {
+			if strings.TrimSuffix(line, "\n") == table {
+				nfTablesMatched++
+				break
+			}
+		}
 	}
 
-	return nfTables, nil
+	if len(iptablesext.NeededTablesForHarp) == nfTablesMatched {
+		nfTablesOk = true
+	}
+
+	if !nfTablesOk {
+		logger.Logger.Println("checkNFTables(): Some of tables are not available from iptables")
+		logger.Logger.Println("checkNFTables(): Please check if your kernel modules are loaded properly")
+		logger.Logger.Println("checkNFTables(): Type 'lsmod' and check if these modules are loaded: " + iptablesext.NeededKernelModulesForHarp)
+		return errors.New("some of tables are not available from iptables")
+	}
+
+	return nil
 }
 
-// FlushIPTABLESRules : Remove all of configured iptables rules
-func FlushIPTABLESRules() error {
-	logger.Logger.Println("Flushing iptables rules...")
-
-	cmd := exec.Command("iptables", "-F")
+func flushOrAddHarpIPTABLESChain(table string, chain string) error {
+	// Check if the chain is exist then create the chain if not exist or flushing it if exist
+	cmd := exec.Command("iptables", "-t", table, "-n", "-L", iptablesext.HarpChainNamePrefix+chain)
 	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("iptables", "-X")
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("iptables", "-Z")
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	nfTables, err := getNFTables()
-	if err != nil {
-		return err
-	}
-
-	for _, table := range nfTables {
-		cmd = exec.Command("iptables", "-t", table, "-F")
+	if err == nil {
+		cmd = exec.Command("iptables", "-t", table, "-F", iptablesext.HarpChainNamePrefix+chain)
 		err = cmd.Run()
 		if err != nil {
 			return err
 		}
 
-		cmd = exec.Command("iptables", "-t", table, "-X")
+		cmd = exec.Command("iptables", "-t", table, "-Z", iptablesext.HarpChainNamePrefix+chain)
 		err = cmd.Run()
 		if err != nil {
 			return err
 		}
+	} else {
+		cmd := exec.Command("iptables", "-t", table, "-N", iptablesext.HarpChainNamePrefix+chain)
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
 
-		cmd = exec.Command("iptables", "-t", table, "-Z")
-		err = cmd.Run()
+	// Check if the chain is included in the table then insert to first line of the table
+	cmd = exec.Command("iptables", "-t", table, "-C", chain, "-j", iptablesext.HarpChainNamePrefix+chain)
+	err = cmd.Run()
+	if err == nil {
+		cmd := exec.Command("iptables", "-t", table, "-D", chain, "-j", iptablesext.HarpChainNamePrefix+chain)
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd = exec.Command("iptables", "-t", table, "-I", chain, "1", "-j", iptablesext.HarpChainNamePrefix+chain)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func prepareHarpNATIPTABLESChains() error {
+	logger.Logger.Println("Preparing harp's NAT iptables chains...")
+
+	err := flushOrAddHarpIPTABLESChain("filter", "FORWARD")
+	if err != nil {
+		return err
+	}
+
+	for _, chain := range iptablesext.NatChains {
+		err := flushOrAddHarpIPTABLESChain("nat", chain)
 		if err != nil {
 			return err
 		}
@@ -95,16 +127,14 @@ func InitIPTABLES() error {
 		return err
 	}
 
-	err = FlushIPTABLESRules()
+	err = checkNFTables()
 	if err != nil {
 		return err
 	}
 
-	logger.Logger.Println("Restoring iptables rules from " + config.AdaptiveIP.IPTABLESInitConfigFileLocation + "...")
-	cmd := exec.Command("iptables-restore", config.AdaptiveIP.IPTABLESInitConfigFileLocation)
-	err = cmd.Run()
+	err = prepareHarpNATIPTABLESChains()
 	if err != nil {
-		logger.Logger.Println("Failed to restore iptables rules. Skipping...")
+		return err
 	}
 
 	return nil
@@ -128,7 +158,7 @@ func LoadAdaptiveIPIPTABLESRules() error {
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
 		cmd := exec.Command("iptables", "-t", "nat",
-			"-A", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+			"-A", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 			"-s", adaptiveIPServer.PrivateIP,
 			"-j", "SNAT",
 			"--to-source", adaptiveIPServer.PublicIP)
@@ -138,7 +168,7 @@ func LoadAdaptiveIPIPTABLESRules() error {
 		}
 
 		cmd = exec.Command("iptables", "-t", "nat",
-			"-A", "PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+			"-A", iptablesext.HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 			"-d", adaptiveIPServer.PublicIP,
 			"-j", "DNAT",
 			"--to-destination", adaptiveIPServer.PrivateIP)
@@ -147,14 +177,14 @@ func LoadAdaptiveIPIPTABLESRules() error {
 			return err
 		}
 
-		cmd = exec.Command("iptables",
-			"-A", "FORWARD",
+		cmd = exec.Command("iptables", "-t", "filter",
+			"-A", iptablesext.HarpChainNamePrefix+"FORWARD",
 			"-s", adaptiveIPServer.PublicIP,
 			"-j", "ACCEPT")
 		err = cmd.Run()
 
-		cmd = exec.Command("iptables",
-			"-A", "FORWARD",
+		cmd = exec.Command("iptables", "-t", "filter",
+			"-A", iptablesext.HarpChainNamePrefix+"FORWARD",
 			"-d", adaptiveIPServer.PrivateIP,
 			"-j", "ACCEPT")
 		err = cmd.Run()
