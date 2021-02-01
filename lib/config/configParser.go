@@ -232,11 +232,6 @@ func parseAdaptiveIP() {
 		if err != nil {
 			logger.Logger.Panicln(err)
 		}
-	} else {
-		AdaptiveIP.IPTABLESInitConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_iptables_init_config_file_location")
-		if err != nil {
-			logger.Logger.Panicln(err)
-		}
 	}
 
 	AdaptiveIP.IfconfigScriptFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_ifconfig_script_file_location")

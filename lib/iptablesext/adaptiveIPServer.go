@@ -13,7 +13,7 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
-		"-A", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+		"-A", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 		"-s", privateIP,
 		"-j", "SNAT",
 		"--to-source", publicIP)
@@ -23,7 +23,7 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 	}
 
 	cmd = exec.Command("iptables", "-t", "nat",
-		"-A", "PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+		"-A", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 		"-d", publicIP,
 		"-j", "DNAT",
 		"--to-destination", privateIP)
@@ -33,13 +33,13 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 	}
 
 	cmd = exec.Command("iptables",
-		"-A", "FORWARD",
+		"-A", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 
 	cmd = exec.Command("iptables",
-		"-A", "FORWARD",
+		"-A", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
@@ -54,7 +54,7 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
-		"-D", "POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+		"-D", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 		"-s", privateIP,
 		"-j", "SNAT",
 		"--to-source", publicIP)
@@ -64,7 +64,7 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 	}
 
 	cmd = exec.Command("iptables", "-t", "nat",
-		"-D", "PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+		"-D", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 		"-d", publicIP,
 		"-j", "DNAT",
 		"--to-destination", privateIP)
@@ -74,13 +74,13 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 	}
 
 	cmd = exec.Command("iptables",
-		"-D", "FORWARD",
+		"-D", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 
 	cmd = exec.Command("iptables",
-		"-D", "FORWARD",
+		"-D", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()

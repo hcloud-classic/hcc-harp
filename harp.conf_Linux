@@ -40,7 +40,6 @@ dhcpd_max_lease_time 3600
 adaptiveip_external_iface_name enp7s0
 adaptiveip_internal_iface_name enp0s20f0u4
 adaptiveip_ifconfig_script_file_location /etc/hcc/harp/iptables/ifconfig
-adaptiveip_iptables_init_config_file_location /etc/hcc/harp/iptables/iptables_init.conf
 adaptiveip_network_config_file /etc/hcc/harp/adaptiveip_network.conf
 adaptiveip_default_ext_iface_ip_addr 192.168.110.10
 adaptiveip_default_netmask 255.255.255.0
