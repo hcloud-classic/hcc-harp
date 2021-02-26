@@ -5,6 +5,7 @@ import (
 	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/logger"
 	"os/exec"
+	"sync"
 )
 
 func restartNetif() error {
@@ -31,10 +32,15 @@ func restartRouting() error {
 	return nil
 }
 
+var dhcpdLock sync.Mutex
+
 // RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
 func RestartDHCPDServer() error {
+	dhcpdLock.Lock()
+
 	configFiles, err := dhcpdext.GetSubnetConfFiles()
 	if err != nil {
+		dhcpdLock.Unlock()
 		return err
 	}
 	if len(configFiles) == 0 {
@@ -44,6 +50,7 @@ func RestartDHCPDServer() error {
 		cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "stop")
 		_ = cmd.Run()
 
+		dhcpdLock.Unlock()
 		return nil
 	}
 
@@ -52,9 +59,11 @@ func RestartDHCPDServer() error {
 	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
 	err = cmd.Run()
 	if err != nil {
+		dhcpdLock.Unlock()
 		return err
 	}
 
+	dhcpdLock.Unlock()
 	return nil
 }
 
