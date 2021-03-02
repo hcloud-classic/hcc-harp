@@ -284,15 +284,19 @@ func UpdateHarpDHCPDConfig() (int, error) {
 		harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
 	}
 
+	harpDHCPDConfigWriteLock.Lock()
 	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
+		harpDHCPDConfigWriteLock.Unlock()
 		return 0, err
 	}
 
 	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
 	if err != nil {
+		harpDHCPDConfigWriteLock.Unlock()
 		return 0, err
 	}
+	harpDHCPDConfigWriteLock.Unlock()
 
 	return files, nil
 }
