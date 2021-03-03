@@ -91,6 +91,8 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 
 func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
 	useSamePXEFileForCompute bool) error {
+	dhcpdext.IncWritingSubnetConfigCounter()
+
 	confContent := subnetConfBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
@@ -118,6 +120,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	for i, uuid := range nodeUUIDs {
 		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
+			dhcpdext.DecWritingSubnetConfigCounter()
 			return err
 		}
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
@@ -155,9 +158,11 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 
 	err := writeConfigFile(confContent, subnet.ServerUUID)
 	if err != nil {
+		dhcpdext.DecWritingSubnetConfigCounter()
 		return err
 	}
 
+	dhcpdext.DecWritingSubnetConfigCounter()
 	return nil
 }
 
@@ -284,15 +289,19 @@ func UpdateHarpDHCPDConfig() (int, error) {
 		harpDHCPDConf = strings.Replace(harpDHCPDConf, "HARP_DHCPD_INCLUDE_STRINGS", allIncludeLines, -1)
 	}
 
+	dhcpdext.HarpDHCPDConfigWriteLock.Lock()
 	err = fileutil.CreateDirIfNotExist(config.DHCPD.ConfigFileLocation)
 	if err != nil {
+		dhcpdext.HarpDHCPDConfigWriteLock.Unlock()
 		return 0, err
 	}
 
 	err = fileutil.WriteFile(config.DHCPD.ConfigFileLocation+"/harp_dhcpd.conf", harpDHCPDConf)
 	if err != nil {
+		dhcpdext.HarpDHCPDConfigWriteLock.Unlock()
 		return 0, err
 	}
+	dhcpdext.HarpDHCPDConfigWriteLock.Unlock()
 
 	return files, nil
 }
@@ -363,10 +372,12 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
+	dhcpdext.IncWritingSubnetConfigCounter()
 	err := fileutil.DeleteFile(dhcpdConfLocation)
 	if err != nil {
 		return "", err
 	}
+	dhcpdext.DecWritingSubnetConfigCounter()
 
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {

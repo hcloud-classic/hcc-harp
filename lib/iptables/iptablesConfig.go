@@ -182,6 +182,9 @@ func LoadAdaptiveIPIPTABLESRules() error {
 			"-s", adaptiveIPServer.PublicIP,
 			"-j", "ACCEPT")
 		err = cmd.Run()
+		if err != nil {
+			return err
+		}
 
 		cmd = exec.Command("iptables", "-t", "filter",
 			"-A", iptablesext.HarpChainNamePrefix+"FORWARD",

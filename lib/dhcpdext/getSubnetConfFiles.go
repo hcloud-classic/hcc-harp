@@ -5,11 +5,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // GetSubnetConfFiles : Get paths of harp's DHCPD configuration files
 func GetSubnetConfFiles() ([]string, error) {
 	var files []string
+
+	if WritingSubnetConfigCounter != 0 {
+		for true {
+			if WritingSubnetConfigCounter == 0 {
+				break
+			}
+
+			time.Sleep(time.Millisecond * 500)
+		}
+	}
 
 	folder := config.DHCPD.ConfigFileLocation
 	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {

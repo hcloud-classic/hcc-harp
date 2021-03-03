@@ -9,7 +9,7 @@ import (
 func EnableAllRouteLocal() error {
 	logger.Logger.Println("Enabling all route for localnet...")
 
-	cmd := exec.Command("sysctl", "-w", "net.ipv4.conf.all.route_localnet=1")
+	cmd := exec.Command("echo", "1", ">", "/proc/sys/net/ipv4/conf/all/route_localnet")
 	err := cmd.Run()
 	if err != nil {
 		return err
