@@ -5,7 +5,9 @@ go 1.13
 require (
 	github.com/Terry-Mao/goconf v0.0.0-20161115082538-13cb73d70c44
 	github.com/apparentlymart/go-cidr v1.1.0
+	github.com/containerd/cgroups v0.0.0-20210114181951-8a68de567b68 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gofrs/flock v0.8.0
 	github.com/gojp/goreportcard v0.0.0-20201106142952-232d912e513e // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/hcloud-classic/hcc_errors v1.1.2
