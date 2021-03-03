@@ -91,7 +91,7 @@ func CheckNodeUUIDs(subnet net.IPNet, nodeUUIDs []string, leaderNodeUUID string)
 
 func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName string, nodeUUIDs []string,
 	useSamePXEFileForCompute bool) error {
-	dhcpdext.IncCreatingSubnetConfigCounter()
+	dhcpdext.IncWritingSubnetConfigCounter()
 
 	confContent := subnetConfBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
@@ -120,7 +120,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	for i, uuid := range nodeUUIDs {
 		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
-			dhcpdext.DecCreatingSubnetConfigCounter()
+			dhcpdext.DecWritingSubnetConfigCounter()
 			return err
 		}
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
@@ -158,11 +158,11 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 
 	err := writeConfigFile(confContent, subnet.ServerUUID)
 	if err != nil {
-		dhcpdext.DecCreatingSubnetConfigCounter()
+		dhcpdext.DecWritingSubnetConfigCounter()
 		return err
 	}
 
-	dhcpdext.DecCreatingSubnetConfigCounter()
+	dhcpdext.DecWritingSubnetConfigCounter()
 	return nil
 }
 
@@ -372,10 +372,12 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
+	dhcpdext.IncWritingSubnetConfigCounter()
 	err := fileutil.DeleteFile(dhcpdConfLocation)
 	if err != nil {
 		return "", err
 	}
+	dhcpdext.DecWritingSubnetConfigCounter()
 
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {

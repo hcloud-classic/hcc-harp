@@ -12,9 +12,9 @@ import (
 func GetSubnetConfFiles() ([]string, error) {
 	var files []string
 
-	if CreatingSubnetConfigCounter != 0 {
+	if WritingSubnetConfigCounter != 0 {
 		for true {
-			if CreatingSubnetConfigCounter == 0 {
+			if WritingSubnetConfigCounter == 0 {
 				break
 			}
 
