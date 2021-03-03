@@ -300,3 +300,27 @@ func LoadHarpIPTABLESRules() error {
 
 	return nil
 }
+
+// LoadFirewall : Load firewall rules for harp module
+func LoadFirewall() error {
+	var err error = nil
+
+	if syscheck.OS == "freebsd" {
+		err = pf.PreparePFConfigFiles()
+		if err != nil {
+			return err
+		}
+
+		err = LoadHarpPFRules()
+		if err != nil {
+			return err
+		}
+	} else {
+		err = LoadHarpIPTABLESRules()
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}

@@ -10,7 +10,6 @@ import (
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
 	"os"
 	"os/signal"
@@ -68,21 +67,9 @@ func init() {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
 	}
 
-	if syscheck.OS == "freebsd" {
-		err = pf.PreparePFConfigFiles()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
-		}
-
-		err = adaptiveip.LoadHarpPFRules()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
-		}
-	} else {
-		err = adaptiveip.LoadHarpIPTABLESRules()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()
-		}
+	err = adaptiveip.LoadFirewall()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadFirewall(): "+err.Error()).Fatal()
 	}
 }
 
