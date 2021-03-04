@@ -15,6 +15,7 @@ import (
 	"hcc/harp/lib/syscheck"
 	"net"
 	"os/exec"
+	"sync"
 )
 
 func checkIPConfigured(ifaceName string, ip string) (bool, error) {
@@ -299,4 +300,35 @@ func LoadHarpIPTABLESRules() error {
 	}
 
 	return nil
+}
+
+var firewallLoadLock sync.Mutex
+
+// LoadFirewall : Load firewall rules for harp module
+func LoadFirewall() error {
+	var err error = nil
+
+	firewallLoadLock.Lock()
+
+	if syscheck.OS == "freebsd" {
+		err = pf.PreparePFConfigFiles()
+		if err != nil {
+			goto ERROR
+		}
+
+		err = LoadHarpPFRules()
+		if err != nil {
+			goto ERROR
+		}
+	} else {
+		err = LoadHarpIPTABLESRules()
+		if err != nil {
+			goto ERROR
+		}
+	}
+
+ERROR:
+	firewallLoadLock.Unlock()
+
+	return err
 }

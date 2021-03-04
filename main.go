@@ -10,22 +10,41 @@ import (
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/lib/pf"
+	"hcc/harp/lib/pid"
 	"hcc/harp/lib/syscheck"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
 func init() {
-	err := syscheck.CheckOS()
+	err, harpRunning, harpPID := pid.IsHarpRunning()
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+	if harpRunning {
+		fmt.Println("harp is already running. (PID: " + strconv.Itoa(harpPID) + ")")
+		os.Exit(1)
+	}
+	err = pid.WriteHarpPID()
+	if err != nil {
+		_ = pid.DeleteHarpPID()
+		fmt.Println(err)
+		panic(err)
+	}
+
+	err = syscheck.CheckOS()
 	if err != nil {
 		fmt.Println("Please run harp module on Linux or FreeBSD machine.")
+		_ = pid.DeleteHarpPID()
 		panic(err)
 	}
 
 	err = syscheck.CheckRoot()
 	if err != nil {
+		_ = pid.DeleteHarpPID()
 		panic(err)
 	}
 
@@ -33,12 +52,14 @@ func init() {
 	if err != nil {
 		hcc_errors.SetErrLogger(logger.Logger)
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "logger.Init(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 	hcc_errors.SetErrLogger(logger.Logger)
 
 	err = syscheck.CheckFirewall()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
 	config.Init()
@@ -46,43 +67,37 @@ func init() {
 	err = mysql.Init()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
 	err = client.Init()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
 	_, err = syscheck.CheckIfaceExist(config.AdaptiveIP.InternalIfaceName)
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 
-	if syscheck.OS == "freebsd" {
-		err = pf.PreparePFConfigFiles()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "pf.PreparePFConfigFiles(): "+err.Error()).Fatal()
-		}
-
-		err = adaptiveip.LoadHarpPFRules()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpPFRules(): "+err.Error()).Fatal()
-		}
-	} else {
-		err = adaptiveip.LoadHarpIPTABLESRules()
-		if err != nil {
-			hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadHarpIPTABLESRules(): "+err.Error()).Fatal()
-		}
+	err = adaptiveip.LoadFirewall()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "adaptiveip.LoadFirewall(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
 	}
 }
 
@@ -90,6 +105,7 @@ func end() {
 	client.End()
 	mysql.End()
 	logger.End()
+	_ = pid.DeleteHarpPID()
 }
 
 func main() {

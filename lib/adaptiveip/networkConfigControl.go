@@ -6,8 +6,6 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"
-	"hcc/harp/lib/pf"
-	"hcc/harp/lib/syscheck"
 	"strings"
 	"sync"
 )
@@ -76,23 +74,12 @@ func WriteNetworkConfigAndReloadHarpNetwork(in *pb.ReqCreateAdaptiveIPSetting) (
 
 	adaptiveIP, err := writeAdaptiveIPNetworkConfig(in)
 	if err != nil {
-		return nil, err
+		goto ERROR
 	}
-	if syscheck.OS == "freebsd" {
-		err = pf.PreparePFConfigFiles()
-		if err != nil {
-			goto ERROR
-		}
 
-		err = LoadHarpPFRules()
-		if err != nil {
-			goto ERROR
-		}
-	} else {
-		err = LoadHarpIPTABLESRules()
-		if err != nil {
-			goto ERROR
-		}
+	err = LoadFirewall()
+	if err != nil {
+		goto ERROR
 	}
 
 	networkReloadLock.Unlock()
