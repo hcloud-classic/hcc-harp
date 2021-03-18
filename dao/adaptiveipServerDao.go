@@ -3,8 +3,8 @@ package dao
 import (
 	dbsql "database/sql"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/hcloud-classic/hcc_errors"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"

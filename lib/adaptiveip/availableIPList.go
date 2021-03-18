@@ -2,7 +2,7 @@ package adaptiveip
 
 import (
 	"github.com/apparentlymart/go-cidr/cidr"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"

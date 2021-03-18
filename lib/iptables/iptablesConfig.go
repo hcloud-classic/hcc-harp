@@ -3,7 +3,7 @@ package iptables
 import (
 	"bufio"
 	"errors"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"

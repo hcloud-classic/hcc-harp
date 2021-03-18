@@ -2,7 +2,7 @@ package adaptiveip
 
 import (
 	"errors"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/fileutil"

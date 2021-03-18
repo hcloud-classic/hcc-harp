@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"github.com/hcloud-classic/hcc_errors"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/action/grpc/errconv"
 	"hcc/harp/dao"
 	"hcc/harp/lib/adaptiveip"

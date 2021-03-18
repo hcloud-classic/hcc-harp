@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"fmt"
-	"github.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/hcc_errors"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"

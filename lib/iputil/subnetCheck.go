@@ -2,7 +2,7 @@ package iputil
 
 import (
 	"errors"
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"net"

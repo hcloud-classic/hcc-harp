@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/hcc_errors"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/action/grpc/server"
 	"hcc/harp/lib/adaptiveip"

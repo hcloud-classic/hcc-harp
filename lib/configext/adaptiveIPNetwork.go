@@ -1,7 +1,7 @@
 package configext
 
 import (
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 )
