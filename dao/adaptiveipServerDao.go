@@ -3,8 +3,6 @@ package dao
 import (
 	dbsql "database/sql"
 	"github.com/golang/protobuf/ptypes"
-	"innogrid.com/hcloud-classic/hcc_errors"
-	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
@@ -12,6 +10,8 @@ import (
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
+	"innogrid.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/pb"
 	"net"
 	"strconv"
 	"strings"
@@ -147,7 +147,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		}
 
 		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
-			GroupID: groupID,
+			GroupID:        groupID,
 			ServerUUID:     serverUUID,
 			PublicIP:       publicIP,
 			PrivateIP:      privateIP,
@@ -263,7 +263,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 
 	adaptiveIPServer := pb.AdaptiveIPServer{
 		ServerUUID: serverUUID,
-		GroupID: groupID,
+		GroupID:    groupID,
 		PublicIP:   publicIP,
 	}
 

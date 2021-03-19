@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"innogrid.com/hcloud-classic/hcc_errors"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/action/grpc/server"
 	"hcc/harp/lib/adaptiveip"
@@ -12,6 +11,7 @@ import (
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pid"
 	"hcc/harp/lib/syscheck"
+	"innogrid.com/hcloud-classic/hcc_errors"
 	"os"
 	"os/signal"
 	"strconv"

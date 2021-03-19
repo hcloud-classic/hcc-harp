@@ -3,8 +3,6 @@ package dhcpd
 import (
 	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
-	"innogrid.com/hcloud-classic/hcc_errors"
-	"innogrid.com/hcloud-classic/pb"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
@@ -15,6 +13,8 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
 	"hcc/harp/model"
+	"innogrid.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/pb"
 	"io/ioutil"
 	"net"
 	"strconv"

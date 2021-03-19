@@ -4,13 +4,13 @@ import (
 	dbsql "database/sql"
 	"errors"
 	"github.com/golang/protobuf/ptypes"
-	"innogrid.com/hcloud-classic/hcc_errors"
-	"innogrid.com/hcloud-classic/pb"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
+	"innogrid.com/hcloud-classic/hcc_errors"
+	"innogrid.com/hcloud-classic/pb"
 	"strconv"
 	"strings"
 	"time"
@@ -284,7 +284,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
-			GroupID: groupID,
+			GroupID:        groupID,
 			NetworkIP:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
@@ -358,7 +358,7 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
-			GroupID: groupID,
+			GroupID:        groupID,
 			NetworkIP:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
@@ -485,7 +485,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 
 	subnet := pb.Subnet{
 		UUID:           uuid,
-		GroupID: reqSubnet.GetGroupID(),
+		GroupID:        reqSubnet.GetGroupID(),
 		NetworkIP:      reqSubnet.GetNetworkIP(),
 		Netmask:        reqSubnet.GetNetmask(),
 		Gateway:        reqSubnet.GetGateway(),
