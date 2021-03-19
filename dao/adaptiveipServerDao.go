@@ -22,15 +22,16 @@ import (
 func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, string) {
 	var adaptiveIPServer pb.AdaptiveIPServer
 
+	var groupID int64
 	var publicIP string
 	var privateIP string
 	var privateGateway string
 	var createdAt time.Time
 
-	sql := "select server_uuid, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where server_uuid = ?"
+	sql := "select group_id, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where server_uuid = ?"
 	row := mysql.Db.QueryRow(sql, serverUUID)
 	err := mysql.QueryRowScan(row,
-		&serverUUID,
+		&groupID,
 		&publicIP,
 		&privateIP,
 		&privateGateway,
@@ -41,6 +42,8 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
+	adaptiveIPServer.ServerUUID = serverUUID
+	adaptiveIPServer.GroupID = groupID
 	adaptiveIPServer.PublicIP = publicIP
 	adaptiveIPServer.PrivateIP = privateIP
 	adaptiveIPServer.PrivateGateway = privateGateway
@@ -63,6 +66,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	var padaptiveIPServers []*pb.AdaptiveIPServer
 
 	var serverUUID string
+	var groupID int64
 	var publicIP string
 	var privateIP string
 	var privateGateway string
@@ -124,7 +128,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&serverUUID, &publicIP, &privateIP, &privateGateway, &createdAt)
+		err := stmt.Scan(&serverUUID, &groupID, &publicIP, &privateIP, &privateGateway, &createdAt)
 		if err != nil {
 			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
 			logger.Logger.Println(errStr)
@@ -143,6 +147,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		}
 
 		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
+			GroupID: groupID,
 			ServerUUID:     serverUUID,
 			PublicIP:       publicIP,
 			PrivateIP:      privateIP,
@@ -198,11 +203,13 @@ func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
 func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPServer, uint64, string) {
 	serverUUID := in.ServerUUID
 	serverUUIDOk := len(serverUUID) != 0
+	groupID := in.GroupID
+	groupIDOk := groupID != 0
 	publicIP := in.PublicIP
 	publicIPOk := len(publicIP) != 0
 
-	if !serverUUIDOk || !publicIPOk {
-		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): need ServerUUID and PublicIP arguments"
+	if !serverUUIDOk || !groupIDOk || !publicIPOk {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): need ServerUUID and GroupID, PublicIP arguments"
 	}
 
 	oldAdaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
@@ -256,6 +263,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 
 	adaptiveIPServer := pb.AdaptiveIPServer{
 		ServerUUID: serverUUID,
+		GroupID: groupID,
 		PublicIP:   publicIP,
 	}
 
@@ -277,7 +285,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
 
-	sql := "insert into adaptiveip_server(server_uuid, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, now())"
+	sql := "insert into adaptiveip_server(server_uuid, group_id, public_ip, private_ip, private_gateway, created_at) values (?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "CreateAdaptiveIPServer(): " + err.Error()
@@ -287,8 +295,8 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	defer func() {
 		_ = stmt.Close()
 	}()
-	_, err = stmt.Exec(adaptiveIPServer.ServerUUID, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
-		adaptiveIPServer.PrivateGateway)
+	_, err = stmt.Exec(adaptiveIPServer.ServerUUID, adaptiveIPServer.GroupID, adaptiveIPServer.PublicIP,
+		adaptiveIPServer.PrivateIP, adaptiveIPServer.PrivateGateway)
 	if err != nil {
 		errStr := "CreateAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)

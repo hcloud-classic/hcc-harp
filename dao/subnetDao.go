@@ -11,6 +11,7 @@ import (
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +20,7 @@ import (
 func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	var subnet pb.Subnet
 
+	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -31,9 +33,10 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	var subnetName string
 	var createdAt time.Time
 
-	sql := "select network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
+	sql := "select group_id, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at from subnet where uuid = ?"
 	row := mysql.Db.QueryRow(sql, uuid)
 	err := mysql.QueryRowScan(row,
+		&groupID,
 		&networkIP,
 		&netmask,
 		&gateway,
@@ -55,6 +58,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	}
 
 	subnet.UUID = uuid
+	subnet.GroupID = groupID
 	subnet.NetworkIP = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
@@ -81,6 +85,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	var subnet pb.Subnet
 
 	var uuid string
+	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -92,10 +97,11 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	var subnetName string
 	var createdAt time.Time
 
-	sql := "select uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, leader_node_uuid, os, subnet_name, created_at from subnet where server_uuid = ?"
+	sql := "select uuid, group_id, network_ip, netmask, gateway, next_server, name_server, domain_name, leader_node_uuid, os, subnet_name, created_at from subnet where server_uuid = ?"
 	row := mysql.Db.QueryRow(sql, serverUUID)
 	err := mysql.QueryRowScan(row,
 		&uuid,
+		&groupID,
 		&networkIP,
 		&netmask,
 		&gateway,
@@ -116,6 +122,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	}
 
 	subnet.UUID = uuid
+	subnet.GroupID = groupID
 	subnet.NetworkIP = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
@@ -144,6 +151,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	var psubnets []*pb.Subnet
 
 	var uuid string
+	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -176,6 +184,8 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 
 		uuid = reqSubnet.UUID
 		uuidOk := len(uuid) != 0
+		groupID = reqSubnet.GroupID
+		groupIDOk := groupID != 0
 		networkIP = reqSubnet.NetworkIP
 		networkIPOk := len(networkIP) != 0
 		netmask = reqSubnet.Netmask
@@ -199,6 +209,9 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 
 		if uuidOk {
 			sql += " and uuid = '" + uuid + "'"
+		}
+		if groupIDOk {
+			sql += " and group_id = " + strconv.Itoa(int(groupID))
 		}
 		if networkIPOk {
 			sql += " and network_ip = '" + networkIP + "'"
@@ -252,7 +265,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
+		err := stmt.Scan(&uuid, &groupID, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
 		if err != nil {
 			errStr := "ReadSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
@@ -271,6 +284,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
+			GroupID: groupID,
 			NetworkIP:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
@@ -300,6 +314,7 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 	var psubnets []*pb.Subnet
 
 	var uuid string
+	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -324,7 +339,7 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 	}()
 
 	for stmt.Next() {
-		err := stmt.Scan(&uuid, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
+		err := stmt.Scan(&uuid, &groupID, &networkIP, &netmask, &gateway, &nextServer, &nameServer, &domainName, &serverUUID, &leaderNodeUUID, &os, &subnetName, &createdAt)
 		if err != nil {
 			errStr := "ReadAvailableSubnetList(): " + err.Error()
 			logger.Logger.Println(errStr)
@@ -343,6 +358,7 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
+			GroupID: groupID,
 			NetworkIP:      networkIP,
 			Netmask:        netmask,
 			Gateway:        gateway,
@@ -435,6 +451,7 @@ func checkServerUUID(serverUUID string) *hcc_errors.HccErrorStack {
 }
 
 func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
+	groupIDOk := reqSubnet.GroupID != 0
 	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
 	netmaskOk := len(reqSubnet.GetNetmask()) != 0
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
@@ -444,7 +461,7 @@ func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !(networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && osOk && subnetNameOk)
+	return !(groupIDOk && networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && osOk && subnetNameOk)
 }
 
 // CreateSubnet : Create a subnet
@@ -468,6 +485,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 
 	subnet := pb.Subnet{
 		UUID:           uuid,
+		GroupID: reqSubnet.GetGroupID(),
 		NetworkIP:      reqSubnet.GetNetworkIP(),
 		Netmask:        reqSubnet.GetNetmask(),
 		Gateway:        reqSubnet.GetGateway(),
@@ -485,7 +503,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
 
-	sql := "insert into subnet(uuid, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
+	sql := "insert into subnet(uuid, group_id, network_ip, netmask, gateway, next_server, name_server, domain_name, server_uuid, leader_node_uuid, os, subnet_name, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 	stmt, err := mysql.Prepare(sql)
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
@@ -495,7 +513,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	_, err = stmt.Exec(subnet.UUID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.ServerUUID, subnet.LeaderNodeUUID, subnet.OS, subnet.SubnetName)
+	_, err = stmt.Exec(subnet.UUID, subnet.GroupID, subnet.NetworkIP, subnet.Netmask, subnet.Gateway, subnet.NextServer, subnet.NameServer, subnet.DomainName, subnet.ServerUUID, subnet.LeaderNodeUUID, subnet.OS, subnet.SubnetName)
 	if err != nil {
 		errStr := "CreateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -506,6 +524,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 }
 
 func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
+	groupIDOk := reqSubnet.GroupID != 0
 	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
 	netmaskOk := len(reqSubnet.GetNetmask()) != 0
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
@@ -517,7 +536,7 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
+	return !groupIDOk && !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
 }
 
 // UpdateSubnet : Update infos of the subnet
@@ -537,6 +556,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
 	}
 
+	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -548,6 +568,8 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	var os string
 	var subnetName string
 
+	groupID = in.GetSubnet().GroupID
+	groupIDOk := groupID != 0
 	networkIP = in.GetSubnet().NetworkIP
 	networkIPOk := len(networkIP) != 0
 	netmask = in.GetSubnet().Netmask
@@ -571,6 +593,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 
 	subnet := new(pb.Subnet)
 	subnet.UUID = requestedUUID
+	subnet.GroupID = groupID
 	subnet.NetworkIP = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
@@ -587,6 +610,9 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, errCode, "UpdateSubnet(): " + errStr
 	}
 
+	if !groupIDOk {
+		subnet.GroupID = oldSubnet.GroupID
+	}
 	if !networkIPOk {
 		subnet.NetworkIP = oldSubnet.NetworkIP
 	}
@@ -611,6 +637,9 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 
 	sql := "update subnet set"
 	var updateSet = ""
+	if groupIDOk {
+		updateSet += " group_id = " + strconv.Itoa(int(subnet.GroupID))
+	}
 	if networkIPOk {
 		updateSet += " network_ip = '" + subnet.NetworkIP + "', "
 	}
