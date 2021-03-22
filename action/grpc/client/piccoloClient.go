@@ -39,7 +39,7 @@ func initPiccolo() error {
 		return nil
 	}
 
-	hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.FluteInternalInitFail, "initPiccolo(): retry count exceeded to connect piccolo module")).Stack()
+	hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "initPiccolo(): retry count exceeded to connect piccolo module")).Stack()
 	return (*hccErrStack)[0].ToError()
 }
 
@@ -56,7 +56,7 @@ func (rc *RPCClient) GetGroupList(_ *pb.Empty) (*pb.ResGetGroupList, *hcc_errors
 	defer cancel()
 	resGetGroupList, err := rc.piccolo.GetGroupList(ctx, &pb.Empty{})
 	if err != nil {
-		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpGrpcRequestError, "GetNode(): "+err.Error()))
+		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(hcc_errors.HarpGrpcRequestError, "GetGroupList(): "+err.Error()))
 		return nil, hccErrStack
 	}
 	if es := resGetGroupList.GetHccErrorStack(); es != nil {
