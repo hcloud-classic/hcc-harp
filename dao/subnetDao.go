@@ -399,6 +399,21 @@ func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
 	return &resSubnetNum, 0, ""
 }
 
+func checkGroupIDExist(groupID int64) error {
+	resGetGroupList, hccErrStack := client.RC.GetGroupList(&pb.Empty{})
+	if hccErrStack != nil {
+		return (*hccErrStack.Stack())[0].ToError()
+	}
+
+	for _, pGroup := range resGetGroupList.Group {
+		if pGroup.Id == groupID {
+			return nil
+		}
+	}
+
+	return errors.New("given group ID is not in the database")
+}
+
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet) error {
 	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet)
 	if isConflict {
@@ -496,6 +511,11 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		LeaderNodeUUID: "",
 		OS:             reqSubnet.GetOS(),
 		SubnetName:     reqSubnet.GetSubnetName(),
+	}
+
+	err = checkGroupIDExist(subnet.GroupID)
+	if err != nil {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
 	}
 
 	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil)
@@ -623,7 +643,12 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		subnet.Gateway = oldSubnet.Gateway
 	}
 
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
+	err := checkGroupIDExist(subnet.GroupID)
+	if err != nil {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
+	}
+
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}
