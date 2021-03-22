@@ -9,8 +9,6 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gojp/goreportcard v0.0.0-20201106142952-232d912e513e // indirect
 	github.com/golang/protobuf v1.4.3
-	github.com/hcloud-classic/hcc_errors v1.1.2
-	github.com/hcloud-classic/pb v0.0.0
 	github.com/mactsouk/go v0.0.0-20180603081621-6a282087f7bd // indirect
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
@@ -27,6 +25,11 @@ require (
 	google.golang.org/genproto v0.0.0-20210111234610-22ae2b108f89 // indirect
 	google.golang.org/grpc v1.34.1
 	google.golang.org/protobuf v1.25.0 // indirect
+	innogrid.com/hcloud-classic/hcc_errors v0.0.0
+	innogrid.com/hcloud-classic/pb v0.0.0
 )
 
-replace github.com/hcloud-classic/pb => ../pb
+replace (
+	innogrid.com/hcloud-classic/hcc_errors => ../hcc_errors
+	innogrid.com/hcloud-classic/pb => ../pb
+)

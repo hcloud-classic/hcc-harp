@@ -1,13 +1,14 @@
 package client
 
 import (
-	"github.com/hcloud-classic/pb"
+	"innogrid.com/hcloud-classic/pb"
 )
 
 // RPCClient : Struct type of gRPC clients
 type RPCClient struct {
-	flute  pb.FluteClient
-	violin pb.ViolinClient
+	flute   pb.FluteClient
+	violin  pb.ViolinClient
+	piccolo pb.PiccoloClient
 }
 
 // RC : Exported variable pointed to RPCClient
@@ -25,11 +26,17 @@ func Init() error {
 		return err
 	}
 
+	err = initPiccolo()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // End : Close connections of gRPC clients
 func End() {
-	closeFlute()
+	closePiccolo()
 	closeViolin()
+	closeFlute()
 }

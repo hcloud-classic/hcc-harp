@@ -2,8 +2,8 @@ package configext
 
 import (
 	"errors"
-	"github.com/hcloud-classic/pb"
 	"hcc/harp/lib/iputil"
+	"innogrid.com/hcloud-classic/pb"
 	"net"
 )
 

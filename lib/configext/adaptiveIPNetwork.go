@@ -1,9 +1,9 @@
 package configext
 
 import (
-	"github.com/hcloud-classic/pb"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
+	"innogrid.com/hcloud-classic/pb"
 )
 
 // GetAdaptiveIPNetwork : Get AdaptiveIP's configured information

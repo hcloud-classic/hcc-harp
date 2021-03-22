@@ -2,7 +2,6 @@ package adaptiveip
 
 import (
 	"github.com/apparentlymart/go-cidr/cidr"
-	"github.com/hcloud-classic/pb"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
@@ -10,6 +9,7 @@ import (
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
+	"innogrid.com/hcloud-classic/pb"
 	"net"
 )
 

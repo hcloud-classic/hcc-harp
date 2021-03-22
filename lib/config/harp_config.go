@@ -10,6 +10,7 @@ type harpConfig struct {
 	CelloConfig             *goconf.Section
 	FluteConfig             *goconf.Section
 	ViolinConfig            *goconf.Section
+	PiccoloConfig           *goconf.Section
 	DHCPDConfig             *goconf.Section
 	ARPINGConfig            *goconf.Section
 	AdaptiveIPConfig        *goconf.Section
