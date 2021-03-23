@@ -117,7 +117,8 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	nextIP := cidr.Inc(firstIP)
 
 	var nodeEntryConfPart = ""
-	for i, uuid := range nodeUUIDs {
+	var nodeNum = 1
+	for _, uuid := range nodeUUIDs {
 		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
 			dhcpdext.DecWritingSubnetConfigCounter()
@@ -126,13 +127,15 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 		pxeMacAddr = strings.Replace(pxeMacAddr, "-", ":", -1)
 
 		var node = new(nodeEntries)
-		node.NodeName = "node" + strconv.Itoa(i) + "." + subnet.UUID
 		node.PXEMACAddress = pxeMacAddr
 		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
+			node.NodeName = "node" + strconv.Itoa(1) + "." + subnet.UUID
 		} else {
 			node.IP = nextIP.String()
 			nextIP = cidr.Inc(nextIP)
+			nodeNum++
+			node.NodeName = "node" + strconv.Itoa(nodeNum) + "." + subnet.UUID
 		}
 
 		var nodeConfPart = nodeEntry
