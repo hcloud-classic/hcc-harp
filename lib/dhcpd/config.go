@@ -145,6 +145,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 		}})
 		if err != nil {
 			logger.Logger.Println(err)
+			dhcpdext.DecWritingSubnetConfigCounter()
 			return err
 		}
 
