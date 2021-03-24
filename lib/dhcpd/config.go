@@ -138,6 +138,16 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 			node.NodeName = "node" + strconv.Itoa(nodeNum) + "." + subnet.UUID
 		}
 
+		_, err = client.RC.UpdateNode(&pb.ReqUpdateNode{Node: &pb.Node{
+			UUID:    uuid,
+			NodeNum: int32(nodeNum),
+			NodeIP:  node.IP,
+		}})
+		if err != nil {
+			logger.Logger.Println(err)
+			return err
+		}
+
 		var nodeConfPart = nodeEntry
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_NAME", node.NodeName, -1)
 		nodeConfPart = strings.Replace(nodeConfPart, "HARP_DHCPD_NODE_PXE_MAC", node.PXEMACAddress, -1)

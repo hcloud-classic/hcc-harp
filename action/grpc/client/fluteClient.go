@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	errors2 "errors"
 	"google.golang.org/grpc"
 	"hcc/harp/action/grpc/errconv"
 	"hcc/harp/lib/config"
@@ -100,4 +101,26 @@ func (rc *RPCClient) GetNodeList(serverUUID string) ([]pb.Node, *hcc_errors.HccE
 	}
 
 	return nodeList, errStack
+}
+
+// UpdateNode : Update infos of the node
+func (rc *RPCClient) UpdateNode(in *pb.ReqUpdateNode) (*pb.Node, error) {
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
+	defer cancel()
+	resUpdateNode, err := rc.flute.UpdateNode(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	hccErrStack := errconv.GrpcStackToHcc(resUpdateNode.HccErrorStack)
+	errors := hccErrStack.ConvertReportForm()
+	if errors != nil {
+		stack := *errors.Stack()
+		if len(stack) != 0 && stack[0].Code() != 0 {
+			return nil, errors2.New(stack[0].Text())
+		}
+	}
+
+	return resUpdateNode.Node, nil
 }
