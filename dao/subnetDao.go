@@ -308,13 +308,12 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 }
 
 // ReadAvailableSubnetList : Get list of available subnets
-func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
+func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnetList, uint64, string) {
 	var subnetList pb.ResGetSubnetList
 	var subnets []pb.Subnet
 	var psubnets []*pb.Subnet
 
 	var uuid string
-	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
@@ -327,7 +326,13 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 	var subnetName string
 	var createdAt time.Time
 
-	sql := "select * from subnet where server_uuid = '' order by created_at desc"
+	var groupID = in.GetGroupID()
+	if groupID == 0 {
+		return nil, hcc_errors.ViolinGrpcArgumentError, "ReadAvailableSubnetList(): please insert a group_id argument"
+	}
+
+	sql := "select * from subnet where server_uuid = '' and group_id = " +
+		strconv.Itoa(int(groupID)) + " order by created_at desc"
 	stmt, err := mysql.Query(sql)
 	if err != nil {
 		errStr := "ReadAvailableSubnetList(): " + err.Error()
@@ -382,11 +387,16 @@ func ReadAvailableSubnetList() (*pb.ResGetSubnetList, uint64, string) {
 }
 
 // ReadSubnetNum : Get the number of subnets
-func ReadSubnetNum() (*pb.ResGetSubnetNum, uint64, string) {
+func ReadSubnetNum(in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, uint64, string) {
 	var resSubnetNum pb.ResGetSubnetNum
 	var subnetNr int64
 
-	sql := "select count(*) from subnet"
+	var groupID = in.GetGroupID()
+	if groupID == 0 {
+		return nil, hcc_errors.ViolinGrpcArgumentError, "ReadSubnetNum(): please insert a group_id argument"
+	}
+
+	sql := "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))
 	row := mysql.Db.QueryRow(sql)
 	err := mysql.QueryRowScan(row, &subnetNr)
 	if err != nil {
