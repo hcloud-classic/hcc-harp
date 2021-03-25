@@ -328,7 +328,7 @@ func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnet
 
 	var groupID = in.GetGroupID()
 	if groupID == 0 {
-		return nil, hcc_errors.ViolinGrpcArgumentError, "ReadAvailableSubnetList(): please insert a group_id argument"
+		return nil, hcc_errors.HarpGrpcArgumentError, "ReadAvailableSubnetList(): please insert a group_id argument"
 	}
 
 	sql := "select * from subnet where server_uuid = '' and group_id = " +
@@ -393,7 +393,7 @@ func ReadSubnetNum(in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, uint64, string)
 
 	var groupID = in.GetGroupID()
 	if groupID == 0 {
-		return nil, hcc_errors.ViolinGrpcArgumentError, "ReadSubnetNum(): please insert a group_id argument"
+		return nil, hcc_errors.HarpGrpcArgumentError, "ReadSubnetNum(): please insert a group_id argument"
 	}
 
 	sql := "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))

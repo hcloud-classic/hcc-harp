@@ -197,10 +197,10 @@ func (s *harpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAda
 	return adaptiveIPServerList, nil
 }
 
-func (s *harpServer) GetAdaptiveIPServerNum(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPServerNum, error) {
+func (s *harpServer) GetAdaptiveIPServerNum(_ context.Context, in *pb.ReqGetAdaptiveIPServerNum) (*pb.ResGetAdaptiveIPServerNum, error) {
 	logger.Logger.Println("Request received: GetAdaptiveIPServerNum()")
 
-	adaptiveIPServerNum, errCode, errStr := dao.ReadAdaptiveIPServerNum()
+	adaptiveIPServerNum, errCode, errStr := dao.ReadAdaptiveIPServerNum(in)
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetAdaptiveIPServerNum{Num: 0, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
