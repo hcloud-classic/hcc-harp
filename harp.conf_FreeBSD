@@ -27,6 +27,13 @@ violin_connection_timeout_ms 5000
 violin_connection_retry_count 10
 violin_request_timeout_ms 5000
 
+[piccolo]
+piccolo_server_address 192.168.110.240
+piccolo_server_port 7901
+piccolo_connection_timeout_ms 5000
+piccolo_connection_retry_count 10
+piccolo_request_timeout_ms 5000
+
 [dhcpd]
 dhcpd_local_dhcpd_service_name isc-dhcpd
 dhcpd_local_config_file_location /usr/local/etc/dhcpd.conf
