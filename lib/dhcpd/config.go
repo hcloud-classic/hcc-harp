@@ -336,7 +336,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	}
 
 	nodes, hccErrStack := client.RC.GetNodeList(subnet.ServerUUID)
-	if errCode != 0 {
+	if hccErrStack != nil {
 		err := (*hccErrStack.Stack())[0].ToError()
 		if err != nil {
 			logger.Logger.Println(errors.New("CreateDHCPDConfig(): Failed to get nodes by server UUID: " +
