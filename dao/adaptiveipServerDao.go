@@ -182,11 +182,16 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 }
 
 // ReadAdaptiveIPServerNum : Get the number of AdaptiveIPServer
-func ReadAdaptiveIPServerNum() (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
+func ReadAdaptiveIPServerNum(in *pb.ReqGetAdaptiveIPServerNum) (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
 	var adaptiveIPServerNum pb.ResGetAdaptiveIPServerNum
 	var adaptiveIPServerNr int64
 
-	sql := "select count(*) from adaptiveip_server"
+	var groupID = in.GetGroupID()
+	if groupID == 0 {
+		return nil, hcc_errors.HarpGrpcArgumentError, "ReadAdaptiveIPServerNum(): please insert a group_id argument"
+	}
+
+	sql := "select count(*) from adaptiveip_server where group_id = " + strconv.Itoa(int(groupID))
 	row := mysql.Db.QueryRow(sql)
 	err := mysql.QueryRowScan(row, &adaptiveIPServerNr)
 	if err != nil {

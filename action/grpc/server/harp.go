@@ -81,10 +81,10 @@ func (s *harpServer) GetSubnetList(_ context.Context, in *pb.ReqGetSubnetList) (
 	return &pb.ResGetSubnetList{Subnet: resGetSubnetList.Subnet}, nil
 }
 
-func (s *harpServer) GetAvailableSubnetList(_ context.Context, _ *pb.Empty) (*pb.ResGetAvailableSubnetList, error) {
+func (s *harpServer) GetAvailableSubnetList(_ context.Context, in *pb.ReqGetAvailableSubnetList) (*pb.ResGetAvailableSubnetList, error) {
 	logger.Logger.Println("Request received: GetAvailableSubnetList()")
 
-	resGetSubnetList, errCode, errStr := dao.ReadAvailableSubnetList()
+	resGetSubnetList, errCode, errStr := dao.ReadAvailableSubnetList(in)
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetAvailableSubnetList{Subnet: []*pb.Subnet{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
@@ -93,10 +93,10 @@ func (s *harpServer) GetAvailableSubnetList(_ context.Context, _ *pb.Empty) (*pb
 	return &pb.ResGetAvailableSubnetList{Subnet: resGetSubnetList.Subnet}, nil
 }
 
-func (s *harpServer) GetSubnetNum(_ context.Context, _ *pb.Empty) (*pb.ResGetSubnetNum, error) {
+func (s *harpServer) GetSubnetNum(_ context.Context, in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, error) {
 	logger.Logger.Println("Request received: GetSubnetNum()")
 
-	resGetSubnetNum, errCode, errStr := dao.ReadSubnetNum()
+	resGetSubnetNum, errCode, errStr := dao.ReadSubnetNum(in)
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetSubnetNum{Num: 0, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
@@ -197,10 +197,10 @@ func (s *harpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAda
 	return adaptiveIPServerList, nil
 }
 
-func (s *harpServer) GetAdaptiveIPServerNum(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPServerNum, error) {
+func (s *harpServer) GetAdaptiveIPServerNum(_ context.Context, in *pb.ReqGetAdaptiveIPServerNum) (*pb.ResGetAdaptiveIPServerNum, error) {
 	logger.Logger.Println("Request received: GetAdaptiveIPServerNum()")
 
-	adaptiveIPServerNum, errCode, errStr := dao.ReadAdaptiveIPServerNum()
+	adaptiveIPServerNum, errCode, errStr := dao.ReadAdaptiveIPServerNum(in)
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetAdaptiveIPServerNum{Num: 0, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
