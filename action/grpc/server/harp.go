@@ -19,6 +19,7 @@ type harpServer struct {
 func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 	return &pb.Subnet{
 		UUID:           subnet.UUID,
+		GroupID:        subnet.GroupID,
 		NetworkIP:      subnet.NetworkIP,
 		Netmask:        subnet.Netmask,
 		Gateway:        subnet.Gateway,
