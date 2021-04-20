@@ -390,13 +390,12 @@ func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnet
 func ReadSubnetNum(in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, uint64, string) {
 	var resSubnetNum pb.ResGetSubnetNum
 	var subnetNr int64
-
 	var groupID = in.GetGroupID()
-	if groupID == 0 {
-		return nil, hcc_errors.HarpGrpcArgumentError, "ReadSubnetNum(): please insert a group_id argument"
-	}
 
-	sql := "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))
+	sql := "select count(*) from subnet"
+	if groupID != 0 {
+		sql = "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))
+	}
 	row := mysql.Db.QueryRow(sql)
 	err := mysql.QueryRowScan(row, &subnetNr)
 	if err != nil {
