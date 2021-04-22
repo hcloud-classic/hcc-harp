@@ -90,6 +90,10 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	if in.AdaptiveipServer != nil {
 		reqAdaptiveIPServer := in.AdaptiveipServer
 
+		serverUUID = reqAdaptiveIPServer.ServerUUID
+		serverUUIDOk := len(serverUUID) != 0
+		groupID = reqAdaptiveIPServer.GroupID
+		groupIDOk := groupID != 0
 		publicIP = reqAdaptiveIPServer.PublicIP
 		publicIPOk := len(publicIP) != 0
 		privateIP = reqAdaptiveIPServer.PrivateIP
@@ -97,6 +101,12 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		privateGateway = reqAdaptiveIPServer.PrivateGateway
 		privateGatewayOk := len(privateGateway) != 0
 
+		if serverUUIDOk {
+			sql += " and server_uuid = '" + serverUUID + "'"
+		}
+		if groupIDOk {
+			sql += " and group_id = " + strconv.Itoa(int(groupID))
+		}
 		if publicIPOk {
 			sql += " and public_ip = '" + publicIP + "'"
 		}
