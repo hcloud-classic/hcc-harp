@@ -12,28 +12,28 @@ var harpPIDFileLocation = "/var/run"
 var harpPIDFile = "/var/run/harp.pid"
 
 // IsHarpRunning : Check if harp is running
-func IsHarpRunning() (err error, running bool, pid int) {
+func IsHarpRunning() (running bool, pid int, err error) {
 	if _, err := os.Stat(harpPIDFile); os.IsNotExist(err) {
-		return nil, false, 0
+		return false, 0, nil
 	}
 
 	pidStr, err := ioutil.ReadFile(harpPIDFile)
 	if err != nil {
-		return err, false, 0
+		return false, 0, err
 	}
 
 	harpPID, _ := strconv.Atoi(string(pidStr))
 
 	proc, err := os.FindProcess(harpPID)
 	if err != nil {
-		return err, false, 0
+		return false, 0, err
 	}
 	err = proc.Signal(syscall.Signal(0))
 	if err == nil {
-		return nil, true, harpPID
+		return true, harpPID, nil
 	}
 
-	return nil, false, 0
+	return false, 0, nil
 }
 
 // WriteHarpPID : Write harp PID to "/var/run/harp.pid"

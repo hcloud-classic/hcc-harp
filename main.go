@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	err, harpRunning, harpPID := pid.IsHarpRunning()
+	harpRunning, harpPID, err := pid.IsHarpRunning()
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
