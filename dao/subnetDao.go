@@ -208,40 +208,40 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 		subnetNameOk := len(subnetName) != 0
 
 		if uuidOk {
-			sql += " and uuid = '" + uuid + "'"
+			sql += " and uuid like '%" + uuid + "%'"
 		}
 		if groupIDOk {
-			sql += " and group_id = " + strconv.Itoa(int(groupID))
+			sql += " and group_id =" + strconv.Itoa(int(groupID))
 		}
 		if networkIPOk {
-			sql += " and network_ip = '" + networkIP + "'"
+			sql += " and network_ip like '%" + networkIP + "%'"
 		}
 		if netmaskOk {
-			sql += " and netmask = '" + netmask + "'"
+			sql += " and netmask like '%" + netmask + "%'"
 		}
 		if gatewayOk {
-			sql += " and gateway = '" + gateway + "'"
+			sql += " and gateway like '%" + gateway + "%'"
 		}
 		if nextServerOk {
-			sql += " and next_server = '" + nextServer + "'"
+			sql += " and next_server like '%" + nextServer + "%'"
 		}
 		if nameServerOk {
-			sql += " and name_server = '" + nameServer + "'"
+			sql += " and name_server like '%" + nameServer + "%'"
 		}
 		if domainNameOk {
-			sql += " and domain_name = '" + domainName + "'"
+			sql += " and domain_name like '%" + domainName + "%'"
 		}
 		if serverUUIDOk {
-			sql += " and server_uuid = '" + serverUUID + "'"
+			sql += " and server_uuid like '%" + serverUUID + "%'"
 		}
 		if leaderNodeUUIDOk {
-			sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
+			sql += " and leader_node_uuid like '%" + leaderNodeUUID + "%'"
 		}
 		if osOk {
-			sql += " and os = '" + os + "'"
+			sql += " and os like '%" + os + "%'"
 		}
 		if subnetNameOk {
-			sql += " and subnet_name = '" + subnetName + "'"
+			sql += " and subnet_name like '%" + subnetName + "%'"
 		}
 	}
 
