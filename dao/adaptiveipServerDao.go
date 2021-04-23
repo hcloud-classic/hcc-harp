@@ -102,19 +102,19 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		privateGatewayOk := len(privateGateway) != 0
 
 		if serverUUIDOk {
-			sql += " and server_uuid = '" + serverUUID + "'"
+			sql += " and server_uuid like '%" + serverUUID + "%'"
 		}
 		if groupIDOk {
 			sql += " and group_id = " + strconv.Itoa(int(groupID))
 		}
 		if publicIPOk {
-			sql += " and public_ip = '" + publicIP + "'"
+			sql += " and public_ip like '%" + publicIP + "%'"
 		}
 		if privateIPOk {
-			sql += " and private_ip = '" + privateIP + "'"
+			sql += " and private_ip like '%" + privateIP + "%'"
 		}
 		if privateGatewayOk {
-			sql += " and private_gateway = '" + privateGateway + "'"
+			sql += " and private_gateway like '%" + privateGateway + "%'"
 		}
 	}
 
