@@ -289,11 +289,6 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	err = iptables.EnableAllRouteLocal()
-	if err != nil {
-		return err
-	}
-
 	err = iptables.EnableIPForwardV4()
 	if err != nil {
 		return err
