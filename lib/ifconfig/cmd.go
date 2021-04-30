@@ -2,7 +2,6 @@ package ifconfig
 
 import (
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/syscheck"
 	"os/exec"
 )
 
@@ -11,11 +10,7 @@ func loadIfconfigScript(filepath string) error {
 
 	var cmd *exec.Cmd
 
-	if syscheck.OS == "freebsd" {
-		cmd = exec.Command("csh", filepath)
-	} else {
-		cmd = exec.Command("bash", filepath)
-	}
+	cmd = exec.Command("bash", filepath)
 
 	err := cmd.Run()
 	if err != nil {

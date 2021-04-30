@@ -3,10 +3,6 @@ package config
 type adaptiveIP struct {
 	ExternalIfaceName          string `goconf:"adaptiveip_external_iface_name"`                      // ExternalIfaceName : External interface name
 	InternalIfaceName          string `goconf:"adaptiveip_internal_iface_name"`                      // InternalIfaceName : Internal interface name
-	PFBaseConfigFileLocation   string `goconf:"adaptiveip:adaptiveip_pf_base_config_file_location"`  // PFBaseConfigFileLocation : Base configuration file location to make harp module's pf.rules
-	PFRulesFileLocation        string `goconf:"adaptiveip:adaptiveip_pf_rules_file_location"`        // PFRulesFileLocation : pf.rules file location to use in harp module
-	PFBinatConfigFileLocation  string `goconf:"adaptiveip:adaptiveip_pf_binat_config_file_location"` // PFBinatConfigFileLocation : PF configuration file location of binat
-	PFnatConfigFileLocation    string `goconf:"adaptiveip:adaptiveip_pf_nat_config_file_location"`   // PFnatConfigFileLocation : PF configuration file location of nat
 	IfconfigScriptFileLocation string `goconf:"adaptiveip:adaptiveip_ifconfig_script_file_location"` // IfconfigScriptFileLocation : Script file location of ifconfig
 	NetworkConfigFile          string `goconf:"adaptiveip:adaptiveip_network_config_file"`           // NetworkConfigFile : Adaptive IP network networkConfig file location
 	DefaultExtIfaceIPAddr      string `goconf:"adaptiveip:adaptiveip_default_ext_iface_ip_addr"`     // DefaultExtIfaceIPAddr : Default IP address of external interface for use adaptive IP

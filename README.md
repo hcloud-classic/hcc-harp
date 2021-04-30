@@ -12,37 +12,23 @@
   - Allocate Adaptive IP (Allocate public IP address to private IP address.)
 
 - Supported OS
-  - FreeBSD
   - Linux
 
 - Pre-required
-  - For FreeBSD
-    - PF firewall enabled with kernel module loaded.
-  - For Linux
     - SELinux disabled (If enabled, iptables will not work correctly.)
     - iptables installed with NAT kernel module loaded (iptable_nat, nf_nat)
-  - For both FreeBSD and Linux
     - Golang installed
     - 2 network interfaces for use an external network and internal networks.
 
 <br>
 
 - How to build
-  - FreeBSD
-    - Just run `gmake` command.
-  - Linux
     - Just run `make` command.
 
 <br>
 
 - How to run
-  - FreeBSD
-    1. Copy `harp.conf_FreeBSD` to `/etc/hcc/harp/harp.conf`
-    2. Change your settings in `harp.conf`
-    3. Run `harp` binary.
-
-  - Linux
-    1. Copy `harp.conf_Linux` to `/etc/hcc/harp/harp.conf`
+    1. Copy `harp.conf` to `/etc/hcc/harp/harp.conf`
     2. Change your settings in `harp.conf`
     3. Run `harp` binary.
 

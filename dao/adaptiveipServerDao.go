@@ -8,8 +8,6 @@ import (
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/lib/pf"
-	"hcc/harp/lib/syscheck"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"innogrid.com/hcloud-classic/pb"
 	"net"
@@ -290,12 +288,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIPServer.PrivateIP = firstIP.String()
 	adaptiveIPServer.PrivateGateway = subnet.Gateway
 
-	if syscheck.OS == "freebsd" {
-		err = pf.CreateAndLoadAnchorConfig(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	} else {
-		err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	}
-
+	err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
@@ -336,11 +329,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
 
-	if syscheck.OS == "freebsd" {
-		err = pf.DeleteAndUnloadAnchorConfig(adaptiveIPServer.PublicIP)
-	} else {
-		err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	}
+	err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
