@@ -114,10 +114,10 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 		&createdAt)
 	if err != nil {
 		errStr := "ReadSubnetByServer(): " + err.Error()
-		logger.Logger.Println(errStr)
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return nil, hcc_errors.HarpSQLNoResult, errStr
 		}
+		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 

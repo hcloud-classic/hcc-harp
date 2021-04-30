@@ -36,6 +36,9 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 		&createdAt)
 	if err != nil {
 		errStr := "ReadAdaptiveIPServer(): " + err.Error()
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, hcc_errors.HarpSQLNoResult, errStr
+		}
 		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
