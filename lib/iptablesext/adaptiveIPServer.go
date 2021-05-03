@@ -12,25 +12,13 @@ import (
 
 func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
-
-	cmd := exec.Command("iptables", "-t", "nat",
-		"-A", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
-		"-s", privateIP,
-		"-j", "SNAT",
-		"--to-source", publicIP)
+	cmd := exec.Command("iptables", "-t", "filter",
+		"-A", HarpAdaptiveIPInputDropChainName,
+		"-d", publicIP,
+		"-j", "DROP")
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("failed to add POSTROUTING rule of " + publicIP)
-	}
-
-	cmd = exec.Command("iptables", "-t", "nat",
-		"-A", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
-		"-d", publicIP,
-		"-j", "DNAT",
-		"--to-destination", privateIP)
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to add PREROUTING rule of " + publicIP)
+		return errors.New("failed to add ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
@@ -56,25 +44,13 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 
 func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
-
-	cmd := exec.Command("iptables", "-t", "nat",
-		"-D", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
-		"-s", privateIP,
-		"-j", "SNAT",
-		"--to-source", publicIP)
+	cmd := exec.Command("iptables", "-t", "filter",
+		"-D", HarpAdaptiveIPInputDropChainName,
+		"-d", publicIP,
+		"-j", "DROP")
 	err := cmd.Run()
 	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("iptables", "-t", "nat",
-		"-D", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
-		"-d", publicIP,
-		"-j", "DNAT",
-		"--to-destination", privateIP)
-	err = cmd.Run()
-	if err != nil {
-		return err
+		return errors.New("failed to delete ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
@@ -82,6 +58,9 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
+	if err != nil {
+		return errors.New("failed to delete external FORWARD rule of " + publicIP)
+	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
 		"-D", HarpChainNamePrefix+"FORWARD",
@@ -89,7 +68,7 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 		"-j", "ACCEPT")
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return errors.New("failed to delete internal FORWARD rule of " + publicIP)
 	}
 
 	return nil
@@ -110,6 +89,11 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		return err
 	}
 
+	err = AddICMPForwarding(publicIP, privateIP)
+	if err != nil {
+		return err
+	}
+
 	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
 	if err != nil {
 		return errors.New("failed to run ifconfig command of " + publicIP)
@@ -121,7 +105,12 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 // DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
 // match with public IP address.
 func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	err := deleteAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
+	err := DeleteICMPForwarding(publicIP, privateIP)
+	if err != nil {
+		return err
+	}
+
+	err = deleteAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
 	if err != nil {
 		goto Error
 	}
