@@ -1,6 +1,7 @@
 package iptablesext
 
 import (
+	"errors"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
@@ -19,7 +20,7 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 		"--to-source", publicIP)
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return errors.New("failed to add POSTROUTING rule of " + publicIP)
 	}
 
 	cmd = exec.Command("iptables", "-t", "nat",
@@ -29,22 +30,25 @@ func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
 		"--to-destination", privateIP)
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return errors.New("failed to add PREROUTING rule of " + publicIP)
 	}
 
-	cmd = exec.Command("iptables",
+	cmd = exec.Command("iptables", "-t", "filter",
 		"-A", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
+	if err != nil {
+		return errors.New("failed to add external FORWARD rule of " + publicIP)
+	}
 
-	cmd = exec.Command("iptables",
+	cmd = exec.Command("iptables", "-t", "filter",
 		"-A", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return errors.New("failed to add internal FORWARD rule of " + publicIP)
 	}
 
 	return nil
@@ -73,13 +77,13 @@ func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) erro
 		return err
 	}
 
-	cmd = exec.Command("iptables",
+	cmd = exec.Command("iptables", "-t", "filter",
 		"-D", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 
-	cmd = exec.Command("iptables",
+	cmd = exec.Command("iptables", "-t", "filter",
 		"-D", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
@@ -98,22 +102,20 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 
 	err := arping.CheckDuplicatedIPAddress(publicIP)
 	if err != nil {
-		goto Error
+		return err
 	}
 
 	err = addAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
 	if err != nil {
-		goto Error
+		return err
 	}
 
 	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
 	if err != nil {
-		goto Error
+		return errors.New("failed to run ifconfig command of " + publicIP)
 	}
 
 	return nil
-Error:
-	return err
 }
 
 // DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
