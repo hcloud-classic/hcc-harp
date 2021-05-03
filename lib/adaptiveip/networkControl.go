@@ -4,7 +4,6 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/dhcpd"
-	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iptables"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -143,17 +142,7 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	err = dhcpd.CheckDatabaseAndGenerateDHCPDConfigs()
-	if err != nil {
-		return err
-	}
-
-	err = ifconfig.LoadExistingIfconfigScriptsInternal()
-	if err != nil {
-		return err
-	}
-
-	err = ifconfig.LoadExistingIfconfigScriptsExternal()
+	err = dhcpd.CheckDatabaseAndPrepareDHCPD()
 	if err != nil {
 		return err
 	}
@@ -163,7 +152,7 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	err = iptables.LoadAdaptiveIPIPTABLESRules()
+	err = iptables.LoadAdaptiveIPIfconfigAndIPTABLESRules()
 	if err != nil {
 		return err
 	}

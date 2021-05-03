@@ -250,7 +250,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	// Allocate gateway IP address to internal interface
-	err = ifconfig.CreateAndLoadIfconfigScriptInternal(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
+	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
@@ -407,8 +407,8 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	return "DeleteDHCPDConfig: succeed", nil
 }
 
-// CheckDatabaseAndGenerateDHCPDConfigs : Check database and generate dhcpd configs
-func CheckDatabaseAndGenerateDHCPDConfigs() error {
+// CheckDatabaseAndPrepareDHCPD : Check database and prepare for dhcpd
+func CheckDatabaseAndPrepareDHCPD() error {
 	serverUUIDs, hccErrStack := client.RC.AllServerUUID()
 	if hccErrStack != nil {
 		return (*hccErrStack.Stack())[0].ToError()
@@ -433,7 +433,7 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 
 		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
 		if errCode != 0 {
-			hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CheckDatabaseAndGenerateDHCPDConfigs(): "+errStr))
+			hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CheckDatabaseAndPrepareDHCPD(): "+errStr))
 			err := (*hccErrStack.Stack())[1].ToError()
 			if err != nil {
 				logger.Logger.Println("Failed to get subnet by server UUID: " +
@@ -451,6 +451,15 @@ func CheckDatabaseAndGenerateDHCPDConfigs() error {
 		}
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
+
+		err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.NetworkIP, subnet.Netmask)
+		if err != nil {
+			logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
+				subnetUUID + " (" + err.Error() + ")")
+			continue
+		}
+
+		logger.Logger.Println("Added virtual internal interface of subnetUUID=" + subnetUUID)
 	}
 
 	files, err := UpdateHarpDHCPDConfig()

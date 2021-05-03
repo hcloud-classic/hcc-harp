@@ -106,8 +106,7 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		goto Error
 	}
 
-	err = ifconfig.CreateAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
-		adaptiveip.Netmask)
+	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
 	if err != nil {
 		goto Error
 	}
@@ -120,15 +119,12 @@ Error:
 // DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
 // match with public IP address.
 func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	adaptiveip := configext.GetAdaptiveIPNetwork()
-
 	err := deleteAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
 	if err != nil {
 		goto Error
 	}
 
-	err = ifconfig.DeleteAndUnloadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
-		adaptiveip.Netmask)
+	err = ifconfig.IfconfigDeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
 	if err != nil {
 		goto Error
 	}

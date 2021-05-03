@@ -6,6 +6,7 @@ import (
 	"hcc/harp/dao"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
+	"hcc/harp/lib/ifconfig"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"innogrid.com/hcloud-classic/pb"
@@ -140,9 +141,9 @@ func InitIPTABLES() error {
 	return nil
 }
 
-// LoadAdaptiveIPIPTABLESRules : Load iptables rules for AdaptiveIP
-func LoadAdaptiveIPIPTABLESRules() error {
-	logger.Logger.Println("Loading iptables rules for AdaptiveIP...")
+// LoadAdaptiveIPIfconfigAndIPTABLESRules : Load the ifconfig command and iptables rules for AdaptiveIP
+func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
+	logger.Logger.Println("Loading ifconfig commands and iptables rules for AdaptiveIPs...")
 
 	var adaptiveIPServer pb.AdaptiveIPServer
 	in := &pb.ReqGetAdaptiveIPServerList{
@@ -157,14 +158,20 @@ func LoadAdaptiveIPIPTABLESRules() error {
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
+		adaptiveip := configext.GetAdaptiveIPNetwork()
+		err := ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, adaptiveIPServer.PublicIP, adaptiveip.Netmask)
+		if err != nil {
+			return errors.New("failed to run ifconfig command of serverUUID=" + adaptiveIPServer.ServerUUID)
+		}
+
 		cmd := exec.Command("iptables", "-t", "nat",
 			"-A", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
 			"-s", adaptiveIPServer.PrivateIP,
 			"-j", "SNAT",
 			"--to-source", adaptiveIPServer.PublicIP)
-		err := cmd.Run()
+		err = cmd.Run()
 		if err != nil {
-			return err
+			return errors.New("failed to add POSTROUTING rule of serverUUID=" + adaptiveIPServer.ServerUUID)
 		}
 
 		cmd = exec.Command("iptables", "-t", "nat",
@@ -174,7 +181,7 @@ func LoadAdaptiveIPIPTABLESRules() error {
 			"--to-destination", adaptiveIPServer.PrivateIP)
 		err = cmd.Run()
 		if err != nil {
-			return err
+			return errors.New("failed to add PREROUTING rule of serverUUID=" + adaptiveIPServer.ServerUUID)
 		}
 
 		cmd = exec.Command("iptables", "-t", "filter",
@@ -183,7 +190,7 @@ func LoadAdaptiveIPIPTABLESRules() error {
 			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
-			return err
+			return errors.New("failed to add external FORWARD rule of serverUUID=" + adaptiveIPServer.ServerUUID)
 		}
 
 		cmd = exec.Command("iptables", "-t", "filter",
@@ -192,7 +199,7 @@ func LoadAdaptiveIPIPTABLESRules() error {
 			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
-			return err
+			return errors.New("failed to add internal FORWARD rule of serverUUID=" + adaptiveIPServer.ServerUUID)
 		}
 	}
 

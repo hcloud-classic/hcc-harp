@@ -205,11 +205,6 @@ func parseDHCPD() {
 		logger.Logger.Panicln(err)
 	}
 
-	DHCPD.IfconfigScriptFileLocation, err = config.DHCPDConfig.String("dhcpd_ifconfig_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
 	DHCPD.MinLeaseTime, err = config.DHCPDConfig.Int("dhcpd_min_lease_time")
 	if err != nil {
 		logger.Logger.Panicln(err)
@@ -242,11 +237,6 @@ func parseAdaptiveIP() {
 	AdaptiveIP.InternalIfaceName, err = config.AdaptiveIPConfig.String("adaptiveip_internal_iface_name")
 	if err != nil {
 		logger.Logger.Panic(err)
-	}
-
-	AdaptiveIP.IfconfigScriptFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_ifconfig_script_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
 	}
 
 	AdaptiveIP.NetworkConfigFile, err = config.AdaptiveIPConfig.String("adaptiveip_network_config_file")
