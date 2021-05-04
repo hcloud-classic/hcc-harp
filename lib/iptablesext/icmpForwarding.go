@@ -26,34 +26,65 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 	logger.Logger.Println(addMsg + " ICMP forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
-		addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
+		"-C", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
 		"-p", "icmp", "--icmp-type", "echo-request",
 		"-j", "SNAT",
 		"--to-source", publicIP)
 	err := cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " ICMP POSTROUTING rule of " + publicIP)
+	isExist := err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "nat",
+			addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
+			"-p", "icmp", "--icmp-type", "echo-request",
+			"-j", "SNAT",
+			"--to-source", publicIP)
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " ICMP POSTROUTING rule of " + publicIP)
+		}
 	}
 
 	cmd = exec.Command("iptables", "-t", "nat",
-		addFlag, HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+		"-C", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 		"-p", "icmp", "--icmp-type", "echo-request",
 		"-d", publicIP,
 		"-j", "DNAT",
 		"--to-destination", privateIP)
 	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " ICMP PREROUTING rule of " + publicIP)
+	isExist = err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "nat",
+			addFlag, HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+			"-p", "icmp", "--icmp-type", "echo-request",
+			"-d", publicIP,
+			"-j", "DNAT",
+			"--to-destination", privateIP)
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " ICMP PREROUTING rule of " + publicIP)
+		}
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
-		addFlag, HarpChainNamePrefix+"INPUT",
+		"-C", HarpChainNamePrefix+"INPUT",
 		"-p", "icmp", "--icmp-type", "echo-request",
 		"-d", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " ICMP INPUT rule of " + publicIP)
+	isExist = err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpChainNamePrefix+"INPUT",
+			"-p", "icmp", "--icmp-type", "echo-request",
+			"-d", publicIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " ICMP INPUT rule of " + publicIP)
+		}
 	}
 
 	return nil
