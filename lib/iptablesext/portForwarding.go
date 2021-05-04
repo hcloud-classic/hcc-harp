@@ -96,14 +96,26 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 		isExist = err == nil
 
 		if (isAdd && !isExist) || (!isAdd && isExist) {
-			cmd = exec.Command("iptables", "-t", "filter",
-				addFlag, HarpChainNamePrefix+"INPUT",
-				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-				"-d", publicIP,
-				"-j", "ACCEPT")
-			err = cmd.Run()
-			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " INPUT rule of " + publicIP)
+			if isAdd {
+				cmd = exec.Command("iptables", "-t", "filter",
+					"-I", HarpChainNamePrefix+"INPUT", "1",
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "ACCEPT")
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " INPUT rule of " + publicIP)
+				}
+			} else {
+				cmd = exec.Command("iptables", "-t", "filter",
+					addFlag, HarpChainNamePrefix+"INPUT",
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "ACCEPT")
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " INPUT rule of " + publicIP)
+				}
 			}
 		}
 	}
