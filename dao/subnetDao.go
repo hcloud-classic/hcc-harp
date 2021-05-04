@@ -722,9 +722,9 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		_ = stmt.Close()
 	}()
 
-	_, err2 := stmt.Exec(subnet.UUID)
-	if err2 != nil {
-		errStr := "UpdateSubnet(): " + err2.Error()
+	_, err = stmt.Exec(subnet.UUID)
+	if err != nil {
+		errStr := "UpdateSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
@@ -768,9 +768,9 @@ func DeleteSubnet(in *pb.ReqDeleteSubnet) (*pb.Subnet, uint64, string) {
 	defer func() {
 		_ = stmt.Close()
 	}()
-	_, err2 := stmt.Exec(requestedUUID)
-	if err2 != nil {
-		errStr := "DeleteSubnet(): " + err2.Error()
+	_, err = stmt.Exec(requestedUUID)
+	if err != nil {
+		errStr := "DeleteSubnet(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
