@@ -84,53 +84,40 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 	return nil
 }
 
-// CreateIPTABLESRulesAndExtIface : Check if public IP is duplicated then create
-// ifconfig script file and virtual external interface, iptables rules.
-func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+// ControlIfconfigAndIPTABLES : Add or delete iptables rules and virtual interface for AdaptiveIPServer
+func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
+	var err error
 
-	err := arping.CheckDuplicatedIPAddress(publicIP)
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
+
+	if isAdd {
+		err = arping.CheckDuplicatedIPAddress(publicIP)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = adaptiveIPServerForwarding(isAdd, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
 
-	err = adaptiveIPServerForwarding(true, publicIP, privateIP)
+	err = ICMPForwarding(isAdd, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
 
-	err = ICMPForwarding(true, publicIP, privateIP)
-	if err != nil {
-		return err
-	}
-
-	err = ifconfig.AddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
-	if err != nil {
-		return errors.New("failed to run ifconfig command of " + publicIP)
+	if isAdd {
+		err = ifconfig.AddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveIP.Netmask)
+		if err != nil {
+			return errors.New("failed to add virtual interface for " + publicIP)
+		}
+	} else {
+		err = ifconfig.DeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
+		if err != nil {
+			return errors.New("failed to delete virtual interface for " + publicIP)
+		}
 	}
 
 	return nil
-}
-
-// DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
-// match with public IP address.
-func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	err := ICMPForwarding(false, publicIP, privateIP)
-	if err != nil {
-		return err
-	}
-
-	err = adaptiveIPServerForwarding(false, publicIP, privateIP)
-	if err != nil {
-		goto Error
-	}
-
-	err = ifconfig.DeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
-	if err != nil {
-		goto Error
-	}
-
-	return nil
-Error:
-	return err
 }

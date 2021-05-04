@@ -213,7 +213,7 @@ func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
-		err := iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP,
+		err := iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP,
 			adaptiveIPServer.PrivateIP)
 		if err != nil {
 			logger.Logger.Println(err.Error())
