@@ -208,3 +208,33 @@ func (s *harpServer) DeleteDHCPDConf(_ context.Context, in *pb.ReqDeleteDHCPDCon
 
 	return &pb.ResDeleteDHCPDConf{Result: result}, nil
 }
+
+func (s *harpServer) GetPortForwardingList(_ context.Context, in *pb.ReqGetPortForwardingList) (*pb.ResGetPortForwardingList, error) {
+	portForwardingList, errCode, errStr := dao.ReadPortForwardingList(in)
+	if errCode != 0 {
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		return &pb.ResGetPortForwardingList{PortForwarding: []*pb.PortForwarding{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
+	}
+
+	return portForwardingList, nil
+}
+
+func (s *harpServer) CreatePortForwarding(_ context.Context, in *pb.ReqCreatePortForwarding) (*pb.ResCreatePortForwarding, error) {
+	portForwarding, errCode, errStr := dao.CreatePortForwarding(in)
+	if errCode != 0 {
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		return &pb.ResCreatePortForwarding{PortForwarding: &pb.PortForwarding{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
+	}
+
+	return &pb.ResCreatePortForwarding{PortForwarding: portForwarding}, nil
+}
+
+func (s *harpServer) DeletePortForwarding(_ context.Context, in *pb.ReqDeletePortForwarding) (*pb.ResDeletePortForwarding, error) {
+	serverUUID, errCode, errStr := dao.DeletePortForwarding(in)
+	if errCode != 0 {
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		return &pb.ResDeletePortForwarding{ServerUUID: "", HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
+	}
+
+	return &pb.ResDeletePortForwarding{ServerUUID: serverUUID}, nil
+}

@@ -218,6 +218,22 @@ func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
 		if err != nil {
 			logger.Logger.Println(err.Error())
 		}
+
+		portForwardingList, _, _ := dao.ReadPortForwardingList(&pb.ReqGetPortForwardingList{
+			PortForwarding: &pb.PortForwarding{
+				ServerUUID: adaptiveIPServer.ServerUUID,
+			},
+		})
+		if portForwardingList != nil {
+			for _, portForwarding := range portForwardingList.PortForwarding {
+				err = iptablesext.PortForwarding(true, portForwarding.ForwardTCP, portForwarding.ForwardUDP,
+					adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
+					int(portForwarding.ExternalPort), int(portForwarding.InternalPort))
+				if err != nil {
+					logger.Logger.Println(err.Error())
+				}
+			}
+		}
 	}
 
 	return nil

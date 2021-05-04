@@ -332,6 +332,15 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
 
+	_, errCode, errStr := DeletePortForwarding(&pb.ReqDeletePortForwarding{
+		PortForwarding: &pb.PortForwarding{
+			ServerUUID: serverUUID,
+		},
+	})
+	if errCode != 0 {
+		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): " + errStr
+	}
+
 	err = iptablesext.ControlIfconfigAndIPTABLES(false, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
