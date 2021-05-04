@@ -89,7 +89,7 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		return err
 	}
 
-	err = AddICMPForwarding(publicIP, privateIP)
+	err = ICMPForwarding(true, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 // DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
 // match with public IP address.
 func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	err := DeleteICMPForwarding(publicIP, privateIP)
+	err := ICMPForwarding(false, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
