@@ -104,7 +104,7 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		return err
 	}
 
-	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
+	err = ifconfig.AddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
 	if err != nil {
 		return errors.New("failed to run ifconfig command of " + publicIP)
 	}
@@ -125,7 +125,7 @@ func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		goto Error
 	}
 
-	err = ifconfig.IfconfigDeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
+	err = ifconfig.DeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
 	if err != nil {
 		goto Error
 	}
