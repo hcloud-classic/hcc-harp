@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"hcc/harp/dao"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
@@ -98,10 +97,67 @@ func flushOrAddHarpIPTABLESChain(table string, chain string) error {
 	return nil
 }
 
-func prepareHarpNATIPTABLESChains() error {
-	logger.Logger.Println("Preparing harp's NAT iptables chains...")
+func flushOrAddHarpIPTABLESChainAdaptiveIPInputDrop() error {
+	// Check if the chain is exist then create the chain if not exist or flushing it if exist
+	cmd := exec.Command("iptables", "-t", "filter", "-n", "-L", iptablesext.HarpAdaptiveIPInputDropChainName)
+	err := cmd.Run()
+	if err == nil {
+		cmd = exec.Command("iptables", "-t", "filter", "-F", iptablesext.HarpAdaptiveIPInputDropChainName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
 
-	err := flushOrAddHarpIPTABLESChain("filter", "FORWARD")
+		cmd = exec.Command("iptables", "-t", "filter", "-Z", iptablesext.HarpAdaptiveIPInputDropChainName)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+	} else {
+		cmd := exec.Command("iptables", "-t", "filter", "-N", iptablesext.HarpAdaptiveIPInputDropChainName)
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check if the chain is included in the table then insert to first line of the table
+	cmd = exec.Command("iptables", "-t", "filter", "-C", iptablesext.HarpChainNamePrefix+"INPUT",
+		"-j", iptablesext.HarpAdaptiveIPInputDropChainName)
+	err = cmd.Run()
+	if err == nil {
+		cmd := exec.Command("iptables", "-t", "filter", "-D", iptablesext.HarpChainNamePrefix+"INPUT",
+			"-j", iptablesext.HarpAdaptiveIPInputDropChainName)
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd = exec.Command("iptables", "-t", "filter", "-A", iptablesext.HarpChainNamePrefix+"INPUT",
+		"-j", iptablesext.HarpAdaptiveIPInputDropChainName)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func prepareHarpIPTABLESChains() error {
+	logger.Logger.Println("Preparing harp's iptables chains...")
+
+	err := flushOrAddHarpIPTABLESChain("filter", "INPUT")
+	if err != nil {
+		return err
+	}
+
+	err = flushOrAddHarpIPTABLESChainAdaptiveIPInputDrop()
+	if err != nil {
+		return err
+	}
+
+	err = flushOrAddHarpIPTABLESChain("filter", "FORWARD")
 	if err != nil {
 		return err
 	}
@@ -132,7 +188,7 @@ func InitIPTABLES() error {
 		return err
 	}
 
-	err = prepareHarpNATIPTABLESChains()
+	err = prepareHarpIPTABLESChains()
 	if err != nil {
 		return err
 	}
@@ -140,9 +196,9 @@ func InitIPTABLES() error {
 	return nil
 }
 
-// LoadAdaptiveIPIPTABLESRules : Load iptables rules for AdaptiveIP
-func LoadAdaptiveIPIPTABLESRules() error {
-	logger.Logger.Println("Loading iptables rules for AdaptiveIP...")
+// LoadAdaptiveIPIfconfigAndIPTABLESRules : Load the ifconfig command and iptables rules for AdaptiveIP
+func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
+	logger.Logger.Println("Loading ifconfig commands and iptables rules for AdaptiveIPs...")
 
 	var adaptiveIPServer pb.AdaptiveIPServer
 	in := &pb.ReqGetAdaptiveIPServerList{
@@ -157,42 +213,10 @@ func LoadAdaptiveIPIPTABLESRules() error {
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
-		cmd := exec.Command("iptables", "-t", "nat",
-			"-A", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
-			"-s", adaptiveIPServer.PrivateIP,
-			"-j", "SNAT",
-			"--to-source", adaptiveIPServer.PublicIP)
-		err := cmd.Run()
+		err := iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP,
+			adaptiveIPServer.PrivateIP)
 		if err != nil {
-			return err
-		}
-
-		cmd = exec.Command("iptables", "-t", "nat",
-			"-A", iptablesext.HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
-			"-d", adaptiveIPServer.PublicIP,
-			"-j", "DNAT",
-			"--to-destination", adaptiveIPServer.PrivateIP)
-		err = cmd.Run()
-		if err != nil {
-			return err
-		}
-
-		cmd = exec.Command("iptables", "-t", "filter",
-			"-A", iptablesext.HarpChainNamePrefix+"FORWARD",
-			"-s", adaptiveIPServer.PublicIP,
-			"-j", "ACCEPT")
-		err = cmd.Run()
-		if err != nil {
-			return err
-		}
-
-		cmd = exec.Command("iptables", "-t", "filter",
-			"-A", iptablesext.HarpChainNamePrefix+"FORWARD",
-			"-d", adaptiveIPServer.PrivateIP,
-			"-j", "ACCEPT")
-		err = cmd.Run()
-		if err != nil {
-			return err
+			logger.Logger.Println(err.Error())
 		}
 	}
 

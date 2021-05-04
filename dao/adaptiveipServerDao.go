@@ -8,8 +8,6 @@ import (
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
-	"hcc/harp/lib/pf"
-	"hcc/harp/lib/syscheck"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"innogrid.com/hcloud-classic/pb"
 	"net"
@@ -38,6 +36,9 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 		&createdAt)
 	if err != nil {
 		errStr := "ReadAdaptiveIPServer(): " + err.Error()
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, hcc_errors.HarpSQLNoResult, errStr
+		}
 		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
@@ -90,6 +91,10 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	if in.AdaptiveipServer != nil {
 		reqAdaptiveIPServer := in.AdaptiveipServer
 
+		serverUUID = reqAdaptiveIPServer.ServerUUID
+		serverUUIDOk := len(serverUUID) != 0
+		groupID = reqAdaptiveIPServer.GroupID
+		groupIDOk := groupID != 0
 		publicIP = reqAdaptiveIPServer.PublicIP
 		publicIPOk := len(publicIP) != 0
 		privateIP = reqAdaptiveIPServer.PrivateIP
@@ -97,14 +102,20 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		privateGateway = reqAdaptiveIPServer.PrivateGateway
 		privateGatewayOk := len(privateGateway) != 0
 
+		if serverUUIDOk {
+			sql += " and server_uuid like '%" + serverUUID + "%'"
+		}
+		if groupIDOk {
+			sql += " and group_id = " + strconv.Itoa(int(groupID))
+		}
 		if publicIPOk {
-			sql += " and public_ip = '" + publicIP + "'"
+			sql += " and public_ip like '%" + publicIP + "%'"
 		}
 		if privateIPOk {
-			sql += " and private_ip = '" + privateIP + "'"
+			sql += " and private_ip like '%" + privateIP + "%'"
 		}
 		if privateGatewayOk {
-			sql += " and private_gateway = '" + privateGateway + "'"
+			sql += " and private_gateway like '%" + privateGateway + "%'"
 		}
 	}
 
@@ -280,12 +291,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIPServer.PrivateIP = firstIP.String()
 	adaptiveIPServer.PrivateGateway = subnet.Gateway
 
-	if syscheck.OS == "freebsd" {
-		err = pf.CreateAndLoadAnchorConfig(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	} else {
-		err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	}
-
+	err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
@@ -326,11 +332,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
 
-	if syscheck.OS == "freebsd" {
-		err = pf.DeleteAndUnloadAnchorConfig(adaptiveIPServer.PublicIP)
-	} else {
-		err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
-	}
+	err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)

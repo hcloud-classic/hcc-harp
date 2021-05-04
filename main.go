@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	err, harpRunning, harpPID := pid.IsHarpRunning()
+	harpRunning, harpPID, err := pid.IsHarpRunning()
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -37,7 +37,7 @@ func init() {
 
 	err = syscheck.CheckOS()
 	if err != nil {
-		fmt.Println("Please run harp module on Linux or FreeBSD machine.")
+		fmt.Println("Please run harp module on the Linux machine.")
 		_ = pid.DeleteHarpPID()
 		panic(err)
 	}
@@ -56,7 +56,7 @@ func init() {
 	}
 	hcc_errors.SetErrLogger(logger.Logger)
 
-	err = syscheck.CheckFirewall()
+	err = syscheck.CheckIPTABLES()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
 		_ = pid.DeleteHarpPID()

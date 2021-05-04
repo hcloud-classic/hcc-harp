@@ -1,6 +1,7 @@
 package iptablesext
 
 import (
+	"errors"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
@@ -9,83 +10,75 @@ import (
 	"os/exec"
 )
 
-func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) error {
+	var addMsg string
+	var addErrMsg string
+	var addFlag string
 
-	cmd := exec.Command("iptables", "-t", "nat",
-		"-A", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
-		"-s", privateIP,
-		"-j", "SNAT",
-		"--to-source", publicIP)
-	err := cmd.Run()
-	if err != nil {
-		return err
+	if isAdd {
+		addMsg = "Adding"
+		addErrMsg = "add"
+		addFlag = "-A"
+	} else {
+		addMsg = "Deleting"
+		addErrMsg = "delete"
+		addFlag = "-D"
 	}
 
-	cmd = exec.Command("iptables", "-t", "nat",
-		"-A", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+
+	cmd := exec.Command("iptables", "-t", "filter",
+		"-C", HarpAdaptiveIPInputDropChainName,
 		"-d", publicIP,
-		"-j", "DNAT",
-		"--to-destination", privateIP)
-	err = cmd.Run()
-	if err != nil {
-		return err
+		"-j", "DROP")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpAdaptiveIPInputDropChainName,
+			"-d", publicIP,
+			"-j", "DROP")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+		}
 	}
 
-	cmd = exec.Command("iptables",
-		"-A", HarpChainNamePrefix+"FORWARD",
+	cmd = exec.Command("iptables", "-t", "filter",
+		"-C", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
+	isExist = err == nil
 
-	cmd = exec.Command("iptables",
-		"-A", HarpChainNamePrefix+"FORWARD",
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpChainNamePrefix+"FORWARD",
+			"-s", publicIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " external FORWARD rule of " + publicIP)
+		}
+	}
+
+	cmd = exec.Command("iptables", "-t", "filter",
+		"-C", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
-	if err != nil {
-		return err
-	}
+	isExist = err == nil
 
-	return nil
-}
-
-func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
-
-	cmd := exec.Command("iptables", "-t", "nat",
-		"-D", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
-		"-s", privateIP,
-		"-j", "SNAT",
-		"--to-source", publicIP)
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("iptables", "-t", "nat",
-		"-D", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
-		"-d", publicIP,
-		"-j", "DNAT",
-		"--to-destination", privateIP)
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("iptables",
-		"-D", HarpChainNamePrefix+"FORWARD",
-		"-s", publicIP,
-		"-j", "ACCEPT")
-	err = cmd.Run()
-
-	cmd = exec.Command("iptables",
-		"-D", HarpChainNamePrefix+"FORWARD",
-		"-d", privateIP,
-		"-j", "ACCEPT")
-	err = cmd.Run()
-	if err != nil {
-		return err
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpChainNamePrefix+"FORWARD",
+			"-d", privateIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " + publicIP)
+		}
 	}
 
 	return nil
@@ -98,37 +91,41 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 
 	err := arping.CheckDuplicatedIPAddress(publicIP)
 	if err != nil {
-		goto Error
+		return err
 	}
 
-	err = addAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
+	err = adaptiveIPServerForwarding(true, publicIP, privateIP)
 	if err != nil {
-		goto Error
+		return err
 	}
 
-	err = ifconfig.CreateAndLoadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
-		adaptiveip.Netmask)
+	err = ICMPForwarding(true, publicIP, privateIP)
 	if err != nil {
-		goto Error
+		return err
+	}
+
+	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveip.Netmask)
+	if err != nil {
+		return errors.New("failed to run ifconfig command of " + publicIP)
 	}
 
 	return nil
-Error:
-	return err
 }
 
 // DeleteIPTABLESRulesAndExtIface : Delete ifconfig script file and virtual interface, iptables rules
 // match with public IP address.
 func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+	err := ICMPForwarding(false, publicIP, privateIP)
+	if err != nil {
+		return err
+	}
 
-	err := deleteAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
+	err = adaptiveIPServerForwarding(false, publicIP, privateIP)
 	if err != nil {
 		goto Error
 	}
 
-	err = ifconfig.DeleteAndUnloadIfconfigScriptExternal(config.AdaptiveIP.ExternalIfaceName, publicIP,
-		adaptiveip.Netmask)
+	err = ifconfig.IfconfigDeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
 	if err != nil {
 		goto Error
 	}

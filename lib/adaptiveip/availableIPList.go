@@ -7,7 +7,6 @@ import (
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/pf"
 	"hcc/harp/lib/syscheck"
 	"innogrid.com/hcloud-classic/pb"
 	"net"
@@ -35,7 +34,7 @@ func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 	for i := 0; i < ipRangeCount; i++ {
 		ip := netStartIP.String()
 		var ipUsed = false
-		if pf.CheckBinatAnchorFileExist(ip) == nil && ipMap[ip] {
+		if ipMap[ip] {
 			for _, addr := range extIPaddrs {
 				var extIP net.IP
 				switch v := addr.(type) {

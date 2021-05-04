@@ -114,10 +114,10 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 		&createdAt)
 	if err != nil {
 		errStr := "ReadSubnetByServer(): " + err.Error()
-		logger.Logger.Println(errStr)
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return nil, hcc_errors.HarpSQLNoResult, errStr
 		}
+		logger.Logger.Println(errStr)
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
@@ -208,40 +208,40 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 		subnetNameOk := len(subnetName) != 0
 
 		if uuidOk {
-			sql += " and uuid = '" + uuid + "'"
+			sql += " and uuid like '%" + uuid + "%'"
 		}
 		if groupIDOk {
-			sql += " and group_id = " + strconv.Itoa(int(groupID))
+			sql += " and group_id =" + strconv.Itoa(int(groupID))
 		}
 		if networkIPOk {
-			sql += " and network_ip = '" + networkIP + "'"
+			sql += " and network_ip like '%" + networkIP + "%'"
 		}
 		if netmaskOk {
-			sql += " and netmask = '" + netmask + "'"
+			sql += " and netmask like '%" + netmask + "%'"
 		}
 		if gatewayOk {
-			sql += " and gateway = '" + gateway + "'"
+			sql += " and gateway like '%" + gateway + "%'"
 		}
 		if nextServerOk {
-			sql += " and next_server = '" + nextServer + "'"
+			sql += " and next_server like '%" + nextServer + "%'"
 		}
 		if nameServerOk {
-			sql += " and name_server = '" + nameServer + "'"
+			sql += " and name_server like '%" + nameServer + "%'"
 		}
 		if domainNameOk {
-			sql += " and domain_name = '" + domainName + "'"
+			sql += " and domain_name like '%" + domainName + "%'"
 		}
 		if serverUUIDOk {
-			sql += " and server_uuid = '" + serverUUID + "'"
+			sql += " and server_uuid like '%" + serverUUID + "%'"
 		}
 		if leaderNodeUUIDOk {
-			sql += " and leader_node_uuid = '" + leaderNodeUUID + "'"
+			sql += " and leader_node_uuid like '%" + leaderNodeUUID + "%'"
 		}
 		if osOk {
-			sql += " and os = '" + os + "'"
+			sql += " and os like '%" + os + "%'"
 		}
 		if subnetNameOk {
-			sql += " and subnet_name = '" + subnetName + "'"
+			sql += " and subnet_name like '%" + subnetName + "%'"
 		}
 	}
 
@@ -390,13 +390,12 @@ func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnet
 func ReadSubnetNum(in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, uint64, string) {
 	var resSubnetNum pb.ResGetSubnetNum
 	var subnetNr int64
-
 	var groupID = in.GetGroupID()
-	if groupID == 0 {
-		return nil, hcc_errors.HarpGrpcArgumentError, "ReadSubnetNum(): please insert a group_id argument"
-	}
 
-	sql := "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))
+	sql := "select count(*) from subnet"
+	if groupID != 0 {
+		sql = "select count(*) from subnet where group_id = " + strconv.Itoa(int(groupID))
+	}
 	row := mysql.Db.QueryRow(sql)
 	err := mysql.QueryRowScan(row, &subnetNr)
 	if err != nil {

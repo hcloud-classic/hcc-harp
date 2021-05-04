@@ -3,7 +3,6 @@ package config
 import (
 	"github.com/Terry-Mao/goconf"
 	"hcc/harp/lib/logger"
-	"hcc/harp/lib/syscheck"
 	"net"
 )
 
@@ -206,11 +205,6 @@ func parseDHCPD() {
 		logger.Logger.Panicln(err)
 	}
 
-	DHCPD.IfconfigScriptFileLocation, err = config.DHCPDConfig.String("dhcpd_ifconfig_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
 	DHCPD.MinLeaseTime, err = config.DHCPDConfig.Int("dhcpd_min_lease_time")
 	if err != nil {
 		logger.Logger.Panicln(err)
@@ -243,33 +237,6 @@ func parseAdaptiveIP() {
 	AdaptiveIP.InternalIfaceName, err = config.AdaptiveIPConfig.String("adaptiveip_internal_iface_name")
 	if err != nil {
 		logger.Logger.Panic(err)
-	}
-
-	if syscheck.OS == "freebsd" {
-		AdaptiveIP.PFBaseConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_base_config_file_location")
-		if err != nil {
-			logger.Logger.Panicln(err)
-		}
-
-		AdaptiveIP.PFRulesFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_rules_file_location")
-		if err != nil {
-			logger.Logger.Panicln(err)
-		}
-
-		AdaptiveIP.PFBinatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_binat_config_file_location")
-		if err != nil {
-			logger.Logger.Panicln(err)
-		}
-
-		AdaptiveIP.PFnatConfigFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_pf_nat_config_file_location")
-		if err != nil {
-			logger.Logger.Panicln(err)
-		}
-	}
-
-	AdaptiveIP.IfconfigScriptFileLocation, err = config.AdaptiveIPConfig.String("adaptiveip_ifconfig_script_file_location")
-	if err != nil {
-		logger.Logger.Panicln(err)
 	}
 
 	AdaptiveIP.NetworkConfigFile, err = config.AdaptiveIPConfig.String("adaptiveip_network_config_file")
