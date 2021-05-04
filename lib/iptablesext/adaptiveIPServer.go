@@ -26,31 +26,59 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 	}
 
 	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+
 	cmd := exec.Command("iptables", "-t", "filter",
-		addFlag, HarpAdaptiveIPInputDropChainName,
+		"-C", HarpAdaptiveIPInputDropChainName,
 		"-d", publicIP,
 		"-j", "DROP")
 	err := cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+	isExist := err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpAdaptiveIPInputDropChainName,
+			"-d", publicIP,
+			"-j", "DROP")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+		}
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
-		addFlag, HarpChainNamePrefix+"FORWARD",
+		"-C", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " external FORWARD rule of " + publicIP)
+	isExist = err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpChainNamePrefix+"FORWARD",
+			"-s", publicIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " external FORWARD rule of " + publicIP)
+		}
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
-		addFlag, HarpChainNamePrefix+"FORWARD",
+		"-C", HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " + publicIP)
+	isExist = err == nil
+
+	if (isAdd && !isExist) || (!isAdd && isExist) {
+		cmd = exec.Command("iptables", "-t", "filter",
+			addFlag, HarpChainNamePrefix+"FORWARD",
+			"-d", privateIP,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " + publicIP)
+		}
 	}
 
 	return nil
