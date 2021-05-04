@@ -3,6 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/configext"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -23,13 +24,16 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 		addFlag = "-D"
 	}
 
+	adaptiveIP := configext.GetAdaptiveIPNetwork()
+
 	logger.Logger.Println(addMsg + " ICMP forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
 	cmd := exec.Command("iptables", "-t", "nat",
 		"-C", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
 		"-p", "icmp", "--icmp-type", "echo-request",
+		"-d", publicIP,
 		"-j", "SNAT",
-		"--to-source", publicIP)
+		"--to-source", adaptiveIP.ExtIfaceIPAddress)
 	err := cmd.Run()
 	isExist := err == nil
 
@@ -37,8 +41,9 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 		cmd = exec.Command("iptables", "-t", "nat",
 			addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
 			"-p", "icmp", "--icmp-type", "echo-request",
+			"-d", publicIP,
 			"-j", "SNAT",
-			"--to-source", publicIP)
+			"--to-source", adaptiveIP.ExtIfaceIPAddress)
 		err = cmd.Run()
 		if err != nil {
 			return errors.New("failed to " + addErrMsg + " ICMP POSTROUTING rule of " + publicIP)

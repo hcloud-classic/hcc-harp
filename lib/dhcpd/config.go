@@ -250,7 +250,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	// Allocate gateway IP address to internal interface
-	err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
+	err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 
-		err = ifconfig.IfconfigAddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.NetworkIP, subnet.Netmask)
+		err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.NetworkIP, subnet.Netmask)
 		if err != nil {
 			logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
 				subnetUUID + " (" + err.Error() + ")")

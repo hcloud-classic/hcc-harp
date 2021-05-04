@@ -213,10 +213,26 @@ func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
-		err := iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP,
+		err := iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP,
 			adaptiveIPServer.PrivateIP)
 		if err != nil {
 			logger.Logger.Println(err.Error())
+		}
+
+		portForwardingList, _, _ := dao.ReadPortForwardingList(&pb.ReqGetPortForwardingList{
+			PortForwarding: &pb.PortForwarding{
+				ServerUUID: adaptiveIPServer.ServerUUID,
+			},
+		})
+		if portForwardingList != nil {
+			for _, portForwarding := range portForwardingList.PortForwarding {
+				err = iptablesext.PortForwarding(true, portForwarding.ForwardTCP, portForwarding.ForwardUDP,
+					adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
+					int(portForwarding.ExternalPort), int(portForwarding.InternalPort))
+				if err != nil {
+					logger.Logger.Println(err.Error())
+				}
+			}
 		}
 	}
 

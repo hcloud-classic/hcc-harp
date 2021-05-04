@@ -29,8 +29,8 @@ func getifaceVNUM(ip string) (vnum int) {
 	return ifaceVNUM
 }
 
-// IfconfigAddVirtualIface : Add virtual iface by running ifconfig command
-func IfconfigAddVirtualIface(ifaceName string, ip string, netmask string) error {
+// AddVirtualIface : Add virtual iface by running ifconfig command
+func AddVirtualIface(ifaceName string, ip string, netmask string) error {
 	ifconfigCommand := strings.Replace(ifconfigReplaceString, "IFCONFIG_IFACE_NAME", ifaceName, -1)
 
 	ifconfigCommand = strings.Replace(ifconfigCommand, "IFCONFIG_IFACE_VNUM", strconv.Itoa(getifaceVNUM(ip)), -1)
@@ -46,8 +46,8 @@ func IfconfigAddVirtualIface(ifaceName string, ip string, netmask string) error 
 	return nil
 }
 
-// IfconfigDeleteVirtualIface : Delete and unload ifconfig scripts for external network
-func IfconfigDeleteVirtualIface(ifaceName string, ip string) error {
+// DeleteVirtualIface : Delete and unload ifconfig scripts for external network
+func DeleteVirtualIface(ifaceName string, ip string) error {
 	ifconfigCommand := strings.Replace(ifconfigDownString, "IFCONFIG_IFACE_NAME", ifaceName, -1)
 	ifconfigCommand = strings.Replace(ifconfigCommand, "IFCONFIG_IFACE_VNUM", strconv.Itoa(getifaceVNUM(ip)), -1)
 

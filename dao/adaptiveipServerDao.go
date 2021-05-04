@@ -291,7 +291,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIPServer.PrivateIP = firstIP.String()
 	adaptiveIPServer.PrivateGateway = subnet.Gateway
 
-	err = iptablesext.CreateIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	err = iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
@@ -332,7 +332,16 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
 
-	err = iptablesext.DeleteIPTABLESRulesAndExtIface(adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	_, errCode, errStr := DeletePortForwarding(&pb.ReqDeletePortForwarding{
+		PortForwarding: &pb.PortForwarding{
+			ServerUUID: serverUUID,
+		},
+	})
+	if errCode != 0 {
+		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): " + errStr
+	}
+
+	err = iptablesext.ControlIfconfigAndIPTABLES(false, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
@@ -349,9 +358,9 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	defer func() {
 		_ = stmt.Close()
 	}()
-	_, err2 := stmt.Exec(serverUUID)
-	if err2 != nil {
-		errStr := "DeleteAdaptiveIPServer(): " + err2.Error()
+	_, err = stmt.Exec(serverUUID)
+	if err != nil {
+		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)
 		return "", hcc_errors.HarpSQLOperationFail, errStr
 	}
