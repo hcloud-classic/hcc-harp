@@ -10,65 +10,47 @@ import (
 	"os/exec"
 )
 
-func addAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Adding AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) error {
+	var addMsg string
+	var addErrMsg string
+	var addFlag string
+
+	if isAdd {
+		addMsg = "Adding"
+		addErrMsg = "add"
+		addFlag = "-A"
+	} else {
+		addMsg = "Deleting"
+		addErrMsg = "delete"
+		addFlag = "-D"
+	}
+
+	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 	cmd := exec.Command("iptables", "-t", "filter",
-		"-A", HarpAdaptiveIPInputDropChainName,
+		addFlag, HarpAdaptiveIPInputDropChainName,
 		"-d", publicIP,
 		"-j", "DROP")
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("failed to add ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+		return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
-		"-A", HarpChainNamePrefix+"FORWARD",
+		addFlag, HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("failed to add external FORWARD rule of " + publicIP)
+		return errors.New("failed to " + addErrMsg + " external FORWARD rule of " + publicIP)
 	}
 
 	cmd = exec.Command("iptables", "-t", "filter",
-		"-A", HarpChainNamePrefix+"FORWARD",
+		addFlag, HarpChainNamePrefix+"FORWARD",
 		"-d", privateIP,
 		"-j", "ACCEPT")
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("failed to add internal FORWARD rule of " + publicIP)
-	}
-
-	return nil
-}
-
-func deleteAdaptiveIPServerIPTABLESRules(publicIP string, privateIP string) error {
-	logger.Logger.Println("Deleting AdaptiveIP Server iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
-	cmd := exec.Command("iptables", "-t", "filter",
-		"-D", HarpAdaptiveIPInputDropChainName,
-		"-d", publicIP,
-		"-j", "DROP")
-	err := cmd.Run()
-	if err != nil {
-		return errors.New("failed to delete ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
-	}
-
-	cmd = exec.Command("iptables", "-t", "filter",
-		"-D", HarpChainNamePrefix+"FORWARD",
-		"-s", publicIP,
-		"-j", "ACCEPT")
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to delete external FORWARD rule of " + publicIP)
-	}
-
-	cmd = exec.Command("iptables", "-t", "filter",
-		"-D", HarpChainNamePrefix+"FORWARD",
-		"-d", privateIP,
-		"-j", "ACCEPT")
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("failed to delete internal FORWARD rule of " + publicIP)
+		return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " + publicIP)
 	}
 
 	return nil
@@ -84,7 +66,7 @@ func CreateIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		return err
 	}
 
-	err = addAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
+	err = adaptiveIPServerForwarding(true, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
@@ -110,7 +92,7 @@ func DeleteIPTABLESRulesAndExtIface(publicIP string, privateIP string) error {
 		return err
 	}
 
-	err = deleteAdaptiveIPServerIPTABLESRules(publicIP, privateIP)
+	err = adaptiveIPServerForwarding(false, publicIP, privateIP)
 	if err != nil {
 		goto Error
 	}
