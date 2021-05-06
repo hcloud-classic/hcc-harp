@@ -672,7 +672,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	sql := "update subnet set"
 	var updateSet = ""
 	if groupIDOk {
-		updateSet += " group_id = " + strconv.Itoa(int(subnet.GroupID))
+		updateSet += " group_id = " + strconv.Itoa(int(subnet.GroupID)) + ", "
 	}
 	if networkIPOk {
 		updateSet += " network_ip = '" + subnet.NetworkIP + "', "
