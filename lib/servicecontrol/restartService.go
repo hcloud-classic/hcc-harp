@@ -67,20 +67,3 @@ func RestartDHCPDServer() error {
 	dhcpdLock.Unlock()
 	return nil
 }
-
-// RestartNetwork : Restart network related services
-func RestartNetwork() error {
-	logger.Logger.Println("Restarting network services...")
-
-	err := restartNetif()
-	if err != nil {
-		logger.Logger.Println(err)
-	}
-
-	err = restartRouting()
-	if err != nil {
-		logger.Logger.Println(err)
-	}
-
-	return nil
-}
