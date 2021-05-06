@@ -44,7 +44,7 @@ type NodeData struct {
 func getNodePXEMACAddress(nodeUUID string) (string, error) {
 	node, hccErrStack := client.RC.GetNode(nodeUUID)
 	if hccErrStack != nil {
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	return node.PXEMacAddr, nil
@@ -189,7 +189,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CreateConfig(): "+errStr))
-		return (*hccErrStack.Stack())[0].ToError()
+		return hccErrStack.Pop().ToError()
 	}
 
 	if len(subnet.SubnetName) == 0 {
@@ -332,12 +332,12 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CreateDHCPDConfig(): "+errStr))
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	nodes, hccErrStack := client.RC.GetNodeList(subnet.ServerUUID)
 	if hccErrStack != nil {
-		err := (*hccErrStack.Stack())[0].ToError()
+		err := hccErrStack.Pop().ToError()
 		if err != nil {
 			logger.Logger.Println(errors.New("CreateDHCPDConfig(): Failed to get nodes by server UUID: " +
 				subnet.ServerUUID + " (" + err.Error() + ")"))
@@ -382,7 +382,7 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "DeleteDHCPDConfig(): "+errStr))
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
@@ -411,13 +411,13 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 func CheckDatabaseAndPrepareDHCPD() error {
 	serverUUIDs, hccErrStack := client.RC.AllServerUUID()
 	if hccErrStack != nil {
-		return (*hccErrStack.Stack())[0].ToError()
+		return hccErrStack.Pop().ToError()
 	}
 
 	for i := range serverUUIDs {
 		nodes, hccErrStack := client.RC.GetNodeList(serverUUIDs[i])
 		if hccErrStack != nil {
-			err := (*hccErrStack.Stack())[0].ToError()
+			err := hccErrStack.Pop().ToError()
 			if err != nil {
 				logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
 					serverUUIDs[i] + " (" + err.Error() + ")"))
@@ -434,7 +434,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
 		if errCode != 0 {
 			hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CheckDatabaseAndPrepareDHCPD(): "+errStr))
-			err := (*hccErrStack.Stack())[1].ToError()
+			err := hccErrStack.Pop().ToError()
 			if err != nil {
 				logger.Logger.Println("Failed to get subnet by server UUID: " +
 					serverUUIDs[i] + " (" + err.Error() + ")")

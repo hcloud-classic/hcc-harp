@@ -410,8 +410,8 @@ func ReadSubnetNum(in *pb.ReqGetSubnetNum) (*pb.ResGetSubnetNum, uint64, string)
 
 func checkGroupIDExist(groupID int64) error {
 	resGetGroupList, hccErrStack := client.RC.GetGroupList(&pb.Empty{})
-	if hccErrStack != nil && (*hccErrStack.Stack())[0].Code() != 0 {
-		return (*hccErrStack.Stack())[0].ToError()
+	if hccErrStack != nil {
+		return hccErrStack.Pop().ToError()
 	}
 
 	for _, pGroup := range resGetGroupList.Group {
