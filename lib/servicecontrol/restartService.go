@@ -1,6 +1,7 @@
 package servicecontrol
 
 import (
+	"errors"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/logger"
@@ -57,10 +58,10 @@ func RestartDHCPDServer() error {
 	logger.Logger.Println("Restarting dhcpd service...")
 
 	cmd := exec.Command("service", config.DHCPD.LocalDHCPDServiceName, "restart")
-	err = cmd.Run()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		dhcpdLock.Unlock()
-		return err
+		return errors.New(string(output))
 	}
 
 	dhcpdLock.Unlock()
