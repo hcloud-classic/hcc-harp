@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	gouuid "github.com/nu7hatch/gouuid"
 	"hcc/harp/action/grpc/client"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -423,8 +424,9 @@ func checkGroupIDExist(groupID int64) error {
 	return errors.New("given group ID is not in the database")
 }
 
-func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet) error {
-	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet)
+func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet,
+	resValidCheckSubnet *pb.ResValidCheckSubnet) error {
+	isConflict, err := iputil.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
 	if isConflict {
 		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
 	}
@@ -432,26 +434,41 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return err
 	}
 
-	netNetwork, err := iputil.CheckNetwork(networkIP, netmask)
-	if err != nil {
-		return err
-	}
+	netNetwork, _ := iputil.CheckNetwork(networkIP, netmask)
 
-	isPrivate, err := iputil.CheckPrivateSubnet(netNetwork.IP.String(), netmask)
+	isPrivate, _ := iputil.CheckPrivateSubnet(netNetwork.IP.String(), netmask)
 	if !isPrivate {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorNotPrivate
+		}
 		return errors.New("given network IP address is not in private network")
 	}
-	if err != nil {
-		return err
+
+	firstIP, _, _ := iputil.GetFirstAndLastIPs(networkIP, netmask)
+	if firstIP.To4()[3] != 1 {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorStartIPNot1
+		}
+		return errors.New("start IP address must be x.x.x.1")
 	}
 
 	err = iputil.CheckIPisInSubnet(*netNetwork, gateway)
 	if err != nil {
+		if resValidCheckSubnet != nil {
+			if strings.Contains(err.Error(), "wrong") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
+			} else {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
+			}
+		}
 		return err
 	}
 
 	err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
 	if err != nil {
+		if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
+		}
 		return err
 	}
 
@@ -527,7 +544,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
@@ -550,6 +567,49 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 	}
 
 	return &subnet, 0, ""
+}
+
+func checkValidCheckSubnetArgs(reqSubnet *pb.Subnet) bool {
+	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
+	netmaskOk := len(reqSubnet.GetNetmask()) != 0
+	gatewayOk := len(reqSubnet.GetGateway()) != 0
+
+	return !(networkIPOk && netmaskOk && gatewayOk)
+}
+
+// ValidCheckSubnet : Check if we can create the subnet with provided network address and subnet mask, gateway
+func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
+	reqSubnet := in.GetSubnet()
+	if reqSubnet == nil {
+		return &pb.ResValidCheckSubnet{
+			ErrorCode: daoext.SubnetValidErrorArgumentError,
+		}
+	}
+
+	if checkValidCheckSubnetArgs(reqSubnet) {
+		return &pb.ResValidCheckSubnet{
+			ErrorCode: daoext.SubnetValidErrorArgumentError,
+		}
+	}
+
+	subnet := pb.Subnet{
+		NetworkIP: reqSubnet.GetNetworkIP(),
+		Netmask:   reqSubnet.GetNetmask(),
+		Gateway:   reqSubnet.GetGateway(),
+	}
+
+	var resValidCheckSubnet pb.ResValidCheckSubnet
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil,
+		&resValidCheckSubnet)
+	if err != nil {
+		return &pb.ResValidCheckSubnet{
+			ErrorCode: resValidCheckSubnet.ErrorCode,
+		}
+	}
+
+	return &pb.ResValidCheckSubnet{
+		ErrorCode: daoext.SubnetValid,
+	}
 }
 
 func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
@@ -657,7 +717,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}

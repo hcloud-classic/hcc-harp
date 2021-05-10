@@ -43,6 +43,12 @@ func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*p
 	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet)}, nil
 }
 
+func (s *harpServer) ValidCheckSubnet(_ context.Context, in *pb.ReqValidCheckSubnet) (*pb.ResValidCheckSubnet, error) {
+	resValidCheckSubnet := dao.ValidCheckSubnet(in)
+
+	return resValidCheckSubnet, nil
+}
+
 func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
 	subnet, errCode, errStr := dao.ReadSubnet(in.GetUUID())
 	if errCode != 0 {

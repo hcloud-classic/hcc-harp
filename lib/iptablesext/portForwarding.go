@@ -42,7 +42,7 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 
 	for i := range protocol {
 		logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +
-		publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
+			publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
 
 		cmd := exec.Command("iptables", "-t", "nat",
 			"-C", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,

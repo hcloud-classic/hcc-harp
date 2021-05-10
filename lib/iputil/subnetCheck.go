@@ -2,10 +2,12 @@ package iputil
 
 import (
 	"errors"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"innogrid.com/hcloud-classic/pb"
 	"net"
+	"strings"
 )
 
 func checkAClassPrivate(IP net.IP) bool {
@@ -88,13 +90,24 @@ func getSubnetList() ([]pb.Subnet, error) {
 
 // CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in the database.
 // Return true if conflicted, return false otherwise.
-func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet) (bool, error) {
+func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet,
+	resValidCheckSubnet *pb.ResValidCheckSubnet) (bool, error) {
 	netNetwork, err := CheckNetwork(IP, Netmask)
 	if err != nil {
+		if resValidCheckSubnet != nil {
+			if strings.Contains(err.Error(), "IP") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetworkAddress
+			} else if strings.Contains(err.Error(), "netmask") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetmask
+			}
+		}
 		return false, err
 	}
 
 	if netNetwork.IP.String() != IP {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetworkAddress
+		}
 		return false, errors.New("CheckPrivateSubnet(): invalid network address")
 	}
 
@@ -102,6 +115,9 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 
 	subnetList, err := getSubnetList()
 	if err != nil {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValid
+		}
 		return false, nil
 	}
 
@@ -125,9 +141,15 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 		}
 
 		if subnetUpperNet.IP.Equal(givenSubnetUpperNet.IP) {
+			if resValidCheckSubnet != nil {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetConflict
+			}
 			return true, nil
 		}
 	}
 
+	if resValidCheckSubnet != nil {
+		resValidCheckSubnet.ErrorCode = daoext.SubnetValid
+	}
 	return false, nil
 }
