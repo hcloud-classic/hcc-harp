@@ -48,7 +48,7 @@ func closePiccolo() {
 }
 
 // GetGroupList : Get list of the group
-func (rc *RPCClient) GetGroupList(_ *pb.Empty) (*pb.ResGetGroupList, *hcc_errors.HccErrorStack) {
+func (rc *RPCClient) GetGroupList() (*pb.ResGetGroupList, *hcc_errors.HccErrorStack) {
 	var errStack *hcc_errors.HccErrorStack = nil
 
 	ctx, cancel := context.WithTimeout(context.Background(),
