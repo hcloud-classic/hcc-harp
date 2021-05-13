@@ -9,30 +9,6 @@ import (
 	"sync"
 )
 
-func restartNetif() error {
-	logger.Logger.Println("Restarting netif service...")
-
-	cmd := exec.Command("service", "netif", "restart")
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func restartRouting() error {
-	logger.Logger.Println("Restarting routing service...")
-
-	cmd := exec.Command("service", "routing", "restart")
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 var dhcpdLock sync.Mutex
 
 // RestartDHCPDServer : Run 'service isc-dhcpd restart' command to restart local dhcpd server
