@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
-	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061 // indirect
+	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
 	google.golang.org/appengine v1.6.5 // indirect
@@ -27,6 +27,7 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	innogrid.com/hcloud-classic/hcc_errors v0.0.0
 	innogrid.com/hcloud-classic/pb v0.0.0
+	pault.ag/go/topsort v0.1.1
 )
 
 replace (
