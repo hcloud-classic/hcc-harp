@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"hcc/harp/dao"
+	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
@@ -141,6 +142,26 @@ func flushOrAddHarpIPTABLESChainAdaptiveIPInputDrop() error {
 	return nil
 }
 
+func addHarpExternalMasqueradeRule() error {
+	cmd := exec.Command("iptables", "-t", "nat",
+		"-C", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "MASQUERADE")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if !isExist {
+		cmd = exec.Command("iptables", "-t", "nat",
+			"-A", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+			"-j", "MASQUERADE")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to add MASQUERADE rule for external interface")
+		}
+	}
+
+	return nil
+}
+
 func prepareHarpIPTABLESChains() error {
 	logger.Logger.Println("Preparing harp's iptables chains...")
 
@@ -164,6 +185,11 @@ func prepareHarpIPTABLESChains() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = addHarpExternalMasqueradeRule()
+	if err != nil {
+		return err
 	}
 
 	return nil
