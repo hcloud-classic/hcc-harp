@@ -8,7 +8,7 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/fileutil"
-	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/ipLink"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
@@ -250,7 +250,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	// Allocate gateway IP address to internal interface
-	err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
+	err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
@@ -393,6 +393,12 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	}
 	dhcpdext.DecWritingSubnetConfigCounter()
 
+	// Delete gateway IP address from internal interface
+	err = ipLink.UnsetHarpInternalDevice(subnet.Gateway)
+	if err != nil {
+		return "", err
+	}
+
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {
 		return "", err
@@ -452,7 +458,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 
-		err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.NetworkIP, subnet.Netmask)
+		err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
 		if err != nil {
 			logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
 				subnetUUID + " (" + err.Error() + ")")

@@ -3,9 +3,8 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/arping"
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/configext"
-	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/ipLink"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -97,6 +96,20 @@ func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) e
 		}
 	}
 
+	if isAdd {
+		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
+		if err != nil {
+			logger.Logger.Println("AddAdaptiveIPNetDev(): " + err.Error())
+			return errors.New("failed to add AdaptiveIP IP address " + publicIP)
+		}
+	} else {
+		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
+		if err != nil {
+			logger.Logger.Println("DeleteAdaptiveIPNetDev(): " + err.Error())
+			return errors.New("failed to delete AdaptiveIP IP address " + publicIP)
+		}
+	}
+
 	err = adaptiveIPServerForwarding(isAdd, publicIP, privateIP)
 	if err != nil {
 		return err
@@ -105,18 +118,6 @@ func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) e
 	err = ICMPForwarding(isAdd, publicIP, privateIP)
 	if err != nil {
 		return err
-	}
-
-	if isAdd {
-		err = ifconfig.AddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveIP.Netmask)
-		if err != nil {
-			return errors.New("failed to add virtual interface for " + publicIP)
-		}
-	} else {
-		err = ifconfig.DeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
-		if err != nil {
-			return errors.New("failed to delete virtual interface for " + publicIP)
-		}
 	}
 
 	return nil
