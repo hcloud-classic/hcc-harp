@@ -44,9 +44,6 @@ func checkNFTables() error {
 	}
 
 	if !nfTablesOk {
-		logger.Logger.Println("checkNFTables(): Some of tables are not available from iptables")
-		logger.Logger.Println("checkNFTables(): Please check if your kernel modules are loaded properly")
-		logger.Logger.Println("checkNFTables(): Type 'lsmod' and check if these modules are loaded: " + iptablesext.NeededKernelModulesForHarp)
 		return errors.New("some of tables are not available from iptables")
 	}
 
