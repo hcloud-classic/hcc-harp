@@ -219,13 +219,11 @@ func ReadAdaptiveIPServerNum(in *pb.ReqGetAdaptiveIPServerNum) (*pb.ResGetAdapti
 func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPServer, uint64, string) {
 	serverUUID := in.ServerUUID
 	serverUUIDOk := len(serverUUID) != 0
-	groupID := in.GroupID
-	groupIDOk := groupID != 0
 	publicIP := in.PublicIP
 	publicIPOk := len(publicIP) != 0
 
-	if !serverUUIDOk || !groupIDOk || !publicIPOk {
-		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): need ServerUUID and GroupID, PublicIP arguments"
+	if !serverUUIDOk || !publicIPOk {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): need ServerUUID and PublicIP arguments"
 	}
 
 	oldAdaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
@@ -279,7 +277,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 
 	adaptiveIPServer := pb.AdaptiveIPServer{
 		ServerUUID: serverUUID,
-		GroupID:    groupID,
+		GroupID:    subnet.GroupID,
 		PublicIP:   publicIP,
 	}
 
