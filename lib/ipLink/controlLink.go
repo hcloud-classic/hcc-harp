@@ -3,6 +3,7 @@ package ipLink
 import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/iputil"
+	"hcc/harp/lib/vnstat"
 	"strconv"
 	"strings"
 )
@@ -112,6 +113,8 @@ func SetHarpInternalDevice(ip string, netmask string) error {
 		return err
 	}
 
+	vnstat.ScheduleUpdateVnStat(HarpInternalPrefix+strconv.Itoa(getIfaceVNUM(ip)), true)
+
 	return nil
 }
 
@@ -130,6 +133,8 @@ func UnsetHarpInternalDevice(ip string) error {
 	if err != nil {
 		return err
 	}
+
+	vnstat.RemoveUpdateVnStat(HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)))
 
 	return nil
 }

@@ -219,9 +219,9 @@ func InitIPTABLES() error {
 	return nil
 }
 
-// LoadAdaptiveIPIfconfigAndIPTABLESRules : Load the ifconfig command and iptables rules for AdaptiveIP
-func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
-	logger.Logger.Println("Loading ifconfig commands and iptables rules for AdaptiveIPs...")
+// LoadAdaptiveIPNetDevAndIPTABLESRules : Load interfaces and iptables rules for AdaptiveIP
+func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
+	logger.Logger.Println("Loading interfaces and iptables rules for AdaptiveIPs...")
 
 	var adaptiveIPServer pb.AdaptiveIPServer
 	in := &pb.ReqGetAdaptiveIPServerList{
@@ -236,7 +236,7 @@ func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
-		err := iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP,
+		err := iptablesext.ControlNetDevAndIPTABLES(true, adaptiveIPServer.PublicIP,
 			adaptiveIPServer.PrivateIP)
 		if err != nil {
 			logger.Logger.Println(err.Error())

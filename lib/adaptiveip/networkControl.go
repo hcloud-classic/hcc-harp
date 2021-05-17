@@ -152,7 +152,7 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	err = iptables.LoadAdaptiveIPIfconfigAndIPTABLESRules()
+	err = iptables.LoadAdaptiveIPNetDevAndIPTABLESRules()
 	if err != nil {
 		return err
 	}

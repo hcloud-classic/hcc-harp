@@ -6,7 +6,7 @@ import (
 )
 
 func generateMACAddress(ip string) string {
-	// iptablesext.GetIfaceVNUM() will return between from 0 to 1020
+	// iptablesext.getIfaceVNUM() will return between from 0 to 1020
 	var vnumStr = fmt.Sprintf("%04d", getIfaceVNUM(ip))
 	bytes := []byte(vnumStr)
 

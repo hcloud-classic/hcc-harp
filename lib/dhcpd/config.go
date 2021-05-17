@@ -249,12 +249,6 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 		return err
 	}
 
-	// Allocate gateway IP address to internal interface
-	err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -355,6 +349,15 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
+	if err != nil {
+		logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
+			subnetUUID + " (" + err.Error() + ")")
+		return "", err
+	}
+
+	logger.Logger.Println("Added virtual internal interface of subnetUUID=" + subnetUUID)
 
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {

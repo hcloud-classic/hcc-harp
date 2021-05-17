@@ -289,7 +289,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	adaptiveIPServer.PrivateIP = firstIP.String()
 	adaptiveIPServer.PrivateGateway = subnet.Gateway
 
-	err = iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	err = iptablesext.ControlNetDevAndIPTABLES(true, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): " + err.Error()
 	}
@@ -351,7 +351,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		}
 	}
 
-	err = iptablesext.ControlIfconfigAndIPTABLES(false, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
+	err = iptablesext.ControlNetDevAndIPTABLES(false, adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP)
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): " + err.Error()
 		logger.Logger.Println(errStr)

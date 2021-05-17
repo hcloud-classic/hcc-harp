@@ -15,4 +15,5 @@ type harpConfig struct {
 	ARPINGConfig            *goconf.Section
 	AdaptiveIPConfig        *goconf.Section
 	AdaptiveIPNetworkConfig *goconf.Section
+	VnStat                  *goconf.Section
 }

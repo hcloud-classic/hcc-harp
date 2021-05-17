@@ -83,8 +83,8 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 	return nil
 }
 
-// ControlIfconfigAndIPTABLES : Add or delete iptables rules and virtual interface for AdaptiveIPServer
-func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
+// ControlNetDevAndIPTABLES : Add or delete iptables rules and virtual interface for AdaptiveIPServer
+func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
 	var err error
 
 	adaptiveIP := configext.GetAdaptiveIPNetwork()
@@ -99,13 +99,13 @@ func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) e
 	if isAdd {
 		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
 		if err != nil {
-			logger.Logger.Println("AddAdaptiveIPNetDev(): " + err.Error())
+			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to add AdaptiveIP IP address " + publicIP)
 		}
 	} else {
 		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
 		if err != nil {
-			logger.Logger.Println("DeleteAdaptiveIPNetDev(): " + err.Error())
+			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to delete AdaptiveIP IP address " + publicIP)
 		}
 	}
