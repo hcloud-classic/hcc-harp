@@ -17,13 +17,9 @@ func getTodayByNumString() string {
 }
 
 func checkIfTodayTrafficExist(serverUUID string) bool {
-	var day int
-
-	sql := "select server_uuid, day from traffic where server_uuid = ? and day = ?"
+	sql := "select server_uuid from traffic where server_uuid = ? and day = ?"
 	row := mysql.Db.QueryRow(sql, serverUUID, getTodayByNumString())
-	err := mysql.QueryRowScan(row,
-		&serverUUID,
-		&day)
+	err := mysql.QueryRowScan(row, &serverUUID)
 	if err != nil {
 		return false
 	}
