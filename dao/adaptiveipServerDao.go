@@ -1,9 +1,8 @@
 package dao
 
 import (
-	dbsql "database/sql"
-	"github.com/golang/protobuf/ptypes"
-	"hcc/harp/lib/configext"
+	daoext2 "hcc/harp/daoext"
+	"hcc/harp/lib/configAdapriveIPNetwork"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -13,184 +12,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 )
-
-// ReadAdaptiveIPServer : Get a information of AdaptiveIP server setting
-func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, string) {
-	var adaptiveIPServer pb.AdaptiveIPServer
-
-	var groupID int64
-	var publicIP string
-	var privateIP string
-	var privateGateway string
-	var createdAt time.Time
-
-	sql := "select group_id, public_ip, private_ip, private_gateway, created_at from adaptiveip_server where server_uuid = ?"
-	row := mysql.Db.QueryRow(sql, serverUUID)
-	err := mysql.QueryRowScan(row,
-		&groupID,
-		&publicIP,
-		&privateIP,
-		&privateGateway,
-		&createdAt)
-	if err != nil {
-		errStr := "ReadAdaptiveIPServer(): " + err.Error()
-		if strings.Contains(err.Error(), "no rows in result set") {
-			return nil, hcc_errors.HarpSQLNoResult, errStr
-		}
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpSQLOperationFail, errStr
-	}
-
-	adaptiveIPServer.ServerUUID = serverUUID
-	adaptiveIPServer.GroupID = groupID
-	adaptiveIPServer.PublicIP = publicIP
-	adaptiveIPServer.PrivateIP = privateIP
-	adaptiveIPServer.PrivateGateway = privateGateway
-
-	_createdAt, err := ptypes.TimestampProto(createdAt)
-	if err != nil {
-		errStr := "ReadAdaptiveIPServer(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-	}
-	adaptiveIPServer.CreatedAt = _createdAt
-
-	return &adaptiveIPServer, 0, ""
-}
-
-// ReadAdaptiveIPServerList : Get the list of AdaptiveIP server settings
-func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, uint64, string) {
-	var adaptiveIPList pb.ResGetAdaptiveIPServerList
-	var adaptiveIPServers []pb.AdaptiveIPServer
-	var padaptiveIPServers []*pb.AdaptiveIPServer
-
-	var serverUUID string
-	var groupID int64
-	var publicIP string
-	var privateIP string
-	var privateGateway string
-	var createdAt time.Time
-
-	var isLimit bool
-	row := in.GetRow()
-	rowOk := row != 0
-	page := in.GetPage()
-	pageOk := page != 0
-	if !rowOk && !pageOk {
-		isLimit = false
-	} else if rowOk && pageOk {
-		isLimit = true
-	} else {
-		return nil, hcc_errors.HarpGrpcArgumentError, "ReadAdaptiveIPServerList(): please insert row and page arguments or leave arguments as empty state"
-	}
-
-	sql := "select * from adaptiveip_server where 1=1"
-
-	if in.AdaptiveipServer != nil {
-		reqAdaptiveIPServer := in.AdaptiveipServer
-
-		serverUUID = reqAdaptiveIPServer.ServerUUID
-		serverUUIDOk := len(serverUUID) != 0
-		groupID = reqAdaptiveIPServer.GroupID
-		groupIDOk := groupID != 0
-		publicIP = reqAdaptiveIPServer.PublicIP
-		publicIPOk := len(publicIP) != 0
-		privateIP = reqAdaptiveIPServer.PrivateIP
-		privateIPOk := len(privateIP) != 0
-		privateGateway = reqAdaptiveIPServer.PrivateGateway
-		privateGatewayOk := len(privateGateway) != 0
-
-		if serverUUIDOk {
-			sql += " and server_uuid like '%" + serverUUID + "%'"
-		}
-		if groupIDOk {
-			sql += " and group_id = " + strconv.Itoa(int(groupID))
-		}
-		if publicIPOk {
-			sql += " and public_ip like '%" + publicIP + "%'"
-		}
-		if privateIPOk {
-			sql += " and private_ip like '%" + privateIP + "%'"
-		}
-		if privateGatewayOk {
-			sql += " and private_gateway like '%" + privateGateway + "%'"
-		}
-	}
-
-	var stmt *dbsql.Rows
-	var err error
-	if isLimit {
-		sql += " order by created_at desc limit ? offset ?"
-		stmt, err = mysql.Query(sql, row, row*(page-1))
-	} else {
-		sql += " order by created_at desc"
-		stmt, err = mysql.Query(sql)
-	}
-
-	if err != nil {
-		errStr := "ReadAdaptiveIPServerList(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpSQLOperationFail, errStr
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
-	for stmt.Next() {
-		err := stmt.Scan(&serverUUID, &groupID, &publicIP, &privateIP, &privateGateway, &createdAt)
-		if err != nil {
-			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
-			logger.Logger.Println(errStr)
-			if strings.Contains(err.Error(), "no rows in result set") {
-				return nil, hcc_errors.HarpSQLNoResult, errStr
-			}
-			return nil, hcc_errors.HarpSQLOperationFail, errStr
-		}
-
-		_createdAt, err := ptypes.TimestampProto(createdAt)
-		if err != nil {
-			logger.Logger.Println(err)
-			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
-			logger.Logger.Println(errStr)
-			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-		}
-
-		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
-			GroupID:        groupID,
-			ServerUUID:     serverUUID,
-			PublicIP:       publicIP,
-			PrivateIP:      privateIP,
-			PrivateGateway: privateGateway,
-			CreatedAt:      _createdAt,
-		})
-	}
-
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
-	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
-	if err != nil {
-		logger.Logger.Println(err)
-		errStr := "ReadAdaptiveIPServerList(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalIPAddressError, errStr
-	}
-
-	for i := range adaptiveIPServers {
-		netIP := iputil.CheckValidIP(adaptiveIPServers[i].PublicIP)
-		if !netNetwork.Contains(netIP) {
-			adaptiveIPServers[i].Status = "Invalid"
-			continue
-		}
-		adaptiveIPServers[i].Status = "Using"
-
-		padaptiveIPServers = append(padaptiveIPServers, &adaptiveIPServers[i])
-	}
-
-	adaptiveIPList.AdaptiveipServer = padaptiveIPServers
-
-	return &adaptiveIPList, 0, ""
-}
 
 // ReadAdaptiveIPServerNum : Get the number of AdaptiveIPServer
 func ReadAdaptiveIPServerNum(in *pb.ReqGetAdaptiveIPServerNum) (*pb.ResGetAdaptiveIPServerNum, uint64, string) {
@@ -226,17 +48,17 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): need ServerUUID and PublicIP arguments"
 	}
 
-	oldAdaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
+	oldAdaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
 	if oldAdaptiveIPServer != nil {
 		return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is already allocated to one of adaptiveIP"
 	}
 
-	subnet, errCode, _ := ReadSubnetByServer(serverUUID)
+	subnet, errCode, _ := daoext2.ReadSubnetByServer(serverUUID)
 	if errCode != 0 {
 		return nil, hcc_errors.HarpInternalSubnetNotAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is not allocated to one of private subnet"
 	}
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
 	netNetwork, _ := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	mask, _ := iputil.CheckNetmask(adaptiveIP.Netmask)
 	netIP := net.IPNet{
@@ -325,7 +147,7 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): need a server_uuid argument"
 	}
 
-	adaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
+	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}

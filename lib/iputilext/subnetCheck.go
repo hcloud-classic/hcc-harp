@@ -1,8 +1,9 @@
-package iputil
+package iputilext
 
 import (
 	"errors"
 	"hcc/harp/daoext"
+	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"innogrid.com/hcloud-classic/pb"
@@ -39,7 +40,7 @@ func checkCClassPrivate(IP net.IP) bool {
 // Return error if given IP address is invalid or is not a network address.
 // Return true if it is private address, return false otherwise.
 func CheckPrivateSubnet(IP string, Netmask string) (bool, error) {
-	netNetwork, err := CheckNetwork(IP, Netmask)
+	netNetwork, err := iputil.CheckNetwork(IP, Netmask)
 	if err != nil {
 		return false, err
 	}
@@ -92,7 +93,7 @@ func getSubnetList() ([]pb.Subnet, error) {
 // Return true if conflicted, return false otherwise.
 func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet,
 	resValidCheckSubnet *pb.ResValidCheckSubnet) (bool, error) {
-	netNetwork, err := CheckNetwork(IP, Netmask)
+	netNetwork, err := iputil.CheckNetwork(IP, Netmask)
 	if err != nil {
 		if resValidCheckSubnet != nil {
 			if strings.Contains(err.Error(), "IP") {
@@ -129,15 +130,15 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 		var givenSubnetUpperNet *net.IPNet
 		var subnetUpperNet *net.IPNet
 
-		mask, _ := CheckNetmask(subnetList[i].Netmask)
+		mask, _ := iputil.CheckNetmask(subnetList[i].Netmask)
 		maskSize, _ := mask.Size()
 
 		if netmaskSize >= maskSize {
-			givenSubnetUpperNet, _ = CheckNetwork(IP, subnetList[i].Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, subnetList[i].Netmask)
+			givenSubnetUpperNet, _ = iputil.CheckNetwork(IP, subnetList[i].Netmask)
+			subnetUpperNet, _ = iputil.CheckNetwork(subnetList[i].NetworkIP, subnetList[i].Netmask)
 		} else {
-			givenSubnetUpperNet, _ = CheckNetwork(IP, Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, Netmask)
+			givenSubnetUpperNet, _ = iputil.CheckNetwork(IP, Netmask)
+			subnetUpperNet, _ = iputil.CheckNetwork(subnetList[i].NetworkIP, Netmask)
 		}
 
 		if subnetUpperNet.IP.Equal(givenSubnetUpperNet.IP) {

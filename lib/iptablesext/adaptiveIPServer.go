@@ -3,8 +3,8 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/arping"
-	"hcc/harp/lib/configext"
-	"hcc/harp/lib/ipLink"
+	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/iplink"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -87,7 +87,7 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
 	var err error
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
 
 	if isAdd {
 		err = arping.CheckDuplicatedIPAddress(publicIP)
@@ -97,13 +97,13 @@ func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) err
 	}
 
 	if isAdd {
-		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
 		if err != nil {
 			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to add AdaptiveIP IP address " + publicIP)
 		}
 	} else {
-		err = ipLink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
 		if err != nil {
 			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to delete AdaptiveIP IP address " + publicIP)

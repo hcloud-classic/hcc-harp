@@ -1,28 +1,17 @@
-package ipLink
+package iplink
 
 import (
 	"hcc/harp/lib/config"
+	"hcc/harp/lib/iplinkext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/vnstat"
 	"strconv"
 	"strings"
 )
 
-func getIfaceVNUM(ip string) (vnum int) {
-	var ifaceVNUM = 0
-
-	ipSplit := strings.Split(ip, ".")
-	for _, ipSplited := range ipSplit {
-		ipSplitedInt, _ := strconv.Atoi(ipSplited)
-		ifaceVNUM += ipSplitedInt
-	}
-
-	return ifaceVNUM
-}
-
 func isHarpInternalDeviceExist(ip string) bool {
 	err := runIP("link show " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)))
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)))
 	if err != nil {
 		return false
 	}
@@ -32,7 +21,7 @@ func isHarpInternalDeviceExist(ip string) bool {
 
 func addHarpInternalDevice(ip string) error {
 	err := runIP("link add link " + config.AdaptiveIP.InternalIfaceName + " " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)) +
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)) +
 		" address " + generateMACAddress(ip) +
 		" type macvlan")
 	if err != nil {
@@ -44,7 +33,7 @@ func addHarpInternalDevice(ip string) error {
 
 func deleteHarpInternalDevice(ip string) error {
 	err := runIP("link delete " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)))
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)))
 	if err != nil {
 		return err
 	}
@@ -54,7 +43,7 @@ func deleteHarpInternalDevice(ip string) error {
 
 func upHarpInternalDevice(ip string) error {
 	err := runIP("link set dev " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)) + " up")
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)) + " up")
 	if err != nil {
 		return err
 	}
@@ -64,7 +53,7 @@ func upHarpInternalDevice(ip string) error {
 
 func downHarpInternalDevice(ip string) error {
 	err := runIP("link set dev " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)) + " down")
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)) + " down")
 	if err != nil {
 		return err
 	}
@@ -76,7 +65,7 @@ func setIPtoHarpInternalDevice(ip string, cidr int) error {
 	err := runIP("address add " +
 		ip + "/" + strconv.Itoa(cidr) +
 		" dev " +
-		HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)))
+		iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)))
 	if err != nil {
 		return err
 	}
@@ -113,7 +102,7 @@ func SetHarpInternalDevice(ip string, netmask string) error {
 		return err
 	}
 
-	vnstat.ScheduleUpdateVnStat(HarpInternalPrefix+strconv.Itoa(getIfaceVNUM(ip)), true)
+	vnstat.ScheduleUpdateVnStat(iplinkext.HarpInternalPrefix+strconv.Itoa(iplinkext.GetIfaceVNUM(ip)), true)
 
 	return nil
 }
@@ -134,7 +123,7 @@ func UnsetHarpInternalDevice(ip string) error {
 		return err
 	}
 
-	vnstat.RemoveUpdateVnStat(HarpInternalPrefix + strconv.Itoa(getIfaceVNUM(ip)))
+	vnstat.RemoveUpdateVnStat(iplinkext.HarpInternalPrefix + strconv.Itoa(iplinkext.GetIfaceVNUM(ip)))
 
 	return nil
 }

@@ -3,7 +3,7 @@ package adaptiveip
 import (
 	"errors"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configAdaptiveIP"
 	"hcc/harp/lib/fileutil"
 	"innogrid.com/hcloud-classic/pb"
 	"strings"
@@ -44,7 +44,7 @@ func writeAdaptiveIPNetworkConfig(in *pb.ReqCreateAdaptiveIPSetting) (*pb.Adapti
 	adaptiveIP.StartIPAddress = startIP
 	adaptiveIP.EndIPAddress = endIP
 
-	err := configext.CheckAdaptiveIPConfig(&adaptiveIP)
+	err := configAdaptiveIP.CheckAdaptiveIPConfig(&adaptiveIP)
 	if err != nil {
 		return nil, err
 	}

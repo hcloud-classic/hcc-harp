@@ -1,4 +1,4 @@
-package ipLink
+package iplink
 
 import (
 	"errors"

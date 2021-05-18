@@ -1,4 +1,4 @@
-package configext
+package configAdaptiveIP
 
 import (
 	"errors"

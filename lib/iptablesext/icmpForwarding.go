@@ -3,7 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configAdapriveIPNetwork"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -24,7 +24,7 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 		addFlag = "-D"
 	}
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
 
 	logger.Logger.Println(addMsg + " ICMP forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 

@@ -4,7 +4,7 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configAdapriveIPNetwork"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
@@ -17,7 +17,7 @@ func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 	var availableIPList pb.AdaptiveIPAvailableIPList
 	var availableIPs []string
 
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+	adaptiveip := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
 	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
 	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
 	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)

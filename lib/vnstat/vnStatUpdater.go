@@ -53,6 +53,11 @@ func updateVnStat(harpIfaceName string) {
 	if err != nil {
 		logger.Logger.Println("Failed to update vnStat for " + harpIfaceName + " (" + string(output) + ")")
 	}
+
+	err = updateTodayTraffic(harpIfaceName)
+	if err != nil {
+		logger.Logger.Println(err.Error())
+	}
 }
 
 func deleteVnStat(harpIfaceName string) {
@@ -80,7 +85,7 @@ func ScheduleUpdateVnStat(harpIfaceName string, isNew bool) {
 		if config.VnStat.Debug == "on" {
 			logger.Logger.Println("updateVnStat(): updateVnStat is canceled cause of queue is deleted for harpIfaceName=" + harpIfaceName)
 		}
-		logger.Logger.Println("updateVnStat(): Removing traffic stats from VnStat database for for harpIfaceName=" + harpIfaceName)
+		logger.Logger.Println("updateVnStat(): Removing traffic stats from vnStat database for for harpIfaceName=" + harpIfaceName)
 		deleteVnStat(harpIfaceName)
 
 		return
@@ -114,7 +119,7 @@ func ScheduleUpdateVnStat(harpIfaceName string, isNew bool) {
 	queueUpdateVnStat(harpIfaceName)
 }
 
-// RemoveUpdateVnStat : Remove Harp's internal interface from VnStat database
+// RemoveUpdateVnStat : Remove Harp's internal interface from vnStat database
 func RemoveUpdateVnStat(harpIfaceName string) {
 	for true {
 		if !isUpdateVnStatLocked(harpIfaceName) {

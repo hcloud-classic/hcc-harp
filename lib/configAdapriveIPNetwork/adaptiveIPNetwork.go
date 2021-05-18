@@ -1,4 +1,4 @@
-package configext
+package configAdapriveIPNetwork
 
 import (
 	"hcc/harp/lib/config"

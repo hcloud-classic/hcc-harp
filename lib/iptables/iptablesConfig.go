@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"hcc/harp/dao"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configAdaptiveIP"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"innogrid.com/hcloud-classic/pb"
@@ -199,9 +201,9 @@ func prepareHarpIPTABLESChains() error {
 func InitIPTABLES() error {
 	logger.Logger.Println("Initializing iptables...")
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
 
-	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configAdaptiveIP.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return err
 	}
@@ -230,7 +232,7 @@ func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
 		Page:             0,
 	}
 
-	adaptiveIPServerList, errCode, errString := dao.ReadAdaptiveIPServerList(in)
+	adaptiveIPServerList, errCode, errString := daoext.ReadAdaptiveIPServerList(in)
 	if errCode != 0 {
 		return errors.New(errString)
 	}

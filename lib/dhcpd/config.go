@@ -5,10 +5,11 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/dao"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/fileutil"
-	"hcc/harp/lib/ipLink"
+	"hcc/harp/lib/iplink"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
@@ -350,7 +351,7 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 		return "", err
 	}
 
-	err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
+	err = iplink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
 			subnetUUID + " (" + err.Error() + ")")
@@ -397,7 +398,7 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	dhcpdext.DecWritingSubnetConfigCounter()
 
 	// Delete gateway IP address from internal interface
-	err = ipLink.UnsetHarpInternalDevice(subnet.Gateway)
+	err = iplink.UnsetHarpInternalDevice(subnet.Gateway)
 	if err != nil {
 		return "", err
 	}
@@ -440,7 +441,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
-		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
+		subnet, errCode, errStr := daoext.ReadSubnetByServer(serverUUIDs[i])
 		if errCode != 0 {
 			hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CheckDatabaseAndPrepareDHCPD(): "+errStr))
 			err := hccErrStack.Pop().ToError()
@@ -461,7 +462,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 
-		err = ipLink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
+		err = iplink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
 		if err != nil {
 			logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
 				subnetUUID + " (" + err.Error() + ")")
