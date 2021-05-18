@@ -5,6 +5,7 @@ import (
 	"hcc/harp/lib/iplinkext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/vnstat"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -75,23 +76,24 @@ func setIPtoHarpInternalDevice(ip string, cidr int) error {
 
 // SetHarpInternalDevice : Setting up harp internal gateway device
 func SetHarpInternalDevice(ip string, netmask string) error {
+	var err error
+	var mask net.IPMask
+	var maskLen int
+
 	if isHarpInternalDeviceExist(ip) {
-		err := deleteHarpInternalDevice(ip)
-		if err != nil {
-			return err
-		}
+		goto SCHEDULE
 	}
 
-	err := addHarpInternalDevice(ip)
+	err = addHarpInternalDevice(ip)
 	if err != nil {
 		return err
 	}
 
-	mask, err := iputil.CheckNetmask(netmask)
+	mask, err = iputil.CheckNetmask(netmask)
 	if err != nil {
 		return err
 	}
-	maskLen, _ := mask.Size()
+	maskLen, _ = mask.Size()
 	err = setIPtoHarpInternalDevice(ip, maskLen)
 	if err != nil {
 		return err
@@ -102,6 +104,7 @@ func SetHarpInternalDevice(ip string, netmask string) error {
 		return err
 	}
 
+SCHEDULE:
 	vnstat.ScheduleUpdateVnStat(iplinkext.HarpInternalPrefix+strconv.Itoa(iplinkext.GetIfaceVNUM(ip)), true)
 
 	return nil
