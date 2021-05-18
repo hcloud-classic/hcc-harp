@@ -3,7 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/arping"
-	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iplink"
 	"hcc/harp/lib/logger"
 	"os/exec"
@@ -87,7 +87,7 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
 	var err error
 
-	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	if isAdd {
 		err = arping.CheckDuplicatedIPAddress(publicIP)

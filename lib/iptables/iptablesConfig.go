@@ -6,8 +6,8 @@ import (
 	"hcc/harp/dao"
 	"hcc/harp/daoext"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configAdapriveIPNetwork"
-	"hcc/harp/lib/configAdaptiveIP"
+	"hcc/harp/lib/configadapriveipnetwork"
+	"hcc/harp/lib/configadaptiveip"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"innogrid.com/hcloud-classic/pb"
@@ -201,9 +201,9 @@ func prepareHarpIPTABLESChains() error {
 func InitIPTABLES() error {
 	logger.Logger.Println("Initializing iptables...")
 
-	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
-	err := configAdaptiveIP.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configadaptiveip.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return err
 	}

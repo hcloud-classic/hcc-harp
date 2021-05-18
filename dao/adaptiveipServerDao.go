@@ -2,7 +2,7 @@ package dao
 
 import (
 	daoext2 "hcc/harp/daoext"
-	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -58,7 +58,7 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpInternalSubnetNotAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is not allocated to one of private subnet"
 	}
 
-	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 	netNetwork, _ := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	mask, _ := iputil.CheckNetmask(adaptiveIP.Netmask)
 	netIP := net.IPNet{

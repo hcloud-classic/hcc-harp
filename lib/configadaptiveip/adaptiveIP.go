@@ -1,4 +1,4 @@
-package configAdaptiveIP
+package configadaptiveip
 
 import (
 	"errors"

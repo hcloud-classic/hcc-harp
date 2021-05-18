@@ -6,7 +6,7 @@ import (
 	"hcc/harp/dao"
 	"hcc/harp/daoext"
 	"hcc/harp/lib/adaptiveip"
-	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/dhcpd"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"innogrid.com/hcloud-classic/pb"
@@ -131,7 +131,7 @@ func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreate
 }
 
 func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPSetting, error) {
-	adaptiveIPNetwork := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIPNetwork := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	return &pb.ResGetAdaptiveIPSetting{AdaptiveipSetting: adaptiveIPNetwork}, nil
 }

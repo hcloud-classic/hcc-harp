@@ -3,7 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/logger"
 	"os/exec"
 	"strconv"
@@ -38,7 +38,7 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 		return errors.New("protocol is not selected")
 	}
 
-	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	for i := range protocol {
 		logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +

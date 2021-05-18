@@ -3,7 +3,7 @@ package daoext
 import (
 	sql2 "database/sql"
 	"github.com/golang/protobuf/ptypes"
-	"hcc/harp/lib/configAdapriveIPNetwork"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -165,7 +165,7 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 		})
 	}
 
-	adaptiveIP := configAdapriveIPNetwork.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 	netNetwork, err := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
 	if err != nil {
 		logger.Logger.Println(err)

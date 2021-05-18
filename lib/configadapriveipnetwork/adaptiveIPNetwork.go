@@ -1,4 +1,4 @@
-package configAdapriveIPNetwork
+package configadapriveipnetwork
 
 import (
 	"hcc/harp/lib/config"
