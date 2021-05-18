@@ -34,6 +34,16 @@ func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 	}
 }
 
+func returnTraffic(traffic *pb.Traffic) *pb.Traffic {
+	return &pb.Traffic{
+		ServerUUID: traffic.ServerUUID,
+		GroupID:    traffic.GroupID,
+		Day:        traffic.Day,
+		TxKB:       traffic.TxKB,
+		RxKB:       traffic.RxKB,
+	}
+}
+
 func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
 	subnet, errCode, errStr := dao.CreateSubnet(in)
 	if errCode != 0 {
@@ -244,4 +254,14 @@ func (s *harpServer) DeletePortForwarding(_ context.Context, in *pb.ReqDeletePor
 	}
 
 	return &pb.ResDeletePortForwarding{ServerUUID: serverUUID}, nil
+}
+
+func (s *harpServer) GetTraffic(_ context.Context, in *pb.ReqGetTraffic) (*pb.ResGetTraffic, error) {
+	traffic, errCode, errStr := dao.GetTraffic(in.GetServerUUID(), in.GetDay())
+	if errCode != 0 {
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		return &pb.ResGetTraffic{Traffic: &pb.Traffic{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
+	}
+
+	return &pb.ResGetTraffic{Traffic: returnTraffic(traffic)}, nil
 }
