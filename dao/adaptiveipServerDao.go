@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"hcc/harp/action/grpc/client"
 	daoext2 "hcc/harp/daoext"
 	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iptablesext"
@@ -56,6 +57,18 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	subnet, errCode, _ := daoext2.ReadSubnetByServer(serverUUID)
 	if errCode != 0 {
 		return nil, hcc_errors.HarpInternalSubnetNotAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is not allocated to one of private subnet"
+	}
+
+	resGetQuota, errStack := client.RC.GetQuota(subnet.GroupID)
+	if errStack != nil {
+		return nil, hcc_errors.HarpGrpcRequestError, "CreateAdaptiveIPServer(): " + errStack.Pop().Text()
+	}
+	adaptiveIPServerNum, errCode, errText := ReadAdaptiveIPServerNum(&pb.ReqGetAdaptiveIPServerNum{GroupID: subnet.GroupID})
+	if errCode != 0 {
+		return nil, errCode, "CreateAdaptiveIPServer(): " + errText
+	}
+	if adaptiveIPServerNum.Num+1 > int64(resGetQuota.Quota.LimitAdaptiveIPCnt) {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateAdaptiveIPServer(): AdaptiveIP count quota exceeded"
 	}
 
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
