@@ -481,6 +481,18 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
 	}
 
+	resGetQuota, errStack := client.RC.GetQuota(subnet.GroupID)
+	if errStack != nil {
+		return nil, hcc_errors.HarpGrpcRequestError, "CreateSubnet(): " + errStack.Pop().Text()
+	}
+	subnetNum, errCode, errText := ReadSubnetNum(&pb.ReqGetSubnetNum{GroupID: subnet.GroupID})
+	if errCode != 0 {
+		return nil, errCode, "CreateSubnet(): " + errText
+	}
+	if subnetNum.Num+1 > int64(resGetQuota.Quota.LimitSubnetCnt) {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): Subnet count quota exceeded"
+	}
+
 	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
