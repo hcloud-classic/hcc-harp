@@ -275,6 +275,25 @@ func parseAdaptiveIP() {
 	}
 }
 
+func parseVnStat() {
+	config.VnStat = conf.Get("vnstat")
+	if config.VnStat == nil {
+		logger.Logger.Panicln("no vnstat section")
+	}
+
+	VnStat = vnStat{}
+
+	VnStat.Debug, err = config.VnStat.String("vnstat_debug")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
+	VnStat.DatabaseUpdateIntervalSec, err = config.VnStat.Int("vnstat_database_update_interval_sec")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+}
+
 // Init : Parse config file and initialize config structure
 func Init() {
 	if err = conf.Parse(configLocation); err != nil {
@@ -289,6 +308,7 @@ func Init() {
 	parsePiccolo()
 	parseDHCPD()
 	parseAdaptiveIP()
+	parseVnStat()
 }
 
 func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {

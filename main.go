@@ -8,6 +8,7 @@ import (
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/logger"
+	"hcc/harp/lib/modprobe"
 	"hcc/harp/lib/mysql"
 	"hcc/harp/lib/pid"
 	"hcc/harp/lib/syscheck"
@@ -56,9 +57,21 @@ func init() {
 	}
 	hcc_errors.SetErrLogger(logger.Logger)
 
+	err = syscheck.CheckIPLink()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIPLink(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
+	}
+
 	err = syscheck.CheckIPTABLES()
 	if err != nil {
-		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckFirewall(): "+err.Error()).Fatal()
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIPTABLES(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
+	}
+
+	err = syscheck.CheckVnStat()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckVnStat(): "+err.Error()).Fatal()
 		_ = pid.DeleteHarpPID()
 	}
 
@@ -91,6 +104,12 @@ func init() {
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
+	}
+
+	err = modprobe.LoadHarpKernelModules()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "modprobe.InitHarpModules(): "+err.Error()).Fatal()
 		_ = pid.DeleteHarpPID()
 	}
 

@@ -1,11 +1,14 @@
-package iputil
+package iputilext
 
 import (
 	"errors"
+	"hcc/harp/daoext"
+	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"innogrid.com/hcloud-classic/pb"
 	"net"
+	"strings"
 )
 
 func checkAClassPrivate(IP net.IP) bool {
@@ -37,7 +40,7 @@ func checkCClassPrivate(IP net.IP) bool {
 // Return error if given IP address is invalid or is not a network address.
 // Return true if it is private address, return false otherwise.
 func CheckPrivateSubnet(IP string, Netmask string) (bool, error) {
-	netNetwork, err := CheckNetwork(IP, Netmask)
+	netNetwork, err := iputil.CheckNetwork(IP, Netmask)
 	if err != nil {
 		return false, err
 	}
@@ -88,13 +91,24 @@ func getSubnetList() ([]pb.Subnet, error) {
 
 // CheckSubnetConflict : Check if given network address is conflict with one of subnet that stored in the database.
 // Return true if conflicted, return false otherwise.
-func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet) (bool, error) {
-	netNetwork, err := CheckNetwork(IP, Netmask)
+func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb.Subnet,
+	resValidCheckSubnet *pb.ResValidCheckSubnet) (bool, error) {
+	netNetwork, err := iputil.CheckNetwork(IP, Netmask)
 	if err != nil {
+		if resValidCheckSubnet != nil {
+			if strings.Contains(err.Error(), "IP") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetworkAddress
+			} else if strings.Contains(err.Error(), "netmask") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetmask
+			}
+		}
 		return false, err
 	}
 
 	if netNetwork.IP.String() != IP {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidNetworkAddress
+		}
 		return false, errors.New("CheckPrivateSubnet(): invalid network address")
 	}
 
@@ -102,6 +116,9 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 
 	subnetList, err := getSubnetList()
 	if err != nil {
+		if resValidCheckSubnet != nil {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValid
+		}
 		return false, nil
 	}
 
@@ -113,21 +130,27 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 		var givenSubnetUpperNet *net.IPNet
 		var subnetUpperNet *net.IPNet
 
-		mask, _ := CheckNetmask(subnetList[i].Netmask)
+		mask, _ := iputil.CheckNetmask(subnetList[i].Netmask)
 		maskSize, _ := mask.Size()
 
 		if netmaskSize >= maskSize {
-			givenSubnetUpperNet, _ = CheckNetwork(IP, subnetList[i].Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, subnetList[i].Netmask)
+			givenSubnetUpperNet, _ = iputil.CheckNetwork(IP, subnetList[i].Netmask)
+			subnetUpperNet, _ = iputil.CheckNetwork(subnetList[i].NetworkIP, subnetList[i].Netmask)
 		} else {
-			givenSubnetUpperNet, _ = CheckNetwork(IP, Netmask)
-			subnetUpperNet, _ = CheckNetwork(subnetList[i].NetworkIP, Netmask)
+			givenSubnetUpperNet, _ = iputil.CheckNetwork(IP, Netmask)
+			subnetUpperNet, _ = iputil.CheckNetwork(subnetList[i].NetworkIP, Netmask)
 		}
 
 		if subnetUpperNet.IP.Equal(givenSubnetUpperNet.IP) {
+			if resValidCheckSubnet != nil {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetConflict
+			}
 			return true, nil
 		}
 	}
 
+	if resValidCheckSubnet != nil {
+		resValidCheckSubnet.ErrorCode = daoext.SubnetValid
+	}
 	return false, nil
 }

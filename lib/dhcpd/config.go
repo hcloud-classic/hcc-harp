@@ -5,10 +5,11 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/dao"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/dhcpdext"
 	"hcc/harp/lib/fileutil"
-	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/iplink"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/servicecontrol"
@@ -44,7 +45,7 @@ type NodeData struct {
 func getNodePXEMACAddress(nodeUUID string) (string, error) {
 	node, hccErrStack := client.RC.GetNode(nodeUUID)
 	if hccErrStack != nil {
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	return node.PXEMacAddr, nil
@@ -189,7 +190,7 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CreateConfig(): "+errStr))
-		return (*hccErrStack.Stack())[0].ToError()
+		return hccErrStack.Pop().ToError()
 	}
 
 	if len(subnet.SubnetName) == 0 {
@@ -245,12 +246,6 @@ func CreateConfig(subnetUUID string, nodeUUIDs []string) error {
 	}
 
 	err = doWriteConfig(subnet, firstIP, lastIP, pxeFileName, nodeUUIDs, false)
-	if err != nil {
-		return err
-	}
-
-	// Allocate gateway IP address to internal interface
-	err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.Gateway, subnet.Netmask)
 	if err != nil {
 		return err
 	}
@@ -332,12 +327,12 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CreateDHCPDConfig(): "+errStr))
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	nodes, hccErrStack := client.RC.GetNodeList(subnet.ServerUUID)
 	if hccErrStack != nil {
-		err := (*hccErrStack.Stack())[0].ToError()
+		err := hccErrStack.Pop().ToError()
 		if err != nil {
 			logger.Logger.Println(errors.New("CreateDHCPDConfig(): Failed to get nodes by server UUID: " +
 				subnet.ServerUUID + " (" + err.Error() + ")"))
@@ -355,6 +350,15 @@ func CreateDHCPDConfig(in *pb.ReqCreateDHCPDConf) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	err = iplink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
+	if err != nil {
+		logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
+			subnetUUID + " (" + err.Error() + ")")
+		return "", err
+	}
+
+	logger.Logger.Println("Added virtual internal interface of subnetUUID=" + subnetUUID)
 
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {
@@ -382,7 +386,7 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	subnet, errCode, errStr := dao.ReadSubnet(subnetUUID)
 	if errCode != 0 {
 		hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "DeleteDHCPDConfig(): "+errStr))
-		return "", (*hccErrStack.Stack())[0].ToError()
+		return "", hccErrStack.Pop().ToError()
 	}
 
 	dhcpdConfLocation := config.DHCPD.ConfigFileLocation + "/" + subnet.ServerUUID + ".conf"
@@ -392,6 +396,12 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 		return "", err
 	}
 	dhcpdext.DecWritingSubnetConfigCounter()
+
+	// Delete gateway IP address from internal interface
+	err = iplink.UnsetHarpInternalDevice(subnet.Gateway)
+	if err != nil {
+		return "", err
+	}
 
 	_, err = UpdateHarpDHCPDConfig()
 	if err != nil {
@@ -411,13 +421,13 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 func CheckDatabaseAndPrepareDHCPD() error {
 	serverUUIDs, hccErrStack := client.RC.AllServerUUID()
 	if hccErrStack != nil {
-		return (*hccErrStack.Stack())[0].ToError()
+		return hccErrStack.Pop().ToError()
 	}
 
 	for i := range serverUUIDs {
 		nodes, hccErrStack := client.RC.GetNodeList(serverUUIDs[i])
 		if hccErrStack != nil {
-			err := (*hccErrStack.Stack())[0].ToError()
+			err := hccErrStack.Pop().ToError()
 			if err != nil {
 				logger.Logger.Println(errors.New("Failed to get nodes by server UUID: " +
 					serverUUIDs[i] + " (" + err.Error() + ")"))
@@ -431,10 +441,10 @@ func CheckDatabaseAndPrepareDHCPD() error {
 			nodeUUIDs = append(nodeUUIDs, nodes[i].UUID)
 		}
 
-		subnet, errCode, errStr := dao.ReadSubnetByServer(serverUUIDs[i])
+		subnet, errCode, errStr := daoext.ReadSubnetByServer(serverUUIDs[i])
 		if errCode != 0 {
 			hccErrStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, "CheckDatabaseAndPrepareDHCPD(): "+errStr))
-			err := (*hccErrStack.Stack())[1].ToError()
+			err := hccErrStack.Pop().ToError()
 			if err != nil {
 				logger.Logger.Println("Failed to get subnet by server UUID: " +
 					serverUUIDs[i] + " (" + err.Error() + ")")
@@ -452,7 +462,7 @@ func CheckDatabaseAndPrepareDHCPD() error {
 
 		logger.Logger.Println("Created dhcpd config of subnetUUID=" + subnetUUID)
 
-		err = ifconfig.AddVirtualIface(config.AdaptiveIP.InternalIfaceName, subnet.NetworkIP, subnet.Netmask)
+		err = iplink.SetHarpInternalDevice(subnet.Gateway, subnet.Netmask)
 		if err != nil {
 			logger.Logger.Println("Failed to add virtual internal interface of subnetUUID=" +
 				subnetUUID + " (" + err.Error() + ")")

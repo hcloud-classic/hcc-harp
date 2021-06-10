@@ -2,7 +2,7 @@ package adaptiveip
 
 import (
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/dhcpd"
 	"hcc/harp/lib/iptables"
 	"hcc/harp/lib/iputil"
@@ -59,7 +59,7 @@ func checkGatewayConfigured(gateway string) (bool, error) {
 func settingExternalInterface() error {
 	logger.Logger.Println("Setting external interface...")
 
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+	adaptiveip := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	cmd := exec.Command("ifconfig", config.AdaptiveIP.ExternalIfaceName, adaptiveip.ExtIfaceIPAddress, "netmask",
 		adaptiveip.Netmask)
@@ -91,9 +91,9 @@ func settingDefaultGateway() error {
 
 	logger.Logger.Println("Setting default gateway...")
 
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+	adaptiveip := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
-	cmd := exec.Command("route", "add", "default", "gw", adaptiveip.GatewayAddress)
+	cmd := exec.Command("ip", "route", "add", "default", "via", adaptiveip.GatewayAddress)
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func settingExternalNetwork() error {
 	logger.Logger.Println("Setting external network...")
 
 	ifaceName := config.AdaptiveIP.ExternalIfaceName
-	adaptiveip := configext.GetAdaptiveIPNetwork()
+	adaptiveip := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	isIPConfigured, err := checkIPConfigured(ifaceName, adaptiveip.ExtIfaceIPAddress)
 	if err != nil {
@@ -152,7 +152,7 @@ func LoadHarpIPTABLESRules() error {
 		return err
 	}
 
-	err = iptables.LoadAdaptiveIPIfconfigAndIPTABLESRules()
+	err = iptables.LoadAdaptiveIPNetDevAndIPTABLESRules()
 	if err != nil {
 		return err
 	}

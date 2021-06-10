@@ -4,8 +4,9 @@ import (
 	"context"
 	"hcc/harp/action/grpc/errconv"
 	"hcc/harp/dao"
+	"hcc/harp/daoext"
 	"hcc/harp/lib/adaptiveip"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/dhcpd"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"innogrid.com/hcloud-classic/pb"
@@ -33,6 +34,16 @@ func returnSubnet(subnet *pb.Subnet) *pb.Subnet {
 	}
 }
 
+func returnTraffic(traffic *pb.Traffic) *pb.Traffic {
+	return &pb.Traffic{
+		ServerUUID: traffic.ServerUUID,
+		GroupID:    traffic.GroupID,
+		Day:        traffic.Day,
+		TxKB:       traffic.TxKB,
+		RxKB:       traffic.RxKB,
+	}
+}
+
 func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*pb.ResCreateSubnet, error) {
 	subnet, errCode, errStr := dao.CreateSubnet(in)
 	if errCode != 0 {
@@ -41,6 +52,12 @@ func (s *harpServer) CreateSubnet(_ context.Context, in *pb.ReqCreateSubnet) (*p
 	}
 
 	return &pb.ResCreateSubnet{Subnet: returnSubnet(subnet)}, nil
+}
+
+func (s *harpServer) ValidCheckSubnet(_ context.Context, in *pb.ReqValidCheckSubnet) (*pb.ResValidCheckSubnet, error) {
+	resValidCheckSubnet := dao.ValidCheckSubnet(in)
+
+	return resValidCheckSubnet, nil
 }
 
 func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResGetSubnet, error) {
@@ -54,7 +71,7 @@ func (s *harpServer) GetSubnet(_ context.Context, in *pb.ReqGetSubnet) (*pb.ResG
 }
 
 func (s *harpServer) GetSubnetByServer(_ context.Context, in *pb.ReqGetSubnetByServer) (*pb.ResGetSubnetByServer, error) {
-	subnet, errCode, errStr := dao.ReadSubnetByServer(in.GetServerUUID())
+	subnet, errCode, errStr := daoext.ReadSubnetByServer(in.GetServerUUID())
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetSubnetByServer{Subnet: &pb.Subnet{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
@@ -124,7 +141,7 @@ func (s *harpServer) CreateAdaptiveIPSetting(_ context.Context, in *pb.ReqCreate
 }
 
 func (s *harpServer) GetAdaptiveIPSetting(_ context.Context, _ *pb.Empty) (*pb.ResGetAdaptiveIPSetting, error) {
-	adaptiveIPNetwork := configext.GetAdaptiveIPNetwork()
+	adaptiveIPNetwork := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	return &pb.ResGetAdaptiveIPSetting{AdaptiveipSetting: adaptiveIPNetwork}, nil
 }
@@ -150,7 +167,7 @@ func (s *harpServer) CreateAdaptiveIPServer(_ context.Context, in *pb.ReqCreateA
 }
 
 func (s *harpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiveIPServer) (*pb.ResGetAdaptiveIPServer, error) {
-	adaptiveIPServer, errCode, errStr := dao.ReadAdaptiveIPServer(in.GetServerUUID())
+	adaptiveIPServer, errCode, errStr := daoext.ReadAdaptiveIPServer(in.GetServerUUID())
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetAdaptiveIPServer{AdaptiveipServer: &pb.AdaptiveIPServer{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
@@ -160,7 +177,7 @@ func (s *harpServer) GetAdaptiveIPServer(_ context.Context, in *pb.ReqGetAdaptiv
 }
 
 func (s *harpServer) GetAdaptiveIPServerList(_ context.Context, in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdaptiveIPServerList, error) {
-	adaptiveIPServerList, errCode, errStr := dao.ReadAdaptiveIPServerList(in)
+	adaptiveIPServerList, errCode, errStr := daoext.ReadAdaptiveIPServerList(in)
 	if errCode != 0 {
 		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
 		return &pb.ResGetAdaptiveIPServerList{AdaptiveipServer: []*pb.AdaptiveIPServer{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
@@ -237,4 +254,14 @@ func (s *harpServer) DeletePortForwarding(_ context.Context, in *pb.ReqDeletePor
 	}
 
 	return &pb.ResDeletePortForwarding{ServerUUID: serverUUID}, nil
+}
+
+func (s *harpServer) GetTraffic(_ context.Context, in *pb.ReqGetTraffic) (*pb.ResGetTraffic, error) {
+	traffic, errCode, errStr := dao.GetTraffic(in.GetServerUUID(), in.GetDay())
+	if errCode != 0 {
+		errStack := hcc_errors.NewHccErrorStack(hcc_errors.NewHccError(errCode, errStr))
+		return &pb.ResGetTraffic{Traffic: &pb.Traffic{}, HccErrorStack: errconv.HccStackToGrpc(errStack)}, nil
+	}
+
+	return &pb.ResGetTraffic{Traffic: returnTraffic(traffic)}, nil
 }

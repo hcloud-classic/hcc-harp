@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"hcc/harp/dao"
-	"hcc/harp/lib/configext"
+	"hcc/harp/daoext"
+	"hcc/harp/lib/config"
+	"hcc/harp/lib/configadapriveipnetwork"
+	"hcc/harp/lib/configadaptiveip"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"innogrid.com/hcloud-classic/pb"
@@ -44,9 +47,6 @@ func checkNFTables() error {
 	}
 
 	if !nfTablesOk {
-		logger.Logger.Println("checkNFTables(): Some of tables are not available from iptables")
-		logger.Logger.Println("checkNFTables(): Please check if your kernel modules are loaded properly")
-		logger.Logger.Println("checkNFTables(): Type 'lsmod' and check if these modules are loaded: " + iptablesext.NeededKernelModulesForHarp)
 		return errors.New("some of tables are not available from iptables")
 	}
 
@@ -144,6 +144,26 @@ func flushOrAddHarpIPTABLESChainAdaptiveIPInputDrop() error {
 	return nil
 }
 
+func addHarpExternalMasqueradeRule() error {
+	cmd := exec.Command("iptables", "-t", "nat",
+		"-C", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "MASQUERADE")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if !isExist {
+		cmd = exec.Command("iptables", "-t", "nat",
+			"-A", iptablesext.HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.ExternalIfaceName,
+			"-j", "MASQUERADE")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to add MASQUERADE rule for external interface")
+		}
+	}
+
+	return nil
+}
+
 func prepareHarpIPTABLESChains() error {
 	logger.Logger.Println("Preparing harp's iptables chains...")
 
@@ -169,6 +189,11 @@ func prepareHarpIPTABLESChains() error {
 		}
 	}
 
+	err = addHarpExternalMasqueradeRule()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -176,9 +201,9 @@ func prepareHarpIPTABLESChains() error {
 func InitIPTABLES() error {
 	logger.Logger.Println("Initializing iptables...")
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
-	err := configext.CheckAdaptiveIPConfig(adaptiveIP)
+	err := configadaptiveip.CheckAdaptiveIPConfig(adaptiveIP)
 	if err != nil {
 		return err
 	}
@@ -196,9 +221,9 @@ func InitIPTABLES() error {
 	return nil
 }
 
-// LoadAdaptiveIPIfconfigAndIPTABLESRules : Load the ifconfig command and iptables rules for AdaptiveIP
-func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
-	logger.Logger.Println("Loading ifconfig commands and iptables rules for AdaptiveIPs...")
+// LoadAdaptiveIPNetDevAndIPTABLESRules : Load interfaces and iptables rules for AdaptiveIP
+func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
+	logger.Logger.Println("Loading interfaces and iptables rules for AdaptiveIPs...")
 
 	var adaptiveIPServer pb.AdaptiveIPServer
 	in := &pb.ReqGetAdaptiveIPServerList{
@@ -207,13 +232,13 @@ func LoadAdaptiveIPIfconfigAndIPTABLESRules() error {
 		Page:             0,
 	}
 
-	adaptiveIPServerList, errCode, errString := dao.ReadAdaptiveIPServerList(in)
+	adaptiveIPServerList, errCode, errString := daoext.ReadAdaptiveIPServerList(in)
 	if errCode != 0 {
 		return errors.New(errString)
 	}
 
 	for _, adaptiveIPServer := range adaptiveIPServerList.AdaptiveipServer {
-		err := iptablesext.ControlIfconfigAndIPTABLES(true, adaptiveIPServer.PublicIP,
+		err := iptablesext.ControlNetDevAndIPTABLES(true, adaptiveIPServer.PublicIP,
 			adaptiveIPServer.PrivateIP)
 		if err != nil {
 			logger.Logger.Println(err.Error())

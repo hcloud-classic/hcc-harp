@@ -3,7 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/logger"
 	"os/exec"
 	"strconv"
@@ -38,10 +38,11 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 		return errors.New("protocol is not selected")
 	}
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	for i := range protocol {
-		logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+		logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +
+			publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
 
 		cmd := exec.Command("iptables", "-t", "nat",
 			"-C", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
@@ -61,7 +62,8 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 				"--to-source", adaptiveIP.ExtIfaceIPAddress)
 			err = cmd.Run()
 			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " POSTROUTING rule of " + publicIP)
+				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+					" POSTROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
 			}
 		}
 
@@ -83,7 +85,8 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 				"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
 			err = cmd.Run()
 			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " PREROUTING rule of " + publicIP)
+				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+					" PREROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
 			}
 		}
 
@@ -96,14 +99,28 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 		isExist = err == nil
 
 		if (isAdd && !isExist) || (!isAdd && isExist) {
-			cmd = exec.Command("iptables", "-t", "filter",
-				addFlag, HarpChainNamePrefix+"INPUT",
-				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-				"-d", publicIP,
-				"-j", "ACCEPT")
-			err = cmd.Run()
-			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) + " INPUT rule of " + publicIP)
+			if isAdd {
+				cmd = exec.Command("iptables", "-t", "filter",
+					"-I", HarpChainNamePrefix+"INPUT", "1",
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "ACCEPT")
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+						" INPUT rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+				}
+			} else {
+				cmd = exec.Command("iptables", "-t", "filter",
+					addFlag, HarpChainNamePrefix+"INPUT",
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "ACCEPT")
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+						" INPUT rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+				}
 			}
 		}
 	}

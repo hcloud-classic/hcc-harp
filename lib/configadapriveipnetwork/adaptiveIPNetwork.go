@@ -1,4 +1,4 @@
-package configext
+package configadapriveipnetwork
 
 import (
 	"hcc/harp/lib/config"

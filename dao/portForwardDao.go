@@ -3,6 +3,7 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
+	daoext2 "hcc/harp/daoext"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -192,7 +193,7 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 			"ExternalPort, InternalPort, Description arguments"
 	}
 
-	adaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
+	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
 	if adaptiveIPServer == nil {
 		return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError,
 			"CreatePortForwarding(): AdaptiveIP is not allocated for the server (serverUUID=" + serverUUID + ")"
@@ -282,7 +283,7 @@ func DeletePortForwarding(in *pb.ReqDeletePortForwarding) (string, uint64, strin
 		return "", hcc_errors.HarpGrpcArgumentError, "DeletePortForwarding(): need ServerUUID and ExternalPort arguments"
 	}
 
-	adaptiveIPServer, _, _ := ReadAdaptiveIPServer(serverUUID)
+	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpInternalAdaptiveIPAllocatedError,
 			"DeletePortForwarding(): AdaptiveIP is not found with the provided ServerUUID"

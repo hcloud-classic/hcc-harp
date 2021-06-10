@@ -3,9 +3,8 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/arping"
-	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
-	"hcc/harp/lib/ifconfig"
+	"hcc/harp/lib/configadapriveipnetwork"
+	"hcc/harp/lib/iplink"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -84,16 +83,30 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 	return nil
 }
 
-// ControlIfconfigAndIPTABLES : Add or delete iptables rules and virtual interface for AdaptiveIPServer
-func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
+// ControlNetDevAndIPTABLES : Add or delete iptables rules and virtual interface for AdaptiveIPServer
+func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
 	var err error
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	if isAdd {
 		err = arping.CheckDuplicatedIPAddress(publicIP)
 		if err != nil {
 			return err
+		}
+	}
+
+	if isAdd {
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
+		if err != nil {
+			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
+			return errors.New("failed to add AdaptiveIP IP address " + publicIP)
+		}
+	} else {
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
+		if err != nil {
+			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
+			return errors.New("failed to delete AdaptiveIP IP address " + publicIP)
 		}
 	}
 
@@ -105,18 +118,6 @@ func ControlIfconfigAndIPTABLES(isAdd bool, publicIP string, privateIP string) e
 	err = ICMPForwarding(isAdd, publicIP, privateIP)
 	if err != nil {
 		return err
-	}
-
-	if isAdd {
-		err = ifconfig.AddVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP, adaptiveIP.Netmask)
-		if err != nil {
-			return errors.New("failed to add virtual interface for " + publicIP)
-		}
-	} else {
-		err = ifconfig.DeleteVirtualIface(config.AdaptiveIP.ExternalIfaceName, publicIP)
-		if err != nil {
-			return errors.New("failed to delete virtual interface for " + publicIP)
-		}
 	}
 
 	return nil

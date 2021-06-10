@@ -3,7 +3,7 @@ package iptablesext
 import (
 	"errors"
 	"hcc/harp/lib/config"
-	"hcc/harp/lib/configext"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/logger"
 	"os/exec"
 )
@@ -24,7 +24,7 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 		addFlag = "-D"
 	}
 
-	adaptiveIP := configext.GetAdaptiveIPNetwork()
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	logger.Logger.Println(addMsg + " ICMP forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
@@ -81,14 +81,26 @@ func ICMPForwarding(isAdd bool, publicIP string, privateIP string) error {
 	isExist = err == nil
 
 	if (isAdd && !isExist) || (!isAdd && isExist) {
-		cmd = exec.Command("iptables", "-t", "filter",
-			addFlag, HarpChainNamePrefix+"INPUT",
-			"-p", "icmp", "--icmp-type", "echo-request",
-			"-d", publicIP,
-			"-j", "ACCEPT")
-		err = cmd.Run()
-		if err != nil {
-			return errors.New("failed to " + addErrMsg + " ICMP INPUT rule of " + publicIP)
+		if isAdd {
+			cmd = exec.Command("iptables", "-t", "filter",
+				"-I", HarpChainNamePrefix+"INPUT", "1",
+				"-p", "icmp", "--icmp-type", "echo-request",
+				"-d", publicIP,
+				"-j", "ACCEPT")
+			err = cmd.Run()
+			if err != nil {
+				return errors.New("failed to " + addErrMsg + " ICMP INPUT rule of " + publicIP)
+			}
+		} else {
+			cmd = exec.Command("iptables", "-t", "filter",
+				addFlag, HarpChainNamePrefix+"INPUT",
+				"-p", "icmp", "--icmp-type", "echo-request",
+				"-d", publicIP,
+				"-j", "ACCEPT")
+			err = cmd.Run()
+			if err != nil {
+				return errors.New("failed to " + addErrMsg + " ICMP INPUT rule of " + publicIP)
+			}
 		}
 	}
 
