@@ -93,7 +93,7 @@ func settingDefaultGateway() error {
 
 	adaptiveip := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
-	cmd := exec.Command("route", "add", "default", "gw", adaptiveip.GatewayAddress)
+	cmd := exec.Command("ip", "route", "add", "default", "via", adaptiveip.GatewayAddress)
 	err = cmd.Run()
 	if err != nil {
 		return err
