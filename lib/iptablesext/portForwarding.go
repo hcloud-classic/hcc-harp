@@ -11,12 +11,13 @@ import (
 )
 
 // PortForwarding : Add or delete iptables rules for port forwarding
-func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP string, privateIP string,
+func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool, publicIP string, privateIP string,
 	externalPort int, internalPort int) error {
 	var addMsg string
 	var addErrMsg string
 	var addFlag string
 	var protocol []string
+	var internalIface = config.AdaptiveIP.InternalIfaceName
 
 	if isAdd {
 		addMsg = "Adding"
@@ -38,6 +39,10 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 		return errors.New("protocol is not selected")
 	}
 
+	if isTimpani {
+		internalIface = config.Timpani.TimpaniTargetIfaceName
+	}
+
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	for i := range protocol {
@@ -45,7 +50,7 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 			publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
 
 		cmd := exec.Command("iptables", "-t", "nat",
-			"-C", HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
+			"-C", HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
 			"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
 			"-d", publicIP,
 			"-j", "SNAT",
@@ -55,7 +60,7 @@ func PortForwarding(isAdd bool, forwardTCP bool, forwardUDP bool, publicIP strin
 
 		if (isAdd && !isExist) || (!isAdd && isExist) {
 			cmd = exec.Command("iptables", "-t", "nat",
-				addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", config.AdaptiveIP.InternalIfaceName,
+				addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
 				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
 				"-d", publicIP,
 				"-j", "SNAT",

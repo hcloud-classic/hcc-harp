@@ -294,6 +294,41 @@ func parseVnStat() {
 	}
 }
 
+func parseTimpani() {
+	config.Timpani = conf.Get("timpani")
+	if config.Timpani == nil {
+		logger.Logger.Panicln("no timpani section")
+	}
+
+	Timpani = timpani{}
+
+	Timpani.TimpaniTargetIfaceName, err = config.Timpani.String("timpani_target_iface_name")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
+	Timpani.TimpaniExternalPort, err = config.Timpani.Int("timpani_external_port")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+	if Timpani.TimpaniExternalPort < 0 || Timpani.TimpaniExternalPort > 65535 {
+		logger.Logger.Panic("Port number is out of range (timpani_external_port)")
+	}
+
+	Timpani.TimpaniInternalPort, err = config.Timpani.Int("timpani_internal_port")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+	if Timpani.TimpaniExternalPort < 0 || Timpani.TimpaniExternalPort > 65535 {
+		logger.Logger.Panic("Port number is out of range (timpani_internal_port)")
+	}
+
+	Timpani.TimpaniAddress, err = config.Timpani.String("timpani_address")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+}
+
 // Init : Parse config file and initialize config structure
 func Init() {
 	if err = conf.Parse(configLocation); err != nil {
@@ -309,6 +344,7 @@ func Init() {
 	parseDHCPD()
 	parseAdaptiveIP()
 	parseVnStat()
+	parseTimpani()
 }
 
 func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {
