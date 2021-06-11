@@ -9,6 +9,9 @@ before_script:
   - export GOPATH="/home/gitlab-runner/go"
   - export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
   - export GOPROXY=direct
+  - export Branch_Name="$CI_COMMIT_REF_NAME"
+  - export Serivce_Name="harp"
+  - export Build_Path="/home/gitlab-runner/tmp_build"
 
 copy_dir:
   stage: init
@@ -46,15 +49,23 @@ go_report:
 #  script:
 #    - gmake lint_dep
 #    - gmake lint
-
 build:
   stage: build
   script:
     - make
-    - sudo /usr/sbin/service harp stop
-    - sudo cp $PWD/harp /bin/harp
-    - sudo chmod 755 /bin/harp
-    - sudo /usr/sbin/service harp start
+    - if [[ ! -d "$Build_Path/$Serivce_Name/$Branch_Name" ]]; then mkdir -p $Build_Path/$Serivce_Name/$Branch_Name;fi
+    - cp -f $PWD/$Serivce_Name $Build_Path/$Serivce_Name/$Branch_Name/
+    - echo "Build Complete"
+
+service_run:
+  stage: run
+  script:
+    - sudo /usr/sbin/service $Serivce_Name stop
+    - sudo cp $Build_Path/$Serivce_Name/$Branch_Name/$Serivce_Name /usr/local/bin/$Serivce_Name
+    - sudo chmod 755 /usr/local/bin/$Serivce_Name
+    - sudo /usr/sbin/service $Serivce_Name start
+    - sudo rm -rf $Build_Path/$Serivce_Name/$Branch_Name
     - echo "Finished"
-#  only:
-#  - master
+  only:
+    - master
+    - feature/dev
