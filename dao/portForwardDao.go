@@ -222,7 +222,7 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 		}
 	}
 
-	err = iptablesext.PortForwarding(true, forwardTCP, forwardUDP,
+	err = iptablesext.PortForwarding(true, false, forwardTCP, forwardUDP,
 		adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(internalPort))
 	if err != nil {
 		return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError, "CreatePortForwarding(): " + err.Error()
@@ -306,7 +306,7 @@ func DeletePortForwarding(in *pb.ReqDeletePortForwarding) (string, uint64, strin
 				"(serverUUID=" + serverUUID + ", ExternalPort=" + strconv.Itoa(int(externalPort)) + ")"
 	}
 
-	err = iptablesext.PortForwarding(false, portForwarding.PortForwarding[0].ForwardTCP, portForwarding.PortForwarding[0].ForwardUDP,
+	err = iptablesext.PortForwarding(false, false, portForwarding.PortForwarding[0].ForwardTCP, portForwarding.PortForwarding[0].ForwardUDP,
 		adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(portForwarding.PortForwarding[0].InternalPort))
 	if err != nil {
 		return "", hcc_errors.HarpInternalAdaptiveIPAllocatedError, "DeletePortForwarding(): " + err.Error()

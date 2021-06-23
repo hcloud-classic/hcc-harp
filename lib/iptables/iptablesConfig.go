@@ -251,7 +251,7 @@ func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
 		})
 		if portForwardingList != nil {
 			for _, portForwarding := range portForwardingList.PortForwarding {
-				err = iptablesext.PortForwarding(true, portForwarding.ForwardTCP, portForwarding.ForwardUDP,
+				err = iptablesext.PortForwarding(true, false, portForwarding.ForwardTCP, portForwarding.ForwardUDP,
 					adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP,
 					int(portForwarding.ExternalPort), int(portForwarding.InternalPort))
 				if err != nil {

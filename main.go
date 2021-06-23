@@ -101,6 +101,12 @@ func init() {
 		_ = pid.DeleteHarpPID()
 	}
 
+	_, err = syscheck.CheckIfaceExist(config.Timpani.TimpaniTargetIfaceName)
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "syscheck.CheckIfaceExist(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
+	}
+
 	err = dhcpd.CheckLocalDHCPDConfig()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "dhcpd.CheckLocalDHCPDConfig(): "+err.Error()).Fatal()

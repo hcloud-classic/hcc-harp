@@ -9,7 +9,8 @@ import (
 	"os/exec"
 )
 
-func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) error {
+// AdaptiveIPServerForwarding : Forwarding public IP address to private IP address
+func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, privateIP string) error {
 	var addMsg string
 	var addErrMsg string
 	var addFlag string
@@ -26,30 +27,32 @@ func adaptiveIPServerForwarding(isAdd bool, publicIP string, privateIP string) e
 
 	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
 
-	cmd := exec.Command("iptables", "-t", "filter",
-		"-C", HarpAdaptiveIPInputDropChainName,
-		"-d", publicIP,
-		"-j", "DROP")
-	err := cmd.Run()
-	isExist := err == nil
-
-	if (isAdd && !isExist) || (!isAdd && isExist) {
-		cmd = exec.Command("iptables", "-t", "filter",
-			addFlag, HarpAdaptiveIPInputDropChainName,
+	if preventInput {
+		cmd := exec.Command("iptables", "-t", "filter",
+			"-C", HarpAdaptiveIPInputDropChainName,
 			"-d", publicIP,
 			"-j", "DROP")
-		err = cmd.Run()
-		if err != nil {
-			return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+		err := cmd.Run()
+		isExist := err == nil
+
+		if (isAdd && !isExist) || (!isAdd && isExist) {
+			cmd = exec.Command("iptables", "-t", "filter",
+				addFlag, HarpAdaptiveIPInputDropChainName,
+				"-d", publicIP,
+				"-j", "DROP")
+			err = cmd.Run()
+			if err != nil {
+				return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+			}
 		}
 	}
 
-	cmd = exec.Command("iptables", "-t", "filter",
+	cmd := exec.Command("iptables", "-t", "filter",
 		"-C", HarpChainNamePrefix+"FORWARD",
 		"-s", publicIP,
 		"-j", "ACCEPT")
-	err = cmd.Run()
-	isExist = err == nil
+	err := cmd.Run()
+	isExist := err == nil
 
 	if (isAdd && !isExist) || (!isAdd && isExist) {
 		cmd = exec.Command("iptables", "-t", "filter",
@@ -110,7 +113,7 @@ func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) err
 		}
 	}
 
-	err = adaptiveIPServerForwarding(isAdd, publicIP, privateIP)
+	err = AdaptiveIPServerForwarding(isAdd, true, publicIP, privateIP)
 	if err != nil {
 		return err
 	}
