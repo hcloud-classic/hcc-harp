@@ -41,7 +41,7 @@ func allowInputPrivateClass(class string) error {
 			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
-			return errors.New("failed to add " + class + " class private network accept rule of Master Node")
+			return errors.New("failed to add " + class + " class private network accept rule of the Master Node")
 		}
 	}
 
@@ -49,7 +49,7 @@ func allowInputPrivateClass(class string) error {
 }
 
 func allowInputPrivateNetworks() error {
-	logger.Logger.Println("Adding allow rules of private networks for Master Node...")
+	logger.Logger.Println("Adding allow rules of private networks for the Master Node...")
 
 	err := allowInputPrivateClass("A"); if err != nil {
 		return err
@@ -61,6 +61,65 @@ func allowInputPrivateNetworks() error {
 
 	err = allowInputPrivateClass("C"); if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func allowInputPingReply() error {
+	logger.Logger.Println("Adding allow rules of ping reply for the Master Node...")
+
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+
+	cmd := exec.Command("iptables", "-t", "filter",
+		"-C", iptablesext.HarpChainNamePrefix+"INPUT",
+		"-p", "icmp", "--icmp-type", "echo-reply",
+		"-d", adaptiveIP.ExtIfaceIPAddress,
+		"-j", "ACCEPT")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if !isExist {
+		cmd = exec.Command("iptables", "-t", "filter",
+			"-I", iptablesext.HarpChainNamePrefix+"INPUT", "1",
+			"-p", "icmp", "--icmp-type", "echo-reply",
+			"-d", adaptiveIP.ExtIfaceIPAddress,
+			"-j", "ACCEPT")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to add ping request accept rule of the Master Node")
+		}
+	}
+
+	return nil
+}
+
+func allowInputEstablishedRelated() error {
+	logger.Logger.Println("Adding allow rules of state for the Master Node...")
+
+	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+	protocol := []string{"tcp", "udp"}
+
+	for i := range protocol {
+		cmd := exec.Command("iptables", "-t", "filter",
+			"-C", iptablesext.HarpChainNamePrefix+"INPUT",
+			"-p", protocol[i], "-m", "state", "--state", "ESTABLISHED,RELATED",
+			"-d", adaptiveIP.ExtIfaceIPAddress,
+			"-j", "ACCEPT")
+		err := cmd.Run()
+		isExist := err == nil
+
+		if !isExist {
+			cmd = exec.Command("iptables", "-t", "filter",
+				"-I", iptablesext.HarpChainNamePrefix+"INPUT", "1",
+				"-p", protocol[i], "-m", "state", "--state", "ESTABLISHED,RELATED",
+				"-d", adaptiveIP.ExtIfaceIPAddress,
+				"-j", "ACCEPT")
+			err = cmd.Run()
+			if err != nil {
+				return errors.New("failed to add " + strings.ToUpper(protocol[i]) + " state rule of the Master Node")
+			}
+		}
 	}
 
 	return nil
@@ -85,7 +144,7 @@ func addMasterDrop() error {
 			"-j", "DROP")
 		err = cmd.Run()
 		if err != nil {
-			return errors.New("failed to add ADAPTIVE_IP_INPUT_DROP rule of Master Node")
+			return errors.New("failed to add ADAPTIVE_IP_INPUT_DROP rule of the Master Node")
 		}
 	}
 
@@ -94,6 +153,14 @@ func addMasterDrop() error {
 
 func masterInputControl() error {
 	err := allowInputPrivateNetworks(); if err != nil {
+		return err
+	}
+
+	err = allowInputPingReply(); if err != nil {
+		return err
+	}
+
+	err = allowInputEstablishedRelated(); if err != nil {
 		return err
 	}
 
