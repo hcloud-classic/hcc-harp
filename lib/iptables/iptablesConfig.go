@@ -218,6 +218,11 @@ func InitIPTABLES() error {
 		return err
 	}
 
+	err = masterInputControl()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
