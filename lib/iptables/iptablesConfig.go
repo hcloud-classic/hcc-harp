@@ -266,5 +266,21 @@ func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
 		}
 	}
 
+	portForwardingList, _, _ := dao.ReadPortForwardingList(&pb.ReqGetPortForwardingList{
+		PortForwarding: &pb.PortForwarding{
+			ServerUUID: "master",
+		},
+	})
+	if portForwardingList != nil {
+		adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+
+		err := iptablesext.PortForwarding(true, false, portForwardingList.PortForwarding[0].ForwardTCP, portForwardingList.PortForwarding[0].ForwardUDP,
+			adaptiveIP.ExtIfaceIPAddress, "",
+			int(portForwardingList.PortForwarding[0].ExternalPort), 0)
+		if err != nil {
+			logger.Logger.Println(err.Error())
+		}
+	}
+
 	return nil
 }
