@@ -51,15 +51,18 @@ func allowInputPrivateClass(class string) error {
 func allowInputPrivateNetworks() error {
 	logger.Logger.Println("Adding allow rules of private networks for the Master Node...")
 
-	err := allowInputPrivateClass("A"); if err != nil {
+	err := allowInputPrivateClass("A")
+	if err != nil {
 		return err
 	}
 
-	err = allowInputPrivateClass("B"); if err != nil {
+	err = allowInputPrivateClass("B")
+	if err != nil {
 		return err
 	}
 
-	err = allowInputPrivateClass("C"); if err != nil {
+	err = allowInputPrivateClass("C")
+	if err != nil {
 		return err
 	}
 
@@ -152,19 +155,23 @@ func addMasterDrop() error {
 }
 
 func masterInputControl() error {
-	err := allowInputPrivateNetworks(); if err != nil {
+	err := allowInputPrivateNetworks()
+	if err != nil {
 		return err
 	}
 
-	err = allowInputPingReply(); if err != nil {
+	err = allowInputPingReply()
+	if err != nil {
 		return err
 	}
 
-	err = allowInputEstablishedRelated(); if err != nil {
+	err = allowInputEstablishedRelated()
+	if err != nil {
 		return err
 	}
 
-	err = addMasterDrop(); if err != nil {
+	err = addMasterDrop()
+	if err != nil {
 		return err
 	}
 
