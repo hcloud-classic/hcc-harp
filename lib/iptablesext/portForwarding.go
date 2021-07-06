@@ -39,69 +39,74 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 		return errors.New("protocol is not selected")
 	}
 
-	if isTimpani {
-		internalIface = config.Timpani.TimpaniTargetIfaceName
-	}
-
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	for i := range protocol {
-		logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +
-			publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
+		if publicIP == adaptiveIP.ExtIfaceIPAddress && !isTimpani {
+			logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " input iptables rule for" +
+				" the master node (Port: " + strconv.Itoa(externalPort) + ")")
+		} else {
+			if isTimpani {
+				internalIface = config.Timpani.TimpaniTargetIfaceName
+			}
 
-		cmd := exec.Command("iptables", "-t", "nat",
-			"-C", HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
-			"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-			"-d", publicIP,
-			"-j", "SNAT",
-			"--to-source", adaptiveIP.ExtIfaceIPAddress)
-		err := cmd.Run()
-		isExist := err == nil
+			logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +
+				publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
 
-		if (isAdd && !isExist) || (!isAdd && isExist) {
-			cmd = exec.Command("iptables", "-t", "nat",
-				addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
+			cmd := exec.Command("iptables", "-t", "nat",
+				"-C", HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
 				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
 				"-d", publicIP,
 				"-j", "SNAT",
 				"--to-source", adaptiveIP.ExtIfaceIPAddress)
-			err = cmd.Run()
-			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-					" POSTROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+			err := cmd.Run()
+			isExist := err == nil
+
+			if (isAdd && !isExist) || (!isAdd && isExist) {
+				cmd = exec.Command("iptables", "-t", "nat",
+					addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "SNAT",
+					"--to-source", adaptiveIP.ExtIfaceIPAddress)
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+						" POSTROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+				}
 			}
-		}
 
-		cmd = exec.Command("iptables", "-t", "nat",
-			"-C", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
-			"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-			"-d", publicIP,
-			"-j", "DNAT",
-			"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
-		err = cmd.Run()
-		isExist = err == nil
-
-		if (isAdd && !isExist) || (!isAdd && isExist) {
 			cmd = exec.Command("iptables", "-t", "nat",
-				addFlag, HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+				"-C", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
 				"-d", publicIP,
 				"-j", "DNAT",
 				"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
 			err = cmd.Run()
-			if err != nil {
-				return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-					" PREROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+			isExist = err == nil
+
+			if (isAdd && !isExist) || (!isAdd && isExist) {
+				cmd = exec.Command("iptables", "-t", "nat",
+					addFlag, HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
+					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
+					"-d", publicIP,
+					"-j", "DNAT",
+					"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
+				err = cmd.Run()
+				if err != nil {
+					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
+						" PREROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+				}
 			}
 		}
 
-		cmd = exec.Command("iptables", "-t", "filter",
+		cmd := exec.Command("iptables", "-t", "filter",
 			"-C", HarpChainNamePrefix+"INPUT",
 			"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
 			"-d", publicIP,
 			"-j", "ACCEPT")
-		err = cmd.Run()
-		isExist = err == nil
+		err := cmd.Run()
+		isExist := err == nil
 
 		if (isAdd && !isExist) || (!isAdd && isExist) {
 			if isAdd {
