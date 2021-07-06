@@ -185,6 +185,9 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 	externalPortOk := externalPort != 0
 	internalPort = reqPortForwarding.InternalPort
 	internalPortOk := internalPort != 0
+	if serverUUID == "master" {
+		internalPortOk = true
+	}
 	description = reqPortForwarding.Description
 	descriptionOk := len(description) != 0
 
@@ -204,9 +207,11 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): External " + err.Error()
 	}
 
-	err = checkPortRange(internalPort)
-	if err != nil {
-		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
+	if serverUUID != "master" {
+		err = checkPortRange(internalPort)
+		if err != nil {
+			return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
+		}
 	}
 
 	oldPortForwarding, _, _ := ReadPortForwardingList(&pb.ReqGetPortForwardingList{
