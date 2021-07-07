@@ -164,6 +164,39 @@ func addHarpExternalMasqueradeRule() error {
 	return nil
 }
 
+func addNATSecurityRule() error {
+	logger.Logger.Println("Adding NAT security rule...")
+
+	cmd := exec.Command("iptables", "-t", "nat",
+		"-C", "PREROUTING",
+		"-i", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "RETURN")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if isExist {
+		cmd = exec.Command("iptables", "-t", "nat",
+			"-D", "PREROUTING",
+			"-i", config.AdaptiveIP.ExternalIfaceName,
+			"-j", "RETURN")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to delete NAT security rule")
+		}
+	}
+
+	cmd = exec.Command("iptables", "-t", "nat",
+		"-A", "PREROUTING",
+		"-i", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "RETURN")
+	err = cmd.Run()
+	if err != nil {
+		return errors.New("failed to add NAT security rule")
+	}
+
+	return nil
+}
+
 func prepareHarpIPTABLESChains() error {
 	logger.Logger.Println("Preparing harp's iptables chains...")
 
@@ -187,6 +220,11 @@ func prepareHarpIPTABLESChains() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = addNATSecurityRule()
+	if err != nil {
+		return err
 	}
 
 	err = addHarpExternalMasqueradeRule()
