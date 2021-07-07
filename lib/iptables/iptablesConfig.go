@@ -186,7 +186,7 @@ func addNATSecurityRule() error {
 	}
 
 	cmd = exec.Command("iptables", "-t", "nat",
-		"-A", "PREROUTING",
+		"-I", "PREROUTING", "2",
 		"-i", config.AdaptiveIP.ExternalIfaceName,
 		"-j", "RETURN")
 	err = cmd.Run()
