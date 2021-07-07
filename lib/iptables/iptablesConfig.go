@@ -312,11 +312,13 @@ func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
 	if portForwardingList != nil {
 		adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
-		err := iptablesext.PortForwarding(true, false, portForwardingList.PortForwarding[0].ForwardTCP, portForwardingList.PortForwarding[0].ForwardUDP,
-			adaptiveIP.ExtIfaceIPAddress, "",
-			int(portForwardingList.PortForwarding[0].ExternalPort), 0)
-		if err != nil {
-			logger.Logger.Println(err.Error())
+		for _, masterInput := range portForwardingList.PortForwarding {
+			err := iptablesext.PortForwarding(true, false, masterInput.ForwardTCP, masterInput.ForwardUDP,
+				adaptiveIP.ExtIfaceIPAddress, "",
+				int(masterInput.ExternalPort), 0)
+			if err != nil {
+				logger.Logger.Println(err.Error())
+			}
 		}
 	}
 
