@@ -4,6 +4,7 @@ import (
 	dbsql "database/sql"
 	"errors"
 	daoext2 "hcc/harp/daoext"
+	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
@@ -185,6 +186,9 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 	externalPortOk := externalPort != 0
 	internalPort = reqPortForwarding.InternalPort
 	internalPortOk := internalPort != 0
+	if serverUUID == "master" {
+		internalPortOk = true
+	}
 	description = reqPortForwarding.Description
 	descriptionOk := len(description) != 0
 
@@ -193,10 +197,13 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 			"ExternalPort, InternalPort, Description arguments"
 	}
 
-	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
-	if adaptiveIPServer == nil {
-		return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError,
-			"CreatePortForwarding(): AdaptiveIP is not allocated for the server (serverUUID=" + serverUUID + ")"
+	var adaptiveIPServer *pb.AdaptiveIPServer
+	if serverUUID != "master" {
+		adaptiveIPServer, _, _ = daoext2.ReadAdaptiveIPServer(serverUUID)
+		if adaptiveIPServer == nil {
+			return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError,
+				"CreatePortForwarding(): AdaptiveIP is not allocated for the server (serverUUID=" + serverUUID + ")"
+		}
 	}
 
 	err := checkPortRange(externalPort)
@@ -204,9 +211,13 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): External " + err.Error()
 	}
 
-	err = checkPortRange(internalPort)
-	if err != nil {
-		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
+	if serverUUID == "master" && internalPort != 0 {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Master Node is not using port forwarding method. Please set internal port as 0 or unset."
+	} else {
+		err = checkPortRange(internalPort)
+		if err != nil {
+			return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
+		}
 	}
 
 	oldPortForwarding, _, _ := ReadPortForwardingList(&pb.ReqGetPortForwardingList{
@@ -222,8 +233,15 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 		}
 	}
 
-	err = iptablesext.PortForwarding(true, false, forwardTCP, forwardUDP,
-		adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(internalPort))
+	if serverUUID == "master" {
+		adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+
+		err = iptablesext.PortForwarding(true, false, forwardTCP, forwardUDP,
+			adaptiveIP.ExtIfaceIPAddress, "", int(externalPort), 0)
+	} else if adaptiveIPServer != nil {
+		err = iptablesext.PortForwarding(true, false, forwardTCP, forwardUDP,
+			adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(internalPort))
+	}
 	if err != nil {
 		return nil, hcc_errors.HarpInternalAdaptiveIPAllocatedError, "CreatePortForwarding(): " + err.Error()
 	}
@@ -283,10 +301,13 @@ func DeletePortForwarding(in *pb.ReqDeletePortForwarding) (string, uint64, strin
 		return "", hcc_errors.HarpGrpcArgumentError, "DeletePortForwarding(): need ServerUUID and ExternalPort arguments"
 	}
 
-	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
-	if adaptiveIPServer == nil {
-		return "", hcc_errors.HarpInternalAdaptiveIPAllocatedError,
-			"DeletePortForwarding(): AdaptiveIP is not found with the provided ServerUUID"
+	var adaptiveIPServer *pb.AdaptiveIPServer
+	if serverUUID != "master" {
+		adaptiveIPServer, _, _ = daoext2.ReadAdaptiveIPServer(serverUUID)
+		if adaptiveIPServer == nil {
+			return "", hcc_errors.HarpInternalAdaptiveIPAllocatedError,
+				"DeletePortForwarding(): AdaptiveIP is not found with the provided ServerUUID"
+		}
 	}
 
 	err := checkPortRange(externalPort)
@@ -306,8 +327,15 @@ func DeletePortForwarding(in *pb.ReqDeletePortForwarding) (string, uint64, strin
 				"(serverUUID=" + serverUUID + ", ExternalPort=" + strconv.Itoa(int(externalPort)) + ")"
 	}
 
-	err = iptablesext.PortForwarding(false, false, portForwarding.PortForwarding[0].ForwardTCP, portForwarding.PortForwarding[0].ForwardUDP,
-		adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(portForwarding.PortForwarding[0].InternalPort))
+	if serverUUID == "master" {
+		adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+
+		err = iptablesext.PortForwarding(false, false, portForwarding.PortForwarding[0].ForwardTCP, portForwarding.PortForwarding[0].ForwardUDP,
+			adaptiveIP.ExtIfaceIPAddress, "", int(externalPort), 0)
+	} else if adaptiveIPServer != nil {
+		err = iptablesext.PortForwarding(false, false, portForwarding.PortForwarding[0].ForwardTCP, portForwarding.PortForwarding[0].ForwardUDP,
+			adaptiveIPServer.PublicIP, adaptiveIPServer.PrivateIP, int(externalPort), int(portForwarding.PortForwarding[0].InternalPort))
+	}
 	if err != nil {
 		return "", hcc_errors.HarpInternalAdaptiveIPAllocatedError, "DeletePortForwarding(): " + err.Error()
 	}

@@ -164,6 +164,39 @@ func addHarpExternalMasqueradeRule() error {
 	return nil
 }
 
+func addNATSecurityRule() error {
+	logger.Logger.Println("Adding NAT security rule...")
+
+	cmd := exec.Command("iptables", "-t", "nat",
+		"-C", "PREROUTING",
+		"-i", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "RETURN")
+	err := cmd.Run()
+	isExist := err == nil
+
+	if isExist {
+		cmd = exec.Command("iptables", "-t", "nat",
+			"-D", "PREROUTING",
+			"-i", config.AdaptiveIP.ExternalIfaceName,
+			"-j", "RETURN")
+		err = cmd.Run()
+		if err != nil {
+			return errors.New("failed to delete NAT security rule")
+		}
+	}
+
+	cmd = exec.Command("iptables", "-t", "nat",
+		"-I", "PREROUTING", "2",
+		"-i", config.AdaptiveIP.ExternalIfaceName,
+		"-j", "RETURN")
+	err = cmd.Run()
+	if err != nil {
+		return errors.New("failed to add NAT security rule")
+	}
+
+	return nil
+}
+
 func prepareHarpIPTABLESChains() error {
 	logger.Logger.Println("Preparing harp's iptables chains...")
 
@@ -187,6 +220,11 @@ func prepareHarpIPTABLESChains() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = addNATSecurityRule()
+	if err != nil {
+		return err
 	}
 
 	err = addHarpExternalMasqueradeRule()
@@ -214,6 +252,11 @@ func InitIPTABLES() error {
 	}
 
 	err = prepareHarpIPTABLESChains()
+	if err != nil {
+		return err
+	}
+
+	err = masterInputControl()
 	if err != nil {
 		return err
 	}
@@ -257,6 +300,24 @@ func LoadAdaptiveIPNetDevAndIPTABLESRules() error {
 				if err != nil {
 					logger.Logger.Println(err.Error())
 				}
+			}
+		}
+	}
+
+	portForwardingList, _, _ := dao.ReadPortForwardingList(&pb.ReqGetPortForwardingList{
+		PortForwarding: &pb.PortForwarding{
+			ServerUUID: "master",
+		},
+	})
+	if portForwardingList != nil {
+		adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+
+		for _, masterInput := range portForwardingList.PortForwarding {
+			err := iptablesext.PortForwarding(true, false, masterInput.ForwardTCP, masterInput.ForwardUDP,
+				adaptiveIP.ExtIfaceIPAddress, "",
+				int(masterInput.ExternalPort), 0)
+			if err != nil {
+				logger.Logger.Println(err.Error())
 			}
 		}
 	}
