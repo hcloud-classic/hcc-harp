@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
@@ -12,8 +11,7 @@ import (
 func Test_DB_Prepare(t *testing.T) {
 	err := syscheck.CheckOS()
 	if err != nil {
-		fmt.Println("Please run harp module on Linux or FreeBSD machine.")
-		panic(err)
+		t.Fatal("Please run harp module on Linux machine.")
 	}
 
 	err = logger.Init()
