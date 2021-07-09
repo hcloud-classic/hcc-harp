@@ -20,6 +20,12 @@ import (
 )
 
 func init() {
+	err := syscheck.CheckRoot()
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+
 	harpRunning, harpPID, err := pid.IsHarpRunning()
 	if err != nil {
 		fmt.Println(err)
@@ -39,12 +45,6 @@ func init() {
 	err = syscheck.CheckOS()
 	if err != nil {
 		fmt.Println("Please run harp module on the Linux machine.")
-		_ = pid.DeleteHarpPID()
-		panic(err)
-	}
-
-	err = syscheck.CheckRoot()
-	if err != nil {
 		_ = pid.DeleteHarpPID()
 		panic(err)
 	}
