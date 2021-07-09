@@ -1,15 +1,19 @@
-package mysql
+package config
 
 import (
-	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"testing"
 )
 
-func Test_DB_Prepare(t *testing.T) {
-	err := syscheck.CheckOS()
+func Test_Init(t *testing.T) {
+	err := syscheck.CheckRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = syscheck.CheckOS()
 	if err != nil {
 		t.Fatal("Please run harp module on Linux machine.")
 	}
@@ -24,13 +28,10 @@ func Test_DB_Prepare(t *testing.T) {
 		_ = logger.FpLog.Close()
 	}()
 
-	config.Init()
+	Init()
 
-	err = Init()
+	err = AdaptiveIPNetworkConfigParser()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
-		_ = Db.Close()
-	}()
 }
