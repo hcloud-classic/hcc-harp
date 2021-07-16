@@ -8,7 +8,7 @@ require (
 	github.com/containerd/cgroups v0.0.0-20210114181951-8a68de567b68 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gojp/goreportcard v0.0.0-20201106142952-232d912e513e // indirect
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/mactsouk/go v0.0.0-20180603081621-6a282087f7bd // indirect
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
@@ -24,6 +24,7 @@ require (
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/genproto v0.0.0-20210111234610-22ae2b108f89 // indirect
 	google.golang.org/grpc v1.39.0
+	google.golang.org/protobuf v1.26.0
 	innogrid.com/hcloud-classic/hcc_errors v0.0.0
 	innogrid.com/hcloud-classic/pb v0.0.0
 	pault.ag/go/topsort v0.1.1
