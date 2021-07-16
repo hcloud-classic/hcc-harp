@@ -2,7 +2,7 @@ package daoext
 
 import (
 	sql2 "database/sql"
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -46,14 +46,7 @@ func ReadAdaptiveIPServer(serverUUID string) (*pb.AdaptiveIPServer, uint64, stri
 	adaptiveIPServer.PublicIP = publicIP
 	adaptiveIPServer.PrivateIP = privateIP
 	adaptiveIPServer.PrivateGateway = privateGateway
-
-	_createdAt, err := ptypes.TimestampProto(createdAt)
-	if err != nil {
-		errStr := "ReadAdaptiveIPServer(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-	}
-	adaptiveIPServer.CreatedAt = _createdAt
+	adaptiveIPServer.CreatedAt = timestamppb.New(createdAt)
 
 	return &adaptiveIPServer, 0, ""
 }
@@ -147,21 +140,13 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 			return nil, hcc_errors.HarpSQLOperationFail, errStr
 		}
 
-		_createdAt, err := ptypes.TimestampProto(createdAt)
-		if err != nil {
-			logger.Logger.Println(err)
-			errStr := "ReadAdaptiveIPServerList(): " + err.Error()
-			logger.Logger.Println(errStr)
-			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-		}
-
 		adaptiveIPServers = append(adaptiveIPServers, pb.AdaptiveIPServer{
 			GroupID:        groupID,
 			ServerUUID:     serverUUID,
 			PublicIP:       publicIP,
 			PrivateIP:      privateIP,
 			PrivateGateway: privateGateway,
-			CreatedAt:      _createdAt,
+			CreatedAt:      timestamppb.New(createdAt),
 		})
 	}
 

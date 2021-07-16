@@ -3,8 +3,8 @@ package dao
 import (
 	dbsql "database/sql"
 	"errors"
-	"github.com/golang/protobuf/ptypes"
 	gouuid "github.com/nu7hatch/gouuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"hcc/harp/action/grpc/client"
 	"hcc/harp/daoext"
 	"hcc/harp/lib/iputil"
@@ -71,13 +71,7 @@ func ReadSubnet(uuid string) (*pb.Subnet, uint64, string) {
 	subnet.LeaderNodeUUID = leaderNodeUUID
 	subnet.OS = _os
 	subnet.SubnetName = subnetName
-
-	subnet.CreatedAt, err = ptypes.TimestampProto(createdAt)
-	if err != nil {
-		errStr := "ReadSubnet(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-	}
+	subnet.CreatedAt = timestamppb.New(createdAt)
 
 	return &subnet, 0, ""
 }
@@ -213,13 +207,6 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 			return nil, hcc_errors.HarpSQLOperationFail, errStr
 		}
 
-		_createdAt, err := ptypes.TimestampProto(createdAt)
-		if err != nil {
-			errStr := "ReadSubnetList(): " + err.Error()
-			logger.Logger.Println(errStr)
-			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-		}
-
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
 			GroupID:        groupID,
@@ -233,7 +220,7 @@ func ReadSubnetList(in *pb.ReqGetSubnetList) (*pb.ResGetSubnetList, uint64, stri
 			LeaderNodeUUID: leaderNodeUUID,
 			OS:             os,
 			SubnetName:     subnetName,
-			CreatedAt:      _createdAt})
+			CreatedAt:      timestamppb.New(createdAt)})
 	}
 
 	for i := range subnets {
@@ -292,13 +279,6 @@ func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnet
 			return nil, hcc_errors.HarpSQLOperationFail, errStr
 		}
 
-		_createdAt, err := ptypes.TimestampProto(createdAt)
-		if err != nil {
-			errStr := "ReadAvailableSubnetList(): " + err.Error()
-			logger.Logger.Println(errStr)
-			return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-		}
-
 		subnets = append(subnets, pb.Subnet{
 			UUID:           uuid,
 			GroupID:        groupID,
@@ -312,7 +292,7 @@ func ReadAvailableSubnetList(in *pb.ReqGetAvailableSubnetList) (*pb.ResGetSubnet
 			LeaderNodeUUID: leaderNodeUUID,
 			OS:             os,
 			SubnetName:     subnetName,
-			CreatedAt:      _createdAt})
+			CreatedAt:      timestamppb.New(createdAt)})
 	}
 
 	for i := range subnets {

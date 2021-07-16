@@ -1,7 +1,7 @@
 package daoext
 
 import (
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/mysql"
 	"innogrid.com/hcloud-classic/hcc_errors"
@@ -63,13 +63,7 @@ func ReadSubnetByServer(serverUUID string) (*pb.Subnet, uint64, string) {
 	subnet.LeaderNodeUUID = leaderNodeUUID
 	subnet.OS = _os
 	subnet.SubnetName = subnetName
-
-	subnet.CreatedAt, err = ptypes.TimestampProto(createdAt)
-	if err != nil {
-		errStr := "ReadSubnetByServer(): " + err.Error()
-		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalTimeStampConversionError, errStr
-	}
+	subnet.CreatedAt = timestamppb.New(createdAt)
 
 	return &subnet, 0, ""
 }
