@@ -94,6 +94,9 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	useSamePXEFileForCompute bool) error {
 	dhcpdext.IncWritingSubnetConfigCounter()
 
+	waitWriteDHCPConfigUnlock(subnet.ServerUUID)
+	writeDHCPConfigLock(subnet.ServerUUID)
+
 	confContent := subnetConfBase
 	confContent = strings.Replace(confContent, "HARP_DHCPD_SUBNET", subnet.NetworkIP, -1)
 	confContent = strings.Replace(confContent, "HARP_DHCPD_NETMASK", subnet.Netmask, -1)
@@ -122,6 +125,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	for _, uuid := range nodeUUIDs {
 		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
+			writeDHCPConfigUnlock(subnet.ServerUUID)
 			dhcpdext.DecWritingSubnetConfigCounter()
 			return err
 		}
@@ -146,6 +150,7 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 		}})
 		if err != nil {
 			logger.Logger.Println(err)
+			writeDHCPConfigUnlock(subnet.ServerUUID)
 			dhcpdext.DecWritingSubnetConfigCounter()
 			return err
 		}
@@ -173,10 +178,12 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 
 	err := writeConfigFile(confContent, subnet.ServerUUID)
 	if err != nil {
+		writeDHCPConfigUnlock(subnet.ServerUUID)
 		dhcpdext.DecWritingSubnetConfigCounter()
 		return err
 	}
 
+	writeDHCPConfigUnlock(subnet.ServerUUID)
 	dhcpdext.DecWritingSubnetConfigCounter()
 	return nil
 }
