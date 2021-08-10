@@ -174,7 +174,7 @@ var firewallLoadLock sync.Mutex
 
 // LoadFirewall : Load firewall rules for harp module
 func LoadFirewall() error {
-	var err error = nil
+	var err error
 
 	firewallLoadLock.Lock()
 

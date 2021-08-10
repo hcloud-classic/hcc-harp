@@ -7,7 +7,7 @@ import (
 
 // WritingSubnetConfigCounter : Counter will increase while creating subnet config file.
 // Must be 0 when there are no creating works.
-var WritingSubnetConfigCounter int64 = 0
+var WritingSubnetConfigCounter int64
 
 // IncWritingSubnetConfigCounter : Increase the value of WritingSubnetConfigCounter
 func IncWritingSubnetConfigCounter() {

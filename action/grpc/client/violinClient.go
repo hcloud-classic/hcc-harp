@@ -50,7 +50,7 @@ func closeViolin() {
 // AllServerUUID : Get all of server UUIDs
 func (rc *RPCClient) AllServerUUID() ([]string, *hcc_errors.HccErrorStack) {
 	var serverUUIDs []string
-	var errStack *hcc_errors.HccErrorStack = nil
+	var errStack *hcc_errors.HccErrorStack
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
