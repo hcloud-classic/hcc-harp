@@ -50,7 +50,7 @@ func closeFlute() {
 
 // GetNode : Get infos of the node
 func (rc *RPCClient) GetNode(uuid string) (*pb.Node, *hcc_errors.HccErrorStack) {
-	var errStack *hcc_errors.HccErrorStack = nil
+	var errStack *hcc_errors.HccErrorStack
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)
@@ -70,7 +70,7 @@ func (rc *RPCClient) GetNode(uuid string) (*pb.Node, *hcc_errors.HccErrorStack) 
 // GetNodeList : Get the list of nodes by server UUID.
 func (rc *RPCClient) GetNodeList(serverUUID string) ([]pb.Node, *hcc_errors.HccErrorStack) {
 	var nodeList []pb.Node
-	var errStack *hcc_errors.HccErrorStack = nil
+	var errStack *hcc_errors.HccErrorStack
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(config.Flute.RequestTimeoutMs)*time.Millisecond)

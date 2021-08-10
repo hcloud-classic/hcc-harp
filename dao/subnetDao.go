@@ -342,13 +342,15 @@ func checkGroupIDExist(groupID int64) error {
 }
 
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet,
-	resValidCheckSubnet *pb.ResValidCheckSubnet) error {
-	isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
-	if isConflict {
-		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
-	}
-	if err != nil {
-		return err
+	resValidCheckSubnet *pb.ResValidCheckSubnet, isUpdate bool) error {
+	if !isUpdate {
+		isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
+		if isConflict {
+			return errors.New("given subnet is conflicted with one of subnet that stored in the database")
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	netNetwork, _ := iputil.CheckNetwork(networkIP, netmask)
@@ -369,24 +371,26 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return errors.New("start IP address must be x.x.x.1")
 	}
 
-	err = iputil.CheckIPisInSubnet(*netNetwork, gateway)
-	if err != nil {
-		if resValidCheckSubnet != nil {
-			if strings.Contains(err.Error(), "wrong") {
-				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
-			} else {
-				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
+	if !isUpdate {
+		err := iputil.CheckIPisInSubnet(*netNetwork, gateway)
+		if err != nil {
+			if resValidCheckSubnet != nil {
+				if strings.Contains(err.Error(), "wrong") {
+					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
+				} else {
+					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
+				}
 			}
+			return err
 		}
-		return err
-	}
 
-	err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
-	if err != nil {
-		if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
-			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
+		err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
+		if err != nil {
+			if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
+			}
+			return err
 		}
-		return err
 	}
 
 	return nil
@@ -473,7 +477,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): Subnet count quota exceeded"
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil, false)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
@@ -529,7 +533,7 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 
 	var resValidCheckSubnet pb.ResValidCheckSubnet
 	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil,
-		&resValidCheckSubnet)
+		&resValidCheckSubnet, false)
 	if err != nil {
 		return &pb.ResValidCheckSubnet{
 			ErrorCode: resValidCheckSubnet.ErrorCode,
@@ -646,7 +650,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil, true)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}

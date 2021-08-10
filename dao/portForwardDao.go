@@ -213,11 +213,11 @@ func CreatePortForwarding(in *pb.ReqCreatePortForwarding) (*pb.PortForwarding, u
 
 	if serverUUID == "master" && internalPort != 0 {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Master Node is not using port forwarding method. Please set internal port as 0 or unset."
-	} else {
-		err = checkPortRange(internalPort)
-		if err != nil {
-			return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
-		}
+	}
+
+	err = checkPortRange(internalPort)
+	if err != nil {
+		return nil, hcc_errors.HarpGrpcArgumentError, "CreatePortForwarding(): Internal " + err.Error()
 	}
 
 	oldPortForwarding, _, _ := ReadPortForwardingList(&pb.ReqGetPortForwardingList{
