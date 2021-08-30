@@ -375,7 +375,9 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		err := iputil.CheckIPisInSubnet(*netNetwork, gateway)
 		if err != nil {
 			if resValidCheckSubnet != nil {
-				if strings.Contains(err.Error(), "wrong") {
+				if strings.Contains(err.Error(), "wrong") ||
+					strings.Contains(err.Error(), "network") ||
+					strings.Contains(err.Error(), "broadcast") {
 					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
 				} else {
 					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
@@ -618,7 +620,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	}
 
 	if oldSubnet.ServerUUID != "" {
-		return nil, hcc_errors.HarpInternalSubnetInUseError, "UpdateSubnet(): Subnet is in use by the server (ServerUUID=" + oldSubnet.ServerUUID +")"
+		return nil, hcc_errors.HarpInternalSubnetInUseError, "UpdateSubnet(): Subnet is in use by the server (ServerUUID=" + oldSubnet.ServerUUID + ")"
 	}
 
 	if !networkIPOk {
