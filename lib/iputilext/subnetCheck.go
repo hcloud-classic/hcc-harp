@@ -123,7 +123,7 @@ func CheckSubnetConflict(IP string, Netmask string, skipMine bool, oldSubnet *pb
 	}
 
 	for i := range subnetList {
-		if skipMine && subnetList[i].UUID == oldSubnet.UUID {
+		if skipMine && oldSubnet != nil && subnetList[i].UUID == oldSubnet.UUID {
 			continue
 		}
 

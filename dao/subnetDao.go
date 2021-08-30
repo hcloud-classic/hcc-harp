@@ -343,14 +343,12 @@ func checkGroupIDExist(groupID int64) error {
 
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet,
 	resValidCheckSubnet *pb.ResValidCheckSubnet, isUpdate bool) error {
-	if !isUpdate {
-		isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
-		if isConflict {
-			return errors.New("given subnet is conflicted with one of subnet that stored in the database")
-		}
-		if err != nil {
-			return err
-		}
+	isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
+	if isConflict {
+		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
+	}
+	if err != nil {
+		return err
 	}
 
 	netNetwork, _ := iputil.CheckNetwork(networkIP, netmask)
@@ -514,6 +512,8 @@ func checkValidCheckSubnetArgs(reqSubnet *pb.Subnet) bool {
 
 // ValidCheckSubnet : Check if we can create the subnet with provided network address and subnet mask, gateway
 func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
+	var oldSubnet *pb.Subnet
+
 	reqSubnet := in.GetSubnet()
 	if reqSubnet == nil {
 		return &pb.ResValidCheckSubnet{
@@ -533,8 +533,12 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 		Gateway:   reqSubnet.GetGateway(),
 	}
 
+	if in.GetIsUpdate() {
+		oldSubnet, _, _ = ReadSubnet(reqSubnet.GetUUID())
+	}
+
 	var resValidCheckSubnet pb.ResValidCheckSubnet
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, in.GetIsUpdate(), nil,
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, in.GetIsUpdate(), oldSubnet,
 		&resValidCheckSubnet, in.GetIsUpdate())
 	if err != nil {
 		return &pb.ResValidCheckSubnet{
