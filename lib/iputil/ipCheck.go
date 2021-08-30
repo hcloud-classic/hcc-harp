@@ -2,6 +2,7 @@ package iputil
 
 import (
 	"errors"
+	"github.com/apparentlymart/go-cidr/cidr"
 	"net"
 	"strconv"
 	"strings"
@@ -61,6 +62,17 @@ func CheckIPisInSubnet(subnet net.IPNet, IP string) error {
 	IPisInSubnet := subnet.Contains(netIP)
 	if IPisInSubnet == false {
 		return errors.New("given IP address is not in the subnet")
+	}
+
+	maskLen, _ := subnet.Mask.Size()
+	_, netNetwork, _ := net.ParseCIDR(IP + "/" + strconv.Itoa(maskLen))
+	firstIP, lastIP := cidr.AddressRange(netNetwork)
+	if IP == firstIP.To4().String() {
+		return errors.New("you can't use network address for IP address")
+	}
+
+	if IP == lastIP.To4().String() {
+		return errors.New("you can't use broadcast address for IP address")
 	}
 
 	return nil

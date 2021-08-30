@@ -342,15 +342,13 @@ func checkGroupIDExist(groupID int64) error {
 }
 
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet,
-	resValidCheckSubnet *pb.ResValidCheckSubnet, isUpdate bool) error {
-	if !isUpdate {
-		isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
-		if isConflict {
-			return errors.New("given subnet is conflicted with one of subnet that stored in the database")
-		}
-		if err != nil {
-			return err
-		}
+	resValidCheckSubnet *pb.ResValidCheckSubnet) error {
+	isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
+	if isConflict {
+		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
+	}
+	if err != nil {
+		return err
 	}
 
 	netNetwork, _ := iputil.CheckNetwork(networkIP, netmask)
@@ -371,26 +369,26 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return errors.New("start IP address must be x.x.x.1")
 	}
 
-	if !isUpdate {
-		err := iputil.CheckIPisInSubnet(*netNetwork, gateway)
-		if err != nil {
-			if resValidCheckSubnet != nil {
-				if strings.Contains(err.Error(), "wrong") {
-					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
-				} else {
-					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
-				}
+	err = iputil.CheckIPisInSubnet(*netNetwork, gateway)
+	if err != nil {
+		if resValidCheckSubnet != nil {
+			if strings.Contains(err.Error(), "wrong") ||
+				strings.Contains(err.Error(), "network") ||
+				strings.Contains(err.Error(), "broadcast") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
+			} else {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
 			}
-			return err
 		}
+		return err
+	}
 
-		err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
-		if err != nil {
-			if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
-				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
-			}
-			return err
+	err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
+	if err != nil {
+		if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
 		}
+		return err
 	}
 
 	return nil
@@ -477,7 +475,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): Subnet count quota exceeded"
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil, false)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
@@ -512,6 +510,8 @@ func checkValidCheckSubnetArgs(reqSubnet *pb.Subnet) bool {
 
 // ValidCheckSubnet : Check if we can create the subnet with provided network address and subnet mask, gateway
 func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
+	var oldSubnet *pb.Subnet
+
 	reqSubnet := in.GetSubnet()
 	if reqSubnet == nil {
 		return &pb.ResValidCheckSubnet{
@@ -531,9 +531,13 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 		Gateway:   reqSubnet.GetGateway(),
 	}
 
+	if in.GetIsUpdate() {
+		oldSubnet, _, _ = ReadSubnet(reqSubnet.GetUUID())
+	}
+
 	var resValidCheckSubnet pb.ResValidCheckSubnet
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil,
-		&resValidCheckSubnet, false)
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, in.GetIsUpdate(), oldSubnet,
+		&resValidCheckSubnet)
 	if err != nil {
 		return &pb.ResValidCheckSubnet{
 			ErrorCode: resValidCheckSubnet.ErrorCode,
@@ -546,19 +550,16 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 }
 
 func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
-	groupIDOk := reqSubnet.GroupID != 0
 	networkIPOk := len(reqSubnet.GetNetworkIP()) != 0
 	netmaskOk := len(reqSubnet.GetNetmask()) != 0
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
 	nextServerOk := len(reqSubnet.GetNextServer()) != 0
 	nameServerOk := len(reqSubnet.GetNameServer()) != 0
 	domainNameOk := len(reqSubnet.GetDomainName()) != 0
-	serverUUIDOk := len(reqSubnet.GetServerUUID()) != 0
-	leaderNodeUUIDOk := len(reqSubnet.GetLeaderNodeUUID()) != 0
 	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !groupIDOk && !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !serverUUIDOk && !leaderNodeUUIDOk && !osOk && !subnetNameOk
+	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !osOk && !subnetNameOk
 }
 
 // UpdateSubnet : Update infos of the subnet
@@ -578,20 +579,15 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
 	}
 
-	var groupID int64
 	var networkIP string
 	var netmask string
 	var gateway string
 	var nextServer string
 	var nameServer string
 	var domainName string
-	var serverUUID string
-	var leaderNodeUUID string
 	var os string
 	var subnetName string
 
-	groupID = in.GetSubnet().GroupID
-	groupIDOk := groupID != 0
 	networkIP = in.GetSubnet().NetworkIP
 	networkIPOk := len(networkIP) != 0
 	netmask = in.GetSubnet().Netmask
@@ -604,10 +600,6 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	nameServerOk := len(nameServer) != 0
 	domainName = in.GetSubnet().DomainName
 	domainNameOk := len(domainName) != 0
-	serverUUID = in.GetSubnet().ServerUUID
-	serverUUIDOk := len(serverUUID) != 0
-	leaderNodeUUID = in.GetSubnet().LeaderNodeUUID
-	leaderNodeUUIDOk := len(leaderNodeUUID) != 0
 	os = in.GetSubnet().OS
 	osOk := len(os) != 0
 	subnetName = in.GetSubnet().SubnetName
@@ -615,15 +607,12 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 
 	subnet := new(pb.Subnet)
 	subnet.UUID = requestedUUID
-	subnet.GroupID = groupID
 	subnet.NetworkIP = networkIP
 	subnet.Netmask = netmask
 	subnet.Gateway = gateway
 	subnet.NextServer = nextServer
 	subnet.NameServer = nameServer
 	subnet.DomainName = domainName
-	subnet.ServerUUID = serverUUID
-	subnet.LeaderNodeUUID = leaderNodeUUID
 	subnet.OS = os
 	subnet.SubnetName = subnetName
 
@@ -632,9 +621,10 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, errCode, "UpdateSubnet(): " + errStr
 	}
 
-	if !groupIDOk {
-		subnet.GroupID = oldSubnet.GroupID
+	if oldSubnet.ServerUUID != "" {
+		return nil, hcc_errors.HarpInternalSubnetInUseError, "UpdateSubnet(): Subnet is in use by the server (ServerUUID=" + oldSubnet.ServerUUID + ")"
 	}
+
 	if !networkIPOk {
 		subnet.NetworkIP = oldSubnet.NetworkIP
 	}
@@ -645,28 +635,13 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		subnet.Gateway = oldSubnet.Gateway
 	}
 
-	err := checkGroupIDExist(subnet.GroupID)
-	if err != nil {
-		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): " + err.Error()
-	}
-
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil, true)
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}
 
-	if serverUUIDOk && subnet.ServerUUID != "-" {
-		errStack := checkServerUUID(subnet.ServerUUID)
-		if errStack != nil {
-			return nil, (*errStack.Stack())[errStack.Len()].Code(), "UpdateSubnet(): " + (*errStack.Stack())[errStack.Len()].Text()
-		}
-	}
-
 	sql := "update subnet set"
 	var updateSet = ""
-	if groupIDOk {
-		updateSet += " group_id = " + strconv.Itoa(int(subnet.GroupID)) + ", "
-	}
 	if networkIPOk {
 		updateSet += " network_ip = '" + subnet.NetworkIP + "', "
 	}
@@ -684,18 +659,6 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	}
 	if domainNameOk {
 		updateSet += " domain_name = '" + subnet.DomainName + "', "
-	}
-	if serverUUIDOk {
-		if subnet.ServerUUID == "-" {
-			subnet.ServerUUID = ""
-		}
-		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
-	}
-	if leaderNodeUUIDOk {
-		if subnet.LeaderNodeUUID == "-" {
-			subnet.LeaderNodeUUID = ""
-		}
-		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
 	}
 	if osOk {
 		updateSet += " os = '" + subnet.OS + "', "
