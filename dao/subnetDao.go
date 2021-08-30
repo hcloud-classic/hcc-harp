@@ -534,8 +534,8 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 	}
 
 	var resValidCheckSubnet pb.ResValidCheckSubnet
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil,
-		&resValidCheckSubnet, false)
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, in.GetIsUpdate(), nil,
+		&resValidCheckSubnet, in.GetIsUpdate())
 	if err != nil {
 		return &pb.ResValidCheckSubnet{
 			ErrorCode: resValidCheckSubnet.ErrorCode,
