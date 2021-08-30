@@ -342,7 +342,7 @@ func checkGroupIDExist(groupID int64) error {
 }
 
 func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool, oldSubnet *pb.Subnet,
-	resValidCheckSubnet *pb.ResValidCheckSubnet, isUpdate bool) error {
+	resValidCheckSubnet *pb.ResValidCheckSubnet) error {
 	isConflict, err := iputilext.CheckSubnetConflict(networkIP, netmask, skipMine, oldSubnet, resValidCheckSubnet)
 	if isConflict {
 		return errors.New("given subnet is conflicted with one of subnet that stored in the database")
@@ -475,7 +475,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): Subnet count quota exceeded"
 	}
 
-	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil, false)
+	err = checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, false, nil, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "CreateSubnet(): " + err.Error()
 	}
@@ -537,7 +537,7 @@ func ValidCheckSubnet(in *pb.ReqValidCheckSubnet) *pb.ResValidCheckSubnet {
 
 	var resValidCheckSubnet pb.ResValidCheckSubnet
 	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, in.GetIsUpdate(), oldSubnet,
-		&resValidCheckSubnet, in.GetIsUpdate())
+		&resValidCheckSubnet)
 	if err != nil {
 		return &pb.ResValidCheckSubnet{
 			ErrorCode: resValidCheckSubnet.ErrorCode,
@@ -635,7 +635,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		subnet.Gateway = oldSubnet.Gateway
 	}
 
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil, true)
+	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
 	if err != nil {
 		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
 	}
