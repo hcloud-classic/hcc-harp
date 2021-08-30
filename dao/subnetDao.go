@@ -369,28 +369,26 @@ func checkSubnet(networkIP string, netmask string, gateway string, skipMine bool
 		return errors.New("start IP address must be x.x.x.1")
 	}
 
-	if !isUpdate {
-		err := iputil.CheckIPisInSubnet(*netNetwork, gateway)
-		if err != nil {
-			if resValidCheckSubnet != nil {
-				if strings.Contains(err.Error(), "wrong") ||
-					strings.Contains(err.Error(), "network") ||
-					strings.Contains(err.Error(), "broadcast") {
-					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
-				} else {
-					resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
-				}
+	err = iputil.CheckIPisInSubnet(*netNetwork, gateway)
+	if err != nil {
+		if resValidCheckSubnet != nil {
+			if strings.Contains(err.Error(), "wrong") ||
+				strings.Contains(err.Error(), "network") ||
+				strings.Contains(err.Error(), "broadcast") {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorInvalidGatewayAddress
+			} else {
+				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorGatewayNotInSubnet
 			}
-			return err
 		}
+		return err
+	}
 
-		err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
-		if err != nil {
-			if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
-				resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
-			}
-			return err
+	err = iputil.CheckSubnetIsUsedByIface(*netNetwork)
+	if err != nil {
+		if resValidCheckSubnet != nil && strings.Contains(err.Error(), "conflicted") {
+			resValidCheckSubnet.ErrorCode = daoext.SubnetValidErrorSubnetIsUsedByIface
 		}
+		return err
 	}
 
 	return nil
