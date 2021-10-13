@@ -2,6 +2,7 @@ package iptablesext
 
 import (
 	"errors"
+	"hcc/harp/lib/adaptiveipext"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/logger"
@@ -11,7 +12,7 @@ import (
 )
 
 // PortForwarding : Add or delete iptables rules for port forwarding
-func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool, publicIP string, privateIP string,
+func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool, externalIP string, privateIP string,
 	externalPort int, internalPort int) error {
 	var addMsg string
 	var addErrMsg string
@@ -40,9 +41,16 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 	}
 
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
+	internalIP, err := adaptiveipext.ExternalIPtoInternalIP(externalIP)
+	if err != nil {
+		internalIP = externalIP
+		externalIP = ""
+	} else {
+		externalIP = " (" + externalIP + ")"
+	}
 
 	for i := range protocol {
-		if publicIP == adaptiveIP.ExtIfaceIPAddress && !isTimpani {
+		if internalIP == adaptiveIP.ExtIfaceIPAddress && !isTimpani {
 			logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " input iptables rule for" +
 				" the master node (Port: " + strconv.Itoa(externalPort) + ")")
 		} else {
@@ -51,12 +59,13 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 			}
 
 			logger.Logger.Println(addMsg + " " + strings.ToUpper(protocol[i]) + " forwarding iptables rules for " +
-				publicIP + ":" + strconv.Itoa(externalPort) + " (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
+				internalIP + externalIP + ":" + strconv.Itoa(externalPort) +
+				" (private: " + privateIP + ":" + strconv.Itoa(internalPort) + ")")
 
 			cmd := exec.Command("iptables", "-t", "nat",
 				"-C", HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
 				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-				"-d", publicIP,
+				"-d", internalIP,
 				"-j", "SNAT",
 				"--to-source", adaptiveIP.ExtIfaceIPAddress)
 			err := cmd.Run()
@@ -66,20 +75,20 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 				cmd = exec.Command("iptables", "-t", "nat",
 					addFlag, HarpChainNamePrefix+"POSTROUTING", "-o", internalIface,
 					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-					"-d", publicIP,
+					"-d", internalIP,
 					"-j", "SNAT",
 					"--to-source", adaptiveIP.ExtIfaceIPAddress)
 				err = cmd.Run()
 				if err != nil {
 					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-						" POSTROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+						" POSTROUTING rule of " + internalIP + externalIP + ":" + strconv.Itoa(externalPort))
 				}
 			}
 
 			cmd = exec.Command("iptables", "-t", "nat",
 				"-C", HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 				"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-				"-d", publicIP,
+				"-d", internalIP,
 				"-j", "DNAT",
 				"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
 			err = cmd.Run()
@@ -89,13 +98,13 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 				cmd = exec.Command("iptables", "-t", "nat",
 					addFlag, HarpChainNamePrefix+"PREROUTING", "-i", config.AdaptiveIP.ExternalIfaceName,
 					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-					"-d", publicIP,
+					"-d", internalIP,
 					"-j", "DNAT",
 					"--to-destination", privateIP+":"+strconv.Itoa(internalPort))
 				err = cmd.Run()
 				if err != nil {
 					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-						" PREROUTING rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+						" PREROUTING rule of " + internalIP + externalIP + ":" + strconv.Itoa(externalPort))
 				}
 			}
 		}
@@ -103,7 +112,7 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 		cmd := exec.Command("iptables", "-t", "filter",
 			"-C", HarpChainNamePrefix+"INPUT",
 			"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-			"-d", publicIP,
+			"-d", internalIP,
 			"-j", "ACCEPT")
 		err := cmd.Run()
 		isExist := err == nil
@@ -113,23 +122,23 @@ func PortForwarding(isAdd bool, isTimpani bool, forwardTCP bool, forwardUDP bool
 				cmd = exec.Command("iptables", "-t", "filter",
 					"-I", HarpChainNamePrefix+"INPUT", "1",
 					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-					"-d", publicIP,
+					"-d", internalIP,
 					"-j", "ACCEPT")
 				err = cmd.Run()
 				if err != nil {
 					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-						" INPUT rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+						" INPUT rule of " + internalIP + externalIP + ":" + strconv.Itoa(externalPort))
 				}
 			} else {
 				cmd = exec.Command("iptables", "-t", "filter",
 					addFlag, HarpChainNamePrefix+"INPUT",
 					"-p", protocol[i], "--dport", strconv.Itoa(externalPort),
-					"-d", publicIP,
+					"-d", internalIP,
 					"-j", "ACCEPT")
 				err = cmd.Run()
 				if err != nil {
 					return errors.New("failed to " + addErrMsg + " " + strings.ToUpper(protocol[i]) +
-						" INPUT rule of " + publicIP + ":" + strconv.Itoa(externalPort))
+						" INPUT rule of " + internalIP + externalIP + ":" + strconv.Itoa(externalPort))
 				}
 			}
 		}

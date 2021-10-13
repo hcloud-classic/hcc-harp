@@ -41,7 +41,7 @@ func CheckDuplicatedIPAddress(IP string) error {
 		return nil
 	}
 
-	err = errors.New("checkDuplicatedIPAddress(): Found duplicated IP address for " + IP + " (MAC: " + mac.String() + ")")
+	err = errors.New("checkDuplicatedIPAddress(): Found duplicated internal IP address for " + IP + " (MAC: " + mac.String() + ")")
 	logger.Logger.Println(err.Error())
 	return err
 }
