@@ -1,6 +1,7 @@
 package adaptiveip
 
 import (
+	"errors"
 	"github.com/apparentlymart/go-cidr/cidr"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/config"
@@ -18,9 +19,18 @@ func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 	var availableIPs []string
 
 	adaptiveip := configadapriveipnetwork.GetAdaptiveIPNetwork()
-	netStartIP := iputil.CheckValidIP(adaptiveip.StartIPAddress)
-	netEndIP := iputil.CheckValidIP(adaptiveip.EndIPAddress)
-	ipRangeCount, _ := iputil.GetIPRangeCount(netStartIP, netEndIP)
+
+	internalNetStartIP := iputil.CheckValidIP(adaptiveip.InternalStartIPAddress)
+	internalNetEndIP := iputil.CheckValidIP(adaptiveip.InternalEndIPAddress)
+	internalIPRangeCount, _ := iputil.GetIPRangeCount(internalNetStartIP, internalNetEndIP)
+
+	externalNetStartIP := iputil.CheckValidIP(adaptiveip.ExternalStartIPAddress)
+	externalNetEndIP := iputil.CheckValidIP(adaptiveip.ExternalEndIPAddress)
+	externalIPRangeCount, _ := iputil.GetIPRangeCount(externalNetStartIP, externalNetEndIP)
+
+	if internalIPRangeCount != externalIPRangeCount {
+		return nil, errors.New("external IP range is not match with internal IP range")
+	}
 
 	extIface, _ := syscheck.CheckIfaceExist(config.AdaptiveIP.ExternalIfaceName)
 	extIPaddrs, err := extIface.Addrs()
@@ -29,12 +39,14 @@ func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 		return nil, err
 	}
 
-	ipMap, _ := arping.GetAvailableIPsStatusMap(netStartIP, netEndIP)
+	ipMap, _ := arping.GetAvailableIPsStatusMap(internalNetStartIP, internalNetEndIP)
 
-	for i := 0; i < ipRangeCount; i++ {
-		ip := netStartIP.String()
+	for i := 0; i < internalIPRangeCount; i++ {
+		internalIP := internalNetStartIP.To4().String()
+		externalIP := externalNetStartIP.To4().String()
+
 		var ipUsed = false
-		if ipMap[ip] {
+		if ipMap[internalIP] {
 			for _, addr := range extIPaddrs {
 				var extIP net.IP
 				switch v := addr.(type) {
@@ -44,19 +56,21 @@ func GetAvailableIPList() (*pb.AdaptiveIPAvailableIPList, error) {
 					extIP = v.IP
 				}
 
-				if extIP.String() == ip {
-					logger.Logger.Println("GetAvailableIPList(): " + ip + " is already used in external interface.")
+				if extIP.String() == internalIP {
+					logger.Logger.Println("GetAvailableIPList(): Internal IP address (" +
+						internalIP + ") is already used in external interface.")
 					ipUsed = true
 					break
 				}
 			}
 
 			if !ipUsed {
-				availableIPs = append(availableIPs, ip)
+				availableIPs = append(availableIPs, externalIP)
 			}
 		}
 
-		netStartIP = cidr.Inc(netStartIP)
+		internalNetStartIP = cidr.Inc(internalNetStartIP)
+		externalNetStartIP = cidr.Inc(externalNetStartIP)
 	}
 
 	availableIPList.AvailableIp = availableIPs

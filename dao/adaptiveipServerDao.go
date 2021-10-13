@@ -10,7 +10,6 @@ import (
 	"hcc/harp/lib/mysql"
 	"innogrid.com/hcloud-classic/hcc_errors"
 	"innogrid.com/hcloud-classic/pb"
-	"net"
 	"strconv"
 	"strings"
 )
@@ -72,24 +71,13 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	}
 
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
-	netNetwork, _ := iputil.CheckNetwork(adaptiveIP.ExtIfaceIPAddress, adaptiveIP.Netmask)
-	mask, _ := iputil.CheckNetmask(adaptiveIP.Netmask)
-	netIP := net.IPNet{
-		IP:   netNetwork.IP,
-		Mask: mask,
-	}
-
-	err := iputil.CheckIPisInSubnet(netIP, publicIP)
-	if err != nil {
-		return nil, hcc_errors.HarpInternalIPAddressError, "CreateAdaptiveIPServer(): " + err.Error()
-	}
 
 	var startIPSum = 0
 	var endIPSsum = 0
 	var publicIPSum = 0
 
-	startIPSplit := strings.Split(adaptiveIP.StartIPAddress, ".")
-	endIPSplit := strings.Split(adaptiveIP.EndIPAddress, ".")
+	startIPSplit := strings.Split(adaptiveIP.ExternalStartIPAddress, ".")
+	endIPSplit := strings.Split(adaptiveIP.ExternalEndIPAddress, ".")
 	publicIPSplit := strings.Split(publicIP, ".")
 
 	for _, startIPSplited := range startIPSplit {

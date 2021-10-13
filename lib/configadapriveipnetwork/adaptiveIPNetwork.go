@@ -17,14 +17,18 @@ func GetAdaptiveIPNetwork() *pb.AdaptiveIPSetting {
 		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIP.DefaultExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIP.DefaultNetmask
 		adaptiveIP.GatewayAddress = config.AdaptiveIP.DefaultGatewayAddr
-		adaptiveIP.StartIPAddress = config.AdaptiveIP.DefaultStartIPAddr
-		adaptiveIP.EndIPAddress = config.AdaptiveIP.DefaultEndIPAddr
+		adaptiveIP.InternalStartIPAddress = config.AdaptiveIP.DefaultInternalStartIPAddr
+		adaptiveIP.InternalEndIPAddress = config.AdaptiveIP.DefaultInternalEndIPAddr
+		adaptiveIP.ExternalStartIPAddress = config.AdaptiveIP.DefaultExternalStartIPAddr
+		adaptiveIP.ExternalEndIPAddress = config.AdaptiveIP.DefaultExternalEndIPAddr
 	} else {
 		adaptiveIP.ExtIfaceIPAddress = config.AdaptiveIPNetwork.ExtIfaceIPAddr
 		adaptiveIP.Netmask = config.AdaptiveIPNetwork.Netmask
 		adaptiveIP.GatewayAddress = config.AdaptiveIPNetwork.GatewayAddr
-		adaptiveIP.StartIPAddress = config.AdaptiveIPNetwork.StartIPAddr
-		adaptiveIP.EndIPAddress = config.AdaptiveIPNetwork.EndIPAddr
+		adaptiveIP.InternalStartIPAddress = config.AdaptiveIPNetwork.InternalStartIPAddr
+		adaptiveIP.InternalEndIPAddress = config.AdaptiveIPNetwork.InternalEndIPAddr
+		adaptiveIP.ExternalStartIPAddress = config.AdaptiveIPNetwork.ExternalStartIPAddr
+		adaptiveIP.ExternalEndIPAddress = config.AdaptiveIPNetwork.ExternalEndIPAddr
 	}
 
 	return &adaptiveIP

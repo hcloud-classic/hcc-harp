@@ -259,12 +259,22 @@ func parseAdaptiveIP() {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.DefaultStartIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_start_ip")
+	AdaptiveIP.DefaultInternalStartIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_internal_start_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIP.DefaultEndIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_end_ip")
+	AdaptiveIP.DefaultInternalEndIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_internal_end_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.DefaultExternalStartIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_external_start_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIP.DefaultExternalEndIPAddr, err = config.AdaptiveIPConfig.String("adaptiveip_default_external_end_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -370,12 +380,22 @@ func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIPNetwork.StartIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_start_ip")
+	AdaptiveIPNetwork.InternalStartIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_internal_start_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
 
-	AdaptiveIPNetwork.EndIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_end_ip")
+	AdaptiveIPNetwork.InternalEndIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_internal_end_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.ExternalStartIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_external_start_ip")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	AdaptiveIPNetwork.ExternalEndIPAddr, err = config.AdaptiveIPNetworkConfig.String("adaptiveip_external_end_ip")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}

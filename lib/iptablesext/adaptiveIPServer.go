@@ -2,6 +2,7 @@ package iptablesext
 
 import (
 	"errors"
+	"hcc/harp/lib/adaptiveipext"
 	"hcc/harp/lib/arping"
 	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iplink"
@@ -9,8 +10,8 @@ import (
 	"os/exec"
 )
 
-// AdaptiveIPServerForwarding : Forwarding public IP address to private IP address
-func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, privateIP string) error {
+// AdaptiveIPServerForwarding : Forwarding internal IP address to private IP address
+func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, internalIP string, privateIP string) error {
 	var addMsg string
 	var addErrMsg string
 	var addFlag string
@@ -25,12 +26,18 @@ func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, 
 		addFlag = "-D"
 	}
 
-	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " + publicIP + " (privateIP: " + privateIP + ")")
+	externalIP, _ := adaptiveipext.InternalIPtoExternalIP(internalIP)
+	if len(externalIP) != 0 {
+		externalIP = " (" + externalIP + ")"
+	}
+
+	logger.Logger.Println(addMsg + " AdaptiveIP Server forwarding iptables rules for " +
+		internalIP + externalIP + " (privateIP: " + privateIP + ")")
 
 	if preventInput {
 		cmd := exec.Command("iptables", "-t", "filter",
 			"-C", HarpAdaptiveIPInputDropChainName,
-			"-d", publicIP,
+			"-d", internalIP,
 			"-j", "DROP")
 		err := cmd.Run()
 		isExist := err == nil
@@ -38,18 +45,19 @@ func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, 
 		if (isAdd && !isExist) || (!isAdd && isExist) {
 			cmd = exec.Command("iptables", "-t", "filter",
 				addFlag, HarpAdaptiveIPInputDropChainName,
-				"-d", publicIP,
+				"-d", internalIP,
 				"-j", "DROP")
 			err = cmd.Run()
 			if err != nil {
-				return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " + publicIP)
+				return errors.New("failed to " + addErrMsg + " ADAPTIVE_IP_INPUT_DROP rule of " +
+					internalIP + externalIP)
 			}
 		}
 	}
 
 	cmd := exec.Command("iptables", "-t", "filter",
 		"-C", HarpChainNamePrefix+"FORWARD",
-		"-s", publicIP,
+		"-s", internalIP,
 		"-j", "ACCEPT")
 	err := cmd.Run()
 	isExist := err == nil
@@ -57,11 +65,12 @@ func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, 
 	if (isAdd && !isExist) || (!isAdd && isExist) {
 		cmd = exec.Command("iptables", "-t", "filter",
 			addFlag, HarpChainNamePrefix+"FORWARD",
-			"-s", publicIP,
+			"-s", internalIP,
 			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
-			return errors.New("failed to " + addErrMsg + " external FORWARD rule of " + publicIP)
+			return errors.New("failed to " + addErrMsg + " external FORWARD rule of " +
+				internalIP + externalIP)
 		}
 	}
 
@@ -79,7 +88,8 @@ func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, 
 			"-j", "ACCEPT")
 		err = cmd.Run()
 		if err != nil {
-			return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " + publicIP)
+			return errors.New("failed to " + addErrMsg + " internal FORWARD rule of " +
+				internalIP + externalIP)
 		}
 	}
 
@@ -90,35 +100,40 @@ func AdaptiveIPServerForwarding(isAdd bool, preventInput bool, publicIP string, 
 func ControlNetDevAndIPTABLES(isAdd bool, publicIP string, privateIP string) error {
 	var err error
 
+	internalIP, err := adaptiveipext.ExternalIPtoInternalIP(publicIP)
+	if err != nil {
+		return err
+	}
+
 	adaptiveIP := configadapriveipnetwork.GetAdaptiveIPNetwork()
 
 	if isAdd {
-		err = arping.CheckDuplicatedIPAddress(publicIP)
+		err = arping.CheckDuplicatedIPAddress(internalIP)
 		if err != nil {
 			return err
 		}
 	}
 
 	if isAdd {
-		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, true)
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(internalIP, adaptiveIP.Netmask, true)
 		if err != nil {
 			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to add AdaptiveIP IP address " + publicIP)
 		}
 	} else {
-		err = iplink.AddOrDeleteIPToHarpExternalDevice(publicIP, adaptiveIP.Netmask, false)
+		err = iplink.AddOrDeleteIPToHarpExternalDevice(internalIP, adaptiveIP.Netmask, false)
 		if err != nil {
 			logger.Logger.Println("AddOrDeleteIPToHarpExternalDevice(): " + err.Error())
 			return errors.New("failed to delete AdaptiveIP IP address " + publicIP)
 		}
 	}
 
-	err = AdaptiveIPServerForwarding(isAdd, true, publicIP, privateIP)
+	err = AdaptiveIPServerForwarding(isAdd, true, internalIP, privateIP)
 	if err != nil {
 		return err
 	}
 
-	err = ICMPForwarding(isAdd, publicIP, privateIP)
+	err = ICMPForwarding(isAdd, internalIP, privateIP)
 	if err != nil {
 		return err
 	}

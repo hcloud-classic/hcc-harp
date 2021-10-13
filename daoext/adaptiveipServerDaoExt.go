@@ -3,6 +3,7 @@ package daoext
 import (
 	sql2 "database/sql"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"hcc/harp/lib/adaptiveipext"
 	"hcc/harp/lib/configadapriveipnetwork"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -160,7 +161,12 @@ func ReadAdaptiveIPServerList(in *pb.ReqGetAdaptiveIPServerList) (*pb.ResGetAdap
 	}
 
 	for i := range adaptiveIPServers {
-		netIP := iputil.CheckValidIP(adaptiveIPServers[i].PublicIP)
+		internalIP, err := adaptiveipext.ExternalIPtoInternalIP(adaptiveIPServers[i].PublicIP)
+		if err != nil {
+			adaptiveIPServers[i].Status = "Invalid"
+			continue
+		}
+		netIP := iputil.CheckValidIP(internalIP)
 		if !netNetwork.Contains(netIP) {
 			adaptiveIPServers[i].Status = "Invalid"
 			continue
