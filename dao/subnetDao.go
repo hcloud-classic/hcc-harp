@@ -417,11 +417,10 @@ func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
 	nextServerOk := len(reqSubnet.GetNextServer()) != 0
 	nameServerOk := len(reqSubnet.GetNameServer()) != 0
-	domainNameOk := len(reqSubnet.GetDomainName()) != 0
 	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !(groupIDOk && networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && domainNameOk && osOk && subnetNameOk)
+	return !(groupIDOk && networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && osOk && subnetNameOk)
 }
 
 // CreateSubnet : Create a subnet
@@ -443,6 +442,12 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "CreateSubnet(): some of arguments are missing"
 	}
 
+	var domainName = ""
+	domainNameOk := len(reqSubnet.GetDomainName()) != 0
+	if domainNameOk {
+		domainName = reqSubnet.GetDomainName()
+	}
+
 	subnet := pb.Subnet{
 		UUID:           uuid,
 		GroupID:        reqSubnet.GetGroupID(),
@@ -451,7 +456,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		Gateway:        reqSubnet.GetGateway(),
 		NextServer:     reqSubnet.GetNextServer(),
 		NameServer:     reqSubnet.GetNameServer(),
-		DomainName:     reqSubnet.GetDomainName(),
+		DomainName:     domainName,
 		ServerUUID:     "",
 		LeaderNodeUUID: "",
 		OS:             reqSubnet.GetOS(),
@@ -555,11 +560,10 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
 	nextServerOk := len(reqSubnet.GetNextServer()) != 0
 	nameServerOk := len(reqSubnet.GetNameServer()) != 0
-	domainNameOk := len(reqSubnet.GetDomainName()) != 0
 	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !domainNameOk && !osOk && !subnetNameOk
+	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !osOk && !subnetNameOk
 }
 
 // UpdateSubnet : Update infos of the subnet
@@ -584,7 +588,6 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	var gateway string
 	var nextServer string
 	var nameServer string
-	var domainName string
 	var os string
 	var subnetName string
 
@@ -598,12 +601,16 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	nextServerOk := len(nextServer) != 0
 	nameServer = in.GetSubnet().NameServer
 	nameServerOk := len(nameServer) != 0
-	domainName = in.GetSubnet().DomainName
-	domainNameOk := len(domainName) != 0
 	os = in.GetSubnet().OS
 	osOk := len(os) != 0
 	subnetName = in.GetSubnet().SubnetName
 	subnetNameOk := len(subnetName) != 0
+
+	var domainName = ""
+	domainNameOk := len(reqSubnet.GetDomainName()) != 0
+	if domainNameOk {
+		domainName = reqSubnet.GetDomainName()
+	}
 
 	subnet := new(pb.Subnet)
 	subnet.UUID = requestedUUID
@@ -657,15 +664,15 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	if nameServerOk {
 		updateSet += " name_server = '" + subnet.NameServer + "', "
 	}
-	if domainNameOk {
-		updateSet += " domain_name = '" + subnet.DomainName + "', "
-	}
 	if osOk {
 		updateSet += " os = '" + subnet.OS + "', "
 	}
 	if subnetNameOk {
 		updateSet += " subnet_name = '" + subnet.SubnetName + "', "
 	}
+
+	updateSet += " domain_name = '" + subnet.DomainName + "', "
+
 	sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
 
 	stmt, err := mysql.Prepare(sql)
