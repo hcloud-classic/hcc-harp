@@ -579,8 +579,20 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need a uuid argument"
 	}
 
+	// Special case for create the server
+	leaderNodeUUID := reqSubnet.GetLeaderNodeUUID()
+	leaderNodeUUIDOk := len(leaderNodeUUID) != 0
+	serverUUID := reqSubnet.GetServerUUID()
+	serverUUIDOk := len(serverUUID) != 0
+	var isSpecialCase = false
+
 	if checkUpdateSubnetArgs(reqSubnet) {
-		return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
+		if leaderNodeUUIDOk && serverUUIDOk {
+			isSpecialCase = true
+			logger.Logger.Println("UpdateSubnet(): Got special case of creating the server")
+		} else {
+			return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
+		}
 	}
 
 	var networkIP string
@@ -619,9 +631,14 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	subnet.Gateway = gateway
 	subnet.NextServer = nextServer
 	subnet.NameServer = nameServer
-	subnet.DomainName = domainName
 	subnet.OS = os
 	subnet.SubnetName = subnetName
+	if isSpecialCase {
+		subnet.LeaderNodeUUID = leaderNodeUUID
+		subnet.ServerUUID = serverUUID
+	} else {
+		subnet.DomainName = domainName
+	}
 
 	oldSubnet, errCode, errStr := ReadSubnet(subnet.GetUUID())
 	if errCode != 0 {
@@ -642,9 +659,11 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		subnet.Gateway = oldSubnet.Gateway
 	}
 
-	err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
-	if err != nil {
-		return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
+	if !isSpecialCase {
+		err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
+		if err != nil {
+			return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
+		}
 	}
 
 	sql := "update subnet set"
@@ -671,7 +690,16 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		updateSet += " subnet_name = '" + subnet.SubnetName + "', "
 	}
 
-	updateSet += " domain_name = '" + subnet.DomainName + "', "
+	if leaderNodeUUIDOk {
+		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
+	}
+	if serverUUIDOk {
+		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
+	}
+
+	if !isSpecialCase {
+		updateSet += " domain_name = '" + subnet.DomainName + "', "
+	}
 
 	sql += updateSet[0:len(updateSet)-2] + " where uuid = ?"
 
