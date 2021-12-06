@@ -589,7 +589,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	if checkUpdateSubnetArgs(reqSubnet) {
 		if leaderNodeUUIDOk && serverUUIDOk {
 			isSpecialCase = true
-			logger.Logger.Println("UpdateSubnet(): Got special case of creating the server")
+			logger.Logger.Println("UpdateSubnet(): Got special case of creating/deleting the server")
 		} else {
 			return nil, hcc_errors.HarpGrpcArgumentError, "UpdateSubnet(): need some arguments"
 		}
@@ -640,26 +640,26 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		subnet.DomainName = domainName
 	}
 
-	oldSubnet, errCode, errStr := ReadSubnet(subnet.GetUUID())
-	if errCode != 0 {
-		return nil, errCode, "UpdateSubnet(): " + errStr
-	}
-
-	if oldSubnet.ServerUUID != "" {
-		return nil, hcc_errors.HarpInternalSubnetInUseError, "UpdateSubnet(): Subnet is in use by the server (ServerUUID=" + oldSubnet.ServerUUID + ")"
-	}
-
-	if !networkIPOk {
-		subnet.NetworkIP = oldSubnet.NetworkIP
-	}
-	if !netmaskOk {
-		subnet.Netmask = oldSubnet.Netmask
-	}
-	if !gatewayOk {
-		subnet.Gateway = oldSubnet.Gateway
-	}
-
 	if !isSpecialCase {
+		oldSubnet, errCode, errStr := ReadSubnet(subnet.GetUUID())
+		if errCode != 0 {
+			return nil, errCode, "UpdateSubnet(): " + errStr
+		}
+
+		if oldSubnet.ServerUUID != "" {
+			return nil, hcc_errors.HarpInternalSubnetInUseError, "UpdateSubnet(): Subnet is in use by the server (ServerUUID=" + oldSubnet.ServerUUID + ")"
+		}
+
+		if !networkIPOk {
+			subnet.NetworkIP = oldSubnet.NetworkIP
+		}
+		if !netmaskOk {
+			subnet.Netmask = oldSubnet.Netmask
+		}
+		if !gatewayOk {
+			subnet.Gateway = oldSubnet.Gateway
+		}
+
 		err := checkSubnet(subnet.NetworkIP, subnet.Netmask, subnet.Gateway, true, oldSubnet, nil)
 		if err != nil {
 			return nil, hcc_errors.HarpInternalIPAddressError, "UpdateSubnet(): " + err.Error()
@@ -720,7 +720,7 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
-	subnet, errCode, errStr = ReadSubnet(subnet.UUID)
+	subnet, errCode, errStr := ReadSubnet(subnet.UUID)
 	if errCode != 0 {
 		logger.Logger.Println("UpdateSubnet(): " + errStr)
 	}
