@@ -148,7 +148,10 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): need a server_uuid argument"
 	}
 
-	adaptiveIPServer, _, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
+	adaptiveIPServer, errCode, _ := daoext2.ReadAdaptiveIPServer(serverUUID)
+	if errCode == hcc_errors.HarpSQLNoResult {
+		return serverUUID, 0, ""
+	}
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
 	}
