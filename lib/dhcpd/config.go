@@ -400,6 +400,11 @@ func DeleteDHCPDConfig(in *pb.ReqDeleteDHCPDConf) (string, error) {
 	dhcpdext.IncWritingSubnetConfigCounter()
 	err := fileutil.DeleteFile(dhcpdConfLocation)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			dhcpdext.DecWritingSubnetConfigCounter()
+			return "DeleteDHCPDConfig: Already deleted", nil
+		}
+		dhcpdext.DecWritingSubnetConfigCounter()
 		return "", err
 	}
 	dhcpdext.DecWritingSubnetConfigCounter()
