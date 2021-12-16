@@ -417,10 +417,9 @@ func checkCreateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
 	nextServerOk := len(reqSubnet.GetNextServer()) != 0
 	nameServerOk := len(reqSubnet.GetNameServer()) != 0
-	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !(groupIDOk && networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && osOk && subnetNameOk)
+	return !(groupIDOk && networkIPOk && netmaskOk && gatewayOk && nextServerOk && nameServerOk && subnetNameOk)
 }
 
 // CreateSubnet : Create a subnet
@@ -459,7 +458,7 @@ func CreateSubnet(in *pb.ReqCreateSubnet) (*pb.Subnet, uint64, string) {
 		DomainName:     domainName,
 		ServerUUID:     "",
 		LeaderNodeUUID: "",
-		OS:             reqSubnet.GetOS(),
+		OS:             "",
 		SubnetName:     reqSubnet.GetSubnetName(),
 	}
 
@@ -684,6 +683,9 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 		updateSet += " name_server = '" + subnet.NameServer + "', "
 	}
 	if osOk {
+		if subnet.OS == "-" {
+			subnet.OS = ""
+		}
 		updateSet += " os = '" + subnet.OS + "', "
 	}
 	if subnetNameOk {
@@ -691,9 +693,15 @@ func UpdateSubnet(in *pb.ReqUpdateSubnet) (*pb.Subnet, uint64, string) {
 	}
 
 	if leaderNodeUUIDOk {
+		if subnet.LeaderNodeUUID == "-" {
+			subnet.LeaderNodeUUID = ""
+		}
 		updateSet += " leader_node_uuid = '" + subnet.LeaderNodeUUID + "', "
 	}
 	if serverUUIDOk {
+		if subnet.ServerUUID == "-" {
+			subnet.ServerUUID = ""
+		}
 		updateSet += " server_uuid = '" + subnet.ServerUUID + "', "
 	}
 
