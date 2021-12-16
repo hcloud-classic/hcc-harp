@@ -559,10 +559,9 @@ func checkUpdateSubnetArgs(reqSubnet *pb.Subnet) bool {
 	gatewayOk := len(reqSubnet.GetGateway()) != 0
 	nextServerOk := len(reqSubnet.GetNextServer()) != 0
 	nameServerOk := len(reqSubnet.GetNameServer()) != 0
-	osOk := len(reqSubnet.GetOS()) != 0
 	subnetNameOk := len(reqSubnet.GetSubnetName()) != 0
 
-	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !osOk && !subnetNameOk
+	return !networkIPOk && !netmaskOk && !gatewayOk && !nextServerOk && !nameServerOk && !subnetNameOk
 }
 
 // UpdateSubnet : Update infos of the subnet
