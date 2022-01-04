@@ -1,6 +1,7 @@
 package config
 
 type adaptiveIP struct {
+	CustomScriptsLocation      string `goconf:"adaptiveip_custom_scripts_location"`              // CustomScriptsLocation : Location of custom scripts run after iptables rules are loaded
 	ExternalIfaceName          string `goconf:"adaptiveip_external_iface_name"`                  // ExternalIfaceName : External interface name
 	InternalIfaceName          string `goconf:"adaptiveip_internal_iface_name"`                  // InternalIfaceName : Internal interface name
 	NetworkConfigFile          string `goconf:"adaptiveip:adaptiveip_network_config_file"`       // NetworkConfigFile : Adaptive IP network networkConfig file location

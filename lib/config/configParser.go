@@ -229,6 +229,11 @@ func parseAdaptiveIP() {
 
 	AdaptiveIP = adaptiveIP{}
 
+	AdaptiveIP.CustomScriptsLocation, err = config.AdaptiveIPConfig.String("adaptiveip_custom_scripts_location")
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
 	AdaptiveIP.ExternalIfaceName, err = config.AdaptiveIPConfig.String("adaptiveip_external_iface_name")
 	if err != nil {
 		logger.Logger.Panic(err)

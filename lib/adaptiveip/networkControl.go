@@ -182,6 +182,11 @@ func LoadFirewall() error {
 		goto ERROR
 	}
 
+	err = loadCustomScripts()
+	if err != nil {
+		goto ERROR
+	}
+
 ERROR:
 	firewallLoadLock.Unlock()
 
