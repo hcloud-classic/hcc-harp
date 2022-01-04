@@ -135,8 +135,7 @@ func settingExternalNetwork() error {
 	return nil
 }
 
-// LoadHarpIPTABLESRules : Load iptables rules for harp module
-func LoadHarpIPTABLESRules() error {
+func loadHarpIPTABLESRules() error {
 	err := settingExternalNetwork()
 	if err != nil {
 		return err
@@ -178,7 +177,12 @@ func LoadFirewall() error {
 
 	firewallLoadLock.Lock()
 
-	err = LoadHarpIPTABLESRules()
+	err = loadHarpIPTABLESRules()
+	if err != nil {
+		goto ERROR
+	}
+
+	err = loadCustomScripts()
 	if err != nil {
 		goto ERROR
 	}
