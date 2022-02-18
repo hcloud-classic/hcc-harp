@@ -140,7 +140,6 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	if err != nil {
 		errStr := "CreateAdaptiveIPServer(): Failed to create port forwarding for the hccweb docker container"
 		logger.Logger.Println(errStr)
-		return nil, hcc_errors.HarpInternalOperationFail, errStr
 	}
 
 	return &adaptiveIPServer, 0, ""
@@ -168,7 +167,6 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	if err != nil {
 		errStr := "DeleteAdaptiveIPServer(): Failed to delete port forwarding for the hccweb docker container"
 		logger.Logger.Println(errStr)
-		return "", hcc_errors.HarpInternalOperationFail, errStr
 	}
 
 	portForwardingList, errCode, errStr := ReadPortForwardingList(&pb.ReqGetPortForwardingList{
