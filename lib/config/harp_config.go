@@ -19,4 +19,5 @@ type harpConfig struct {
 	AdaptiveIPNetworkConfig *goconf.Section
 	VnStat                  *goconf.Section
 	Timpani                 *goconf.Section
+	HccwebConfig            *goconf.Section
 }

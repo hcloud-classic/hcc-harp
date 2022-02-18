@@ -4,6 +4,7 @@ import (
 	"hcc/harp/action/grpc/client"
 	daoext2 "hcc/harp/daoext"
 	"hcc/harp/lib/configadapriveipnetwork"
+	"hcc/harp/lib/hccweb"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -135,6 +136,13 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
+	err = hccweb.PortForwardDocker(true, serverUUID)
+	if err != nil {
+		errStr := "CreateAdaptiveIPServer(): Failed to create port forwarding for the hccweb docker container"
+		logger.Logger.Println(errStr)
+		return nil, hcc_errors.HarpInternalOperationFail, errStr
+	}
+
 	return &adaptiveIPServer, 0, ""
 }
 
@@ -154,6 +162,13 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	}
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
+	}
+
+	err = hccweb.PortForwardDocker(false, serverUUID)
+	if err != nil {
+		errStr := "DeleteAdaptiveIPServer(): Failed to delete port forwarding for the hccweb docker container"
+		logger.Logger.Println(errStr)
+		return "", hcc_errors.HarpInternalOperationFail, errStr
 	}
 
 	portForwardingList, errCode, errStr := ReadPortForwardingList(&pb.ReqGetPortForwardingList{

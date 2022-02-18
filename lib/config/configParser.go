@@ -384,6 +384,18 @@ func parseTimpani() {
 	}
 }
 
+func parseHccweb() {
+	config.HccwebConfig = conf.Get("hccweb")
+	if config.HccwebConfig == nil {
+		logger.Logger.Panicln("no hccweb section")
+	}
+
+	Hccweb.Port, err = config.HccwebConfig.Int("port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 // Init : Parse config file and initialize config structure
 func Init() {
 	if err = conf.Parse(configLocation); err != nil {
@@ -402,6 +414,7 @@ func Init() {
 	parseAdaptiveIP()
 	parseVnStat()
 	parseTimpani()
+	parseHccweb()
 }
 
 func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {
