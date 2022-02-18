@@ -33,7 +33,7 @@ func PortForwardDocker(isAdd bool, serverUUID string) error {
 	}
 
 	err = iptablesext.PortForwarding(isAdd, false, true, false, adaptiveIPServer.PublicIP,
-		dockerIP, int(config.Timpani.TimpaniExternalPort), int(config.Hccweb.Port))
+		dockerIP, 50000+harpVNUM, int(config.Hccweb.Port))
 	if err != nil {
 		return err
 	}
