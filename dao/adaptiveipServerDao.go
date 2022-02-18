@@ -176,9 +176,8 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	if err != nil {
 		return "", hcc_errors.HarpGrpcRequestError, "DeleteAdaptiveIPServer(): Failed to get server information"
 	}
-	if server.Server != nil &&
-		(strings.ToLower(server.Server.Status) == "creating" || strings.ToLower(server.Server.Status) == "deleting") {
-		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): You can't delete the AdaptiveIP when creating or deleting the server"
+	if server.Server != nil && strings.ToLower(server.Server.Status) == "creating" {
+		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): You can't delete the AdaptiveIP when creating the server"
 	}
 
 	err = hccweb.PortForwardDocker(false, serverUUID)
