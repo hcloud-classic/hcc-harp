@@ -73,3 +73,16 @@ func (rc *RPCClient) AllServerUUID() ([]string, *hcc_errors.HccErrorStack) {
 
 	return serverUUIDs, errStack
 }
+
+// GetServer : Get infos of the server
+func (rc *RPCClient) GetServer(uuid string) (*pb.ResGetServer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(config.Violin.RequestTimeoutMs)*time.Millisecond)
+	defer cancel()
+	resGetServer, err := rc.violin.GetServer(ctx, &pb.ReqGetServer{UUID: uuid})
+	if err != nil {
+		return nil, err
+	}
+
+	return resGetServer, nil
+}

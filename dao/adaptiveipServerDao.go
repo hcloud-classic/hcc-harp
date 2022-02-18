@@ -59,6 +59,15 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpInternalSubnetNotAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is not allocated to one of private subnet"
 	}
 
+	server, err := client.RC.GetServer(serverUUID)
+	if err != nil {
+		return nil, hcc_errors.HarpGrpcRequestError, "CreateAdaptiveIPServer(): Failed to get server information"
+	}
+	if server.Server != nil &&
+		(strings.ToLower(server.Server.Status) == "creating" || strings.ToLower(server.Server.Status) == "deleting") {
+		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): You can't create the AdaptiveIP when creating or deleting the server"
+	}
+
 	resGetQuota, errStack := client.RC.GetQuota(subnet.GroupID)
 	if errStack != nil {
 		return nil, hcc_errors.HarpGrpcRequestError, "CreateAdaptiveIPServer(): " + errStack.Pop().Text()
@@ -161,6 +170,15 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	}
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
+	}
+
+	server, err := client.RC.GetServer(serverUUID)
+	if err != nil {
+		return "", hcc_errors.HarpGrpcRequestError, "DeleteAdaptiveIPServer(): Failed to get server information"
+	}
+	if server.Server != nil &&
+		(strings.ToLower(server.Server.Status) == "creating" || strings.ToLower(server.Server.Status) == "deleting") {
+		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): You can't delete the AdaptiveIP when creating or deleting the server"
 	}
 
 	err = hccweb.PortForwardDocker(false, serverUUID)
