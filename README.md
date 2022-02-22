@@ -16,6 +16,16 @@
 
 - Pre-required
     - SELinux disabled (If enabled, iptables will not work correctly.)
+    - If you have apparmor installed, you should add an allow line to apparmor config.
+      WARNING: If you make harp config directory as a symbolic link, you must also allow the target directory.
+      - vi /etc/apparmor.d/usr.sbin.dhcpd
+      ```
+      /etc/hcc/harp/dhcpd/config/*.conf lrw,
+      ```
+      - Restart apparmor
+      ```
+      service apparmor restart
+      ```
     - iptables installed with NAT kernel module loaded (iptable_nat, nf_nat)
     - Golang installed
     - 2 network interfaces for use an external network and internal networks.
@@ -28,8 +38,8 @@
 <br>
 
 - How to run
-    1. Copy `harp.conf` to `/etc/hcc/harp/harp.conf`
-    2. Change your settings in `harp.conf`
+    1. Copy `harp.conf` and `harp_adaptiveip_network.conf`  to `/etc/hcc/harp/harp.conf`
+    2. Change your settings in `harp.conf` and `harp_adaptiveip_network.conf`
     3. Run `harp` binary.
 
   <br>
