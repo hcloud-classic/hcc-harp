@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"hcc/harp/action/grpc/client"
 	"hcc/harp/lib/config"
 	"hcc/harp/lib/logger"
 	"hcc/harp/lib/syscheck"
@@ -25,6 +26,11 @@ func Test_DB_Prepare(t *testing.T) {
 	}()
 
 	config.Init()
+
+	err = client.Init()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	err = Init()
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"hcc/harp/action/grpc/client"
 	daoext2 "hcc/harp/daoext"
 	"hcc/harp/lib/configadapriveipnetwork"
+	"hcc/harp/lib/hccweb"
 	"hcc/harp/lib/iptablesext"
 	"hcc/harp/lib/iputil"
 	"hcc/harp/lib/logger"
@@ -56,6 +57,15 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 	subnet, errCode, _ := daoext2.ReadSubnetByServer(serverUUID)
 	if errCode != 0 {
 		return nil, hcc_errors.HarpInternalSubnetNotAllocatedError, "CreateAdaptiveIPServer(): provided ServerUUID is not allocated to one of private subnet"
+	}
+
+	server, err := client.RC.GetServer(serverUUID)
+	if err != nil {
+		return nil, hcc_errors.HarpGrpcRequestError, "CreateAdaptiveIPServer(): Failed to get server information"
+	}
+	if server.Server != nil &&
+		(strings.ToLower(server.Server.Status) == "creating" || strings.ToLower(server.Server.Status) == "deleting") {
+		return nil, hcc_errors.HarpInternalOperationFail, "CreateAdaptiveIPServer(): You can't create the AdaptiveIP when creating or deleting the server"
 	}
 
 	resGetQuota, errStack := client.RC.GetQuota(subnet.GroupID)
@@ -135,6 +145,12 @@ func CreateAdaptiveIPServer(in *pb.ReqCreateAdaptiveIPServer) (*pb.AdaptiveIPSer
 		return nil, hcc_errors.HarpSQLOperationFail, errStr
 	}
 
+	err = hccweb.PortForwardDocker(true, serverUUID)
+	if err != nil {
+		errStr := "CreateAdaptiveIPServer(): Failed to create port forwarding for the hccweb docker container"
+		logger.Logger.Println(errStr)
+	}
+
 	return &adaptiveIPServer, 0, ""
 }
 
@@ -154,6 +170,20 @@ func DeleteAdaptiveIPServer(in *pb.ReqDeleteAdaptiveIPServer) (string, uint64, s
 	}
 	if adaptiveIPServer == nil {
 		return "", hcc_errors.HarpGrpcArgumentError, "DeleteAdaptiveIPServer(): adaptiveIPServer is nil"
+	}
+
+	server, err := client.RC.GetServer(serverUUID)
+	if err != nil {
+		return "", hcc_errors.HarpGrpcRequestError, "DeleteAdaptiveIPServer(): Failed to get server information"
+	}
+	if server.Server != nil && strings.ToLower(server.Server.Status) == "creating" {
+		return "", hcc_errors.HarpInternalOperationFail, "DeleteAdaptiveIPServer(): You can't delete the AdaptiveIP when creating the server"
+	}
+
+	err = hccweb.PortForwardDocker(false, serverUUID)
+	if err != nil {
+		errStr := "DeleteAdaptiveIPServer(): Failed to delete port forwarding for the hccweb docker container"
+		logger.Logger.Println(errStr)
 	}
 
 	portForwardingList, errCode, errStr := ReadPortForwardingList(&pb.ReqGetPortForwardingList{

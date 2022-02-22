@@ -10,6 +10,18 @@ var conf = goconf.New()
 var config = harpConfig{}
 var err error
 
+func parseRsakey() {
+	config.RsakeyConfig = conf.Get("rsakey")
+	if config.RsakeyConfig == nil {
+		logger.Logger.Panicln("no rsakey section")
+	}
+
+	Rsakey.PrivateKeyFile, err = config.RsakeyConfig.String("private_key_file")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 func parseMysql() {
 	config.MysqlConfig = conf.Get("mysql")
 	if config.MysqlConfig == nil {
@@ -18,11 +30,6 @@ func parseMysql() {
 
 	Mysql = mysql{}
 	Mysql.ID, err = config.MysqlConfig.String("id")
-	if err != nil {
-		logger.Logger.Panicln(err)
-	}
-
-	Mysql.Password, err = config.MysqlConfig.String("password")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -60,6 +67,39 @@ func parseGrpc() {
 	}
 
 	Grpc.Port, err = config.GrpcConfig.Int("port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
+func parseHorn() {
+	config.HornConfig = conf.Get("horn")
+	if config.HornConfig == nil {
+		logger.Logger.Panicln("no horn section")
+	}
+
+	Horn = horn{}
+	Horn.ServerAddress, err = config.HornConfig.String("horn_server_address")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Horn.ServerPort, err = config.HornConfig.Int("horn_server_port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Horn.ConnectionTimeOutMs, err = config.HornConfig.Int("horn_connection_timeout_ms")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Horn.ConnectionRetryCount, err = config.HornConfig.Int("horn_connection_retry_count")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+
+	Horn.RequestTimeoutMs, err = config.HornConfig.Int("horn_request_timeout_ms")
 	if err != nil {
 		logger.Logger.Panicln(err)
 	}
@@ -344,14 +384,28 @@ func parseTimpani() {
 	}
 }
 
+func parseHccweb() {
+	config.HccwebConfig = conf.Get("hccweb")
+	if config.HccwebConfig == nil {
+		logger.Logger.Panicln("no hccweb section")
+	}
+
+	Hccweb.Port, err = config.HccwebConfig.Int("port")
+	if err != nil {
+		logger.Logger.Panicln(err)
+	}
+}
+
 // Init : Parse config file and initialize config structure
 func Init() {
 	if err = conf.Parse(configLocation); err != nil {
 		logger.Logger.Panicln(err)
 	}
 
+	parseRsakey()
 	parseMysql()
 	parseGrpc()
+	parseHorn()
 	parseCello()
 	parseFlute()
 	parseViolin()
@@ -360,6 +414,7 @@ func Init() {
 	parseAdaptiveIP()
 	parseVnStat()
 	parseTimpani()
+	parseHccweb()
 }
 
 func parseAdaptiveIPNetwork(adaptiveipNetworkConf *goconf.Config) {

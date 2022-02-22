@@ -77,15 +77,15 @@ func init() {
 
 	config.Init()
 
-	err = mysql.Init()
-	if err != nil {
-		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
-		_ = pid.DeleteHarpPID()
-	}
-
 	err = client.Init()
 	if err != nil {
 		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "client.Init(): "+err.Error()).Fatal()
+		_ = pid.DeleteHarpPID()
+	}
+
+	err = mysql.Init()
+	if err != nil {
+		hcc_errors.NewHccError(hcc_errors.HarpInternalInitFail, "mysql.Init(): "+err.Error()).Fatal()
 		_ = pid.DeleteHarpPID()
 	}
 
@@ -127,8 +127,8 @@ func init() {
 }
 
 func end() {
-	client.End()
 	mysql.End()
+	client.End()
 	logger.End()
 	_ = pid.DeleteHarpPID()
 }
