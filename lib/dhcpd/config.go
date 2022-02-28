@@ -121,7 +121,8 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 	nextIP := cidr.Inc(firstIP)
 
 	var nodeEntryConfPart = ""
-	var nodeNum = 1
+	var nodeNum int
+	var computeNodeNum = 2
 	for _, uuid := range nodeUUIDs {
 		pxeMacAddr, err := getNodePXEMACAddress(uuid)
 		if err != nil {
@@ -136,11 +137,13 @@ func doWriteConfig(subnet *pb.Subnet, firstIP net.IP, lastIP net.IP, pxeFileName
 		if uuid == subnet.LeaderNodeUUID {
 			node.IP = firstIP.String()
 			node.NodeName = "node" + strconv.Itoa(1) + "." + subnet.UUID
+			nodeNum = 1
 		} else {
 			node.IP = nextIP.String()
 			nextIP = cidr.Inc(nextIP)
-			nodeNum++
-			node.NodeName = "node" + strconv.Itoa(nodeNum) + "." + subnet.UUID
+			node.NodeName = "node" + strconv.Itoa(computeNodeNum) + "." + subnet.UUID
+			nodeNum = computeNodeNum
+			computeNodeNum++
 		}
 
 		_, err = client.RC.UpdateNode(&pb.ReqUpdateNode{Node: &pb.Node{
